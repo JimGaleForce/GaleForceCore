@@ -10,6 +10,12 @@ namespace GaleForceCore.Helpers
 {
     public static class Web
     {
+        /// <summary>
+        /// Gets the specified URL.
+        /// </summary>
+        /// <param name="url">The URL.</param>
+        /// <param name="timeoutSeconds">The timeout in seconds.</param>
+        /// <returns>System.String.</returns>
         public static async Task<string> Get(string url, int timeoutSeconds = 5)
         {
             var uri = new Uri(url);
@@ -29,6 +35,14 @@ namespace GaleForceCore.Helpers
             return result;
         }
 
+        /// <summary>
+        /// Gets the specified URL.
+        /// </summary>
+        /// <param name="url">The URL.</param>
+        /// <param name="headers">The headers.</param>
+        /// <param name="token">Bearer token if needed</param>
+        /// <param name="timeoutSeconds">The timeout in seconds.</param>
+        /// <returns>System.String.</returns>
         public static async Task<string> Get(
             string url,
             Dictionary<string, string> headers = null,
@@ -61,6 +75,17 @@ namespace GaleForceCore.Helpers
             return result;
         }
 
+        /// <summary>
+        /// Puts the specified URL.
+        /// </summary>
+        /// <param name="url">The URL.</param>
+        /// <param name="body">The body.</param>
+        /// <param name="headers">The headers.</param>
+        /// <param name="token">The bearer token.</param>
+        /// <param name="contentType">Type of the content.</param>
+        /// <param name="method">The method.</param>
+        /// <param name="timeoutSeconds">The timeout in seconds.</param>
+        /// <returns>System.String.</returns>
         public static async Task<string> Put(
             string url,
             string body,

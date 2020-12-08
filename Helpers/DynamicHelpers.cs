@@ -7,6 +7,11 @@ namespace GaleForceCore.Helpers
 {
     public static class DynamicHelpers
     {
+        /// <summary>
+        /// Converts to an object to an expandoobject.
+        /// </summary>
+        /// <param name="obj">The object.</param>
+        /// <returns>ExpandoObject.</returns>
         public static ExpandoObject ToExpandoObject(this object obj)
         {
             if(obj == null)

@@ -4,6 +4,11 @@ namespace GaleForceCore.Helpers
 {
     public static class TimeHelpers
     {
+        /// <summary>
+        /// Unixes the time stamp to date time.
+        /// </summary>
+        /// <param name="unixTimeStamp">The unix time stamp.</param>
+        /// <returns>DateTime.</returns>
         public static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
         {
             // Unix timestamp is seconds past epoch
