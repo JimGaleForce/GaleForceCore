@@ -7,23 +7,23 @@ namespace GaleForceCore.Helpers
     {
         public static string WorkspaceFolder => Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-        public static string[] GetLocalFiles(string spec, string folder = "tmp")
+        public static string[] GetLocalFiles(string spec, string folder = "tmp", bool createWebRootIfNeeded = false)
         {
-            var xspec = GetLocalFilename(spec, folder);
+            var xspec = GetLocalFilename(spec, folder, createWebRootIfNeeded);
             return Directory.GetFiles(Path.GetDirectoryName(xspec), spec);
         }
 
-        public static string GetLocalFilename(string filename, string folder = "tmp")
+        public static string GetLocalPathName(string folder = "tmp", bool createWebRootIfNeeded = false)
         {
             if(Directory.Exists(folder + "/"))
             {
-                return folder + "/" + filename;
+                return folder + "/";
             }
 
             if(Directory.Exists(WorkspaceFolder + folder))
             {
                 var dir = WorkspaceFolder + folder;
-                return dir + "/" + filename;
+                return dir + "/";
             }
             else
             {
@@ -42,21 +42,28 @@ namespace GaleForceCore.Helpers
                 dir = dir + folder;
                 if(Directory.Exists(dir))
                 {
-                    return dir + "/" + filename;
+                    return dir + "/";
                 }
             }
 
             if(Directory.Exists("d:/home/site/wwwroot"))
             {
-                return "d:/home/site/wwwroot/" + folder + "/" + filename;
+                return "d:/home/site/wwwroot/" + folder + "/";
             }
 
-            if(!Directory.Exists("wwwroot/" + folder + "/"))
+            if(!Directory.Exists("wwwroot/" + folder + "/") && createWebRootIfNeeded)
             {
                 Directory.CreateDirectory("wwwroot/" + folder + "/");
+                return "wwwroot/" + folder + "/";
             }
 
-            return "wwwroot/" + folder + "/" + filename;
+            return folder + "/"; //doesn't exist
         }
+
+        public static string GetLocalFilename(
+            string filename,
+            string folder = "tmp",
+            bool createWebRootIfNeeded = false)
+        { return GetLocalPathName(folder, createWebRootIfNeeded) + filename; }
     }
 }
