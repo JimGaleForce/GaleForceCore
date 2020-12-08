@@ -1,7 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageId>GaleForce.Core</PackageId>
+    <Authors>GaleForce</Authors>
+    <Copyright>2020 (c) GaleForce Software</Copyright>
+    <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
+    <Description>Provides basic helpers for cross-use in numerous projects.</Description>
   </PropertyGroup>
 
 </Project>
