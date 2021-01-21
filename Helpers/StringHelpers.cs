@@ -158,7 +158,7 @@ namespace GaleForceCore.Helpers
         { return left != null && right != null && left.ToLowerInvariant().Equals(right.ToLowerInvariant()); }
 
         /// <summary>
-        /// Extracts text between to chars.
+        /// Extracts text between two chars.
         /// </summary>
         /// <param name="text">The text.</param>
         /// <param name="startChar">The start character.</param>
@@ -187,6 +187,48 @@ namespace GaleForceCore.Helpers
             }
 
             return result.ToArray();
+        }
+
+        /// <summary>
+        /// Removes all text between two characters, optionally removing the characters also.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="startChar">The start character.</param>
+        /// <param name="endChar">The end character.</param>
+        /// <param name="removeChars">if set to <c>true</c> [remove chars].</param>
+        /// <returns>System.String.</returns>
+        public static string RemoveAllBetween(this string text, char startChar, char endChar, bool removeChars = false)
+        {
+            var inBetween = false;
+            var sb = new StringBuilder();
+            foreach(var c in text)
+            {
+                if(inBetween && c.Equals(endChar))
+                {
+                    inBetween = false;
+                    if(!removeChars)
+                    {
+                        sb.Append(c);
+                    }
+                }
+                else if(!inBetween)
+                {
+                    if(c.Equals(startChar))
+                    {
+                        inBetween = true;
+                        if(!removeChars)
+                        {
+                            sb.Append(c);
+                        }
+                    }
+                    else
+                    {
+                        sb.Append(c);
+                    }
+                }
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>
