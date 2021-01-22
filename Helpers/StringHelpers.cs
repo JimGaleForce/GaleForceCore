@@ -200,9 +200,23 @@ namespace GaleForceCore.Helpers
         public static string RemoveAllBetween(this string text, char startChar, char endChar, bool removeChars = false)
         {
             var inBetween = false;
+            char lastChar = (char)0;
             var sb = new StringBuilder();
             foreach(var c in text)
             {
+                if(inBetween && lastChar == c && c.Equals(startChar))
+                {
+                    inBetween = false;
+                    sb.Append(c);
+                    continue;
+                }
+                else if(!inBetween && lastChar == c && c.Equals(endChar))
+                {
+                    inBetween = true;
+                    sb.Append(c);
+                    continue;
+                }
+
                 if(inBetween && c.Equals(endChar))
                 {
                     inBetween = false;
@@ -226,6 +240,8 @@ namespace GaleForceCore.Helpers
                         sb.Append(c);
                     }
                 }
+
+                lastChar = c;
             }
 
             return sb.ToString();
