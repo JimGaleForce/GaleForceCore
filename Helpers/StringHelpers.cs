@@ -254,5 +254,25 @@ namespace GaleForceCore.Helpers
         /// <returns>System.String.</returns>
         public static string ToTitleInvariant(this string text)
         { return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text); }
+
+        /// <summary>
+        /// Counts the number of characters in a string, quickly.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="c">The character to count.</param>
+        /// <returns>int</returns>
+        public static int CharCount(this string text, char c)
+        {
+            var count = 0;
+            foreach(var cc in text)
+            {
+                if(cc.Equals(c))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
     }
 }
