@@ -47,7 +47,8 @@ namespace GaleForceCore.Helpers
             string url,
             Dictionary<string, string> headers = null,
             string token = null,
-            int timeoutSeconds = 5)
+            int timeoutSeconds = 5,
+            bool addAPIKey = true)
         {
             var uri = new Uri(url);
             var cts = new CancellationTokenSource();
@@ -61,9 +62,28 @@ namespace GaleForceCore.Helpers
 
                 if(headers != null && headers.Count > 0)
                 {
-                    request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(headers["Content-Type"]));
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                    request.Headers.Add("Authentication", "APIKey " + headers["Authentication"]);
+                    if(headers.ContainsKey("Content-Type"))
+                    {
+                        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(headers["Content-Type"]));
+                    }
+
+                    if(token != null)
+                    {
+                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    }
+
+                    if(headers.ContainsKey("Authentication") && addAPIKey)
+                    {
+                        request.Headers.Add("Authentication", "APIKey " + headers["Authentication"]);
+                    }
+
+                    foreach(var header in headers)
+                    {
+                        if(header.Key != "Content-Type" && ((header.Key != "Authentication") || !addAPIKey))
+                        {
+                            request.Headers.Add(header.Key, header.Value);
+                        }
+                    }
                 }
 
                 using(var response = await client.SendAsync(request, cts.Token))

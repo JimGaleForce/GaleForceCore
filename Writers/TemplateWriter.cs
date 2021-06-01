@@ -1,4 +1,5 @@
 ﻿using GaleForceCore.Helpers;
+using System;
 using System.Collections.Generic;
 
 namespace GaleForceCore.Writers
@@ -16,6 +17,9 @@ namespace GaleForceCore.Writers
 
         public Dictionary<string, string> Terms { get; set; } = new Dictionary<string, string>();
 
+        public Dictionary<string, string> OriginalTerms { get; set; } = new Dictionary<string, string>();
+        public List<string> Segments = new List<string>();
+
         public int Length { get { return this.ToString().Length; } }
 
         /// <summary>
@@ -29,6 +33,31 @@ namespace GaleForceCore.Writers
             this.Template = template;
             this.LeftBracket = left;
             this.RightBracket = right;
+        }
+
+        public void SaveBase()
+        {
+            this.OriginalTerms.Clear();
+            foreach(var term in Terms)
+            {
+                this.OriginalTerms.Add(term.Key, term.Value);
+            }
+        }
+
+        public void SaveSegment(string sep = "", Func<string, bool> validation = null)
+        {
+            var segment = this.ToStringSegment(sep);
+            if(validation != null && !validation(segment))
+            {
+                return;
+            }
+
+            this.Segments.Add(segment);
+            this.Terms.Clear();
+            foreach(var term in OriginalTerms)
+            {
+                this.Terms.Add(term.Key, term.Value);
+            }
         }
 
         /// <summary>
@@ -49,6 +78,9 @@ namespace GaleForceCore.Writers
         }
 
         public override string ToString()
+        { return string.Join(string.Empty, this.Segments.ToArray()) + this.ToStringSegment(); }
+
+        public string ToStringSegment(string sep = "")
         {
             var template = this.Template;
             foreach(var term in Terms)
@@ -57,7 +89,7 @@ namespace GaleForceCore.Writers
             }
 
             template = StringHelper.RemoveAllBetween(template, LeftBracket, RightBracket, true);
-            return template;
+            return (template.Length > 0 ? sep : string.Empty) + template;
         }
     }
 }
