@@ -274,5 +274,47 @@ namespace GaleForceCore.Helpers
 
             return count;
         }
+
+        public static string Soundex(this string text, int length = 4)
+        {
+            StringBuilder result = new StringBuilder();
+            if(text != null && text.Length > 0)
+            {
+                string previousCode = string.Empty, currentCode = string.Empty, currentLetter = string.Empty;
+                result.Append(text.Substring(0, 1));
+                for(int i = 1; i < text.Length; i++)
+                {
+                    currentLetter = text.Substring(i, 1).ToLower();
+                    currentCode = string.Empty;
+
+                    if("bfpv".IndexOf(currentLetter) > -1)
+                        currentCode = "1";
+                    else if("cgjkqsxz".IndexOf(currentLetter) > -1)
+                        currentCode = "2";
+                    else if("dt".IndexOf(currentLetter) > -1)
+                        currentCode = "3";
+                    else if(currentLetter == "l")
+                        currentCode = "4";
+                    else if("mn".IndexOf(currentLetter) > -1)
+                        currentCode = "5";
+                    else if(currentLetter == "r")
+                        currentCode = "6";
+
+                    if(currentCode != previousCode)
+                        result.Append(currentCode);
+
+                    if(result.Length == length)
+                        break;
+
+                    if(currentCode != string.Empty)
+                        previousCode = currentCode;
+                }
+            }
+
+            if(result.Length < length)
+                result.Append(new String('0', length - result.Length));
+
+            return result.ToString().ToUpper();
+        }
     }
 }
