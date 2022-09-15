@@ -115,7 +115,7 @@
                 .Where(r => r.Bool1)
                 .Build();
 
-            var expected = "SELECT TOP 10 Int1 FROM TableName WHERE Bool1 ORDER BY Int2 DESC";
+            var expected = "SELECT TOP 10 Int1 FROM TableName WHERE Bool1 = 1 ORDER BY Int2 DESC";
 
             Assert.AreEqual(expected, actual);
         }
@@ -257,6 +257,137 @@
             Assert.AreEqual(expected, actual);
         }
 
+        [TestMethod]
+        public void TestWhereBool()
+        {
+            var user = "abc@def.com";
+            var actual = new SimpleSqlBuilder<SqlTestRecord>()
+                .From("TableName")
+                .Select(r => r.Bool1)
+                .Where(r => r.String1 == user && r.Bool1)
+                .Take(1)
+                .Build();
+
+            var expected = "SELECT TOP 1 Bool1 FROM TableName WHERE ((String1 = 'abc@def.com') AND Bool1 = 1)";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestWhereBoolFalse()
+        {
+            var user = "abc@def.com";
+            var actual = new SimpleSqlBuilder<SqlTestRecord>()
+                .From("TableName")
+                .Select(r => r.Int1)
+                .Where(r => r.String1 == user && !r.Bool1)
+                .Take(1)
+                .Build();
+
+            var expected = "SELECT TOP 1 Int1 FROM TableName WHERE ((String1 = 'abc@def.com') AND NOT Bool1 = 1)";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestWhereBoolCompare()
+        {
+            var user = "abc@def.com";
+            var actual = new SimpleSqlBuilder<SqlTestRecord>()
+                .From("TableName")
+                .Select(r => r.Int1)
+                .Where(r => r.String1 == user && r.Bool1 == r.Bool1)
+                .Take(1)
+                .Build();
+
+            var expected = "SELECT TOP 1 Int1 FROM TableName WHERE ((String1 = 'abc@def.com') AND (Bool1 = Bool1))";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestInnerJoin1()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2")
+                .SelectAs(tResult => tResult.Int3, (t1, t2) => t1.Int1 + t2.Int2)
+                .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
+                .Build();
+
+            var expected = "SELECT (TableName.Int1 + TableName2.Int2) AS Int3 FROM TableName INNER JOIN TableName2 ON (TableName.String1 = TableName2.String1)";
+
+            // TODO: Fix to 'TableName' not type name, do positionally in lambda since names may be the same.
+            // TODO: try other clauses
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestInnerJoinWithWhere()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2")
+                .SelectAs(tResult => tResult.Int3, (t1, t2) => t1.Int1 + t2.Int2)
+                .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
+                .Where(tResult => tResult.Int3 > 0)
+                .Build();
+
+            var expected = "SELECT (TableName.Int1 + TableName2.Int2) AS Int3 FROM TableName INNER JOIN TableName2 ON (TableName.String1 = TableName2.String1) WHERE (Int3 > 0)";
+
+            // TODO: Fix to 'TableName' not type name, do positionally in lambda since names may be the same.
+            // TODO: try other clauses
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestInnerJoinSelect()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2")
+                .Select((t1, t2) => t1.Int1)
+                .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
+                .Where(tResult => tResult.Int3 > 0)
+                .Build();
+
+            var expected = "SELECT TableName.Int1 FROM TableName INNER JOIN TableName2 ON (TableName.String1 = TableName2.String1) WHERE (Int3 > 0)";
+
+            // TODO: Fix to 'TableName' not type name, do positionally in lambda since names may be the same.
+            // TODO: try other clauses
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestWhere2()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2")
+                .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
+                .Where((m, t) => m.String1 == "String123")
+                .Select((m, t) => m.Int1)
+                .Build();
+
+            var expected = "SELECT TableName.Int1 FROM TableName INNER JOIN TableName2 ON (TableName.String1 = TableName2.String1) WHERE (TableName.String1 = 'String123')";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestConstant1()
+        {
+            var data = this.GetData();
+
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2")
+                .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
+                .Where((m, t) => m.String1 == data[0].String1)
+                .Select((m, t) => m.Int1)
+                .Build();
+
+            var expected = "SELECT TableName.Int1 FROM TableName INNER JOIN TableName2 ON (TableName.String1 = TableName2.String1) WHERE (TableName.String1 = 'String123')";
+            Assert.AreEqual(expected, actual);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
@@ -268,6 +399,11 @@
             data.Add(new SqlTestRecord { Int1 = 5, Int2 = 101, String1 = "String132", Bool1 = true, DateTime1 = dt });
             return data;
         }
+    }
+
+    public class SqlTestNewRecord
+    {
+        public int Int3 { get; set; }
     }
 
     public class SqlTestRecord
