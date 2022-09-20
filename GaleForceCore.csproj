@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.9</Version>
-    <AssemblyVersion>1.0.9.1</AssemblyVersion>
-    <FileVersion>1.0.9.1</FileVersion>
-    <PackageReleaseNotes>added SimpleSqlBuilder</PackageReleaseNotes>
+    <Version>1.0.10</Version>
+    <AssemblyVersion>1.0.10.1</AssemblyVersion>
+    <FileVersion>1.0.10.1</FileVersion>
+    <PackageReleaseNotes>added SimpleSqlBuilder InnerJoinOn()</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 

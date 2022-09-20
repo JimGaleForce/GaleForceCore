@@ -377,7 +377,7 @@ namespace GaleForceCore.Builders
                         sb.Append(" <= ");
                         break;
                     case ExpressionType.NotEqual:
-                        sb.Append(" != ");
+                        sb.Append(right == "NULL" ? " IS NOT " : " != ");
                         break;
                     case ExpressionType.Add:
                         sb.Append(" + ");
@@ -392,7 +392,7 @@ namespace GaleForceCore.Builders
                         sb.Append(" / ");
                         break;
                     case ExpressionType.Equal:
-                        sb.Append(" = ");
+                        sb.Append(right == "NULL" ? " IS " : " = ");
                         break;
                 }
 
@@ -515,7 +515,7 @@ namespace GaleForceCore.Builders
             else if (exp is ConstantExpression)
             {
                 var value = (exp as ConstantExpression).Value;
-                var valueStr = value.ToString();
+                var valueStr = value == null ? "NULL" : value.ToString();
                 if (value is string || value is DateTime)
                 {
                     valueStr = "'" + valueStr + "'";
