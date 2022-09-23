@@ -396,7 +396,7 @@ namespace GaleForceCore.Builders
                         break;
                 }
 
-                if (bExp.Right.NodeType == ExpressionType.Not)
+                if (bExp.Right.NodeType == ExpressionType.Not && bExp.Right.Type.Name != "Boolean")
                 {
                     sb.Append("NOT ");
                 }
@@ -425,7 +425,7 @@ namespace GaleForceCore.Builders
                             SqlHelpers.GetBetterPropTypeName(((PropertyInfo)operandMember.Member).PropertyType)
                                 .StartsWith("bool"))
                         {
-                            suffix = " = 1";
+                            suffix = exp.NodeType == ExpressionType.Not ? " = 0" : " = 1";
                         }
 
                         return prefix + operandMember.Member.Name + suffix;
@@ -762,6 +762,8 @@ namespace GaleForceCore.Builders
     {
         public Expression<Func<TRecord1, TRecord2, object>> JoinKey { get; protected set; }
 
+        public string JoinPhrase { get; set; }
+
         /// <summary>
         /// Gets the field expressions (lambda expressions for each field).
         /// </summary>
@@ -853,6 +855,15 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> InnerJoinOn(
             Expression<Func<TRecord1, TRecord2, object>> joinKey)
         {
+            this.JoinPhrase = "INNER";
+            this.JoinKey = joinKey;
+            return this;
+        }
+
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> LeftOuterJoinOn(
+            Expression<Func<TRecord1, TRecord2, object>> joinKey)
+        {
+            this.JoinPhrase = "LEFT OUTER";
             this.JoinKey = joinKey;
             return this;
         }
@@ -866,7 +877,7 @@ namespace GaleForceCore.Builders
                     this.JoinKey.Body,
                     true,
                     parameters: this.JoinKey.Parameters);
-                sb.Append("INNER JOIN " + this.TableNames[1] + " ON " + keys + " ");
+                sb.Append($"{this.JoinPhrase} JOIN {this.TableNames[1]} ON {keys} ");
             }
         }
 

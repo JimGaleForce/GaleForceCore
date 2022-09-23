@@ -284,7 +284,7 @@
                 .Take(1)
                 .Build();
 
-            var expected = "SELECT TOP 1 Int1 FROM TableName WHERE ((String1 = 'abc@def.com') AND NOT Bool1 = 1)";
+            var expected = "SELECT TOP 1 Int1 FROM TableName WHERE ((String1 = 'abc@def.com') AND Bool1 = 0)";
 
             Assert.AreEqual(expected, actual);
         }
@@ -301,6 +301,22 @@
                 .Build();
 
             var expected = "SELECT TOP 1 Int1 FROM TableName WHERE ((String1 = 'abc@def.com') AND (Bool1 = Bool1))";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestWhereNotBoolCompare()
+        {
+            var user = "abc@def.com";
+            var actual = new SimpleSqlBuilder<SqlTestRecord>()
+                .From("TableName")
+                .Select(r => r.Int1)
+                .Where(r => !r.Bool1)
+                .Take(1)
+                .Build();
+
+            var expected = "SELECT TOP 1 Int1 FROM TableName WHERE Bool1 = 0";
 
             Assert.AreEqual(expected, actual);
         }
@@ -423,6 +439,45 @@
         }
 
         [TestMethod]
+        public void TestOuterJoinSelect()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2")
+                .Select((t1, t2) => t1.Int1)
+                .LeftOuterJoinOn((TableName, TableName2) => TableName.Int1 == TableName2.Int1)
+                .Where((t1, t2) => t1.String1 != null)
+                .Build();
+
+            var expected = "SELECT TableName.Int1 FROM TableName " +
+                "LEFT OUTER JOIN TableName2 ON (TableName.Int1 = TableName2.Int1) " +
+                "WHERE (TableName.String1 IS NOT NULL)";
+
+            // TODO: Fix to 'TableName' not type name, do positionally in lambda since names may be the same.
+            // TODO: try other clauses
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestOuterJoinMultiSelect()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2")
+                .Select((t1, t2) => t1.Int1, (t1, t2) => t2.String1)
+                .LeftOuterJoinOn((TableName, TableName2) => TableName.Int1 == TableName2.Int1)
+                .Where((t1, t2) => t1.String1 != null)
+                .Build();
+
+            var expected = "SELECT TableName.Int1,TableName2.String1 FROM TableName " +
+                "LEFT OUTER JOIN TableName2 ON (TableName.Int1 = TableName2.Int1) " +
+                "WHERE (TableName.String1 IS NOT NULL)";
+
+            // TODO: Fix to 'TableName' not type name, do positionally in lambda since names may be the same.
+            // TODO: try other clauses
+
+            Assert.AreEqual(expected, actual);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
