@@ -555,6 +555,13 @@ namespace GaleForceCore.Builders
                             return $"{obj} LIKE '%{subValue}'";
                     }
                 }
+                else if (meContainingType.StartsWith("List") && meMethodName == "Contains")
+                {
+                    var subValue = this.RemoveOuterQuotes(
+                        this.ParseExpression<TRecord>(types, me.Arguments[0], parameters: parameters));
+                    var obj = this.ParseExpression<TRecord>(types, me.Object, parameters: parameters);
+                    return $"{subValue} IN {obj}";
+                }
 
                 try
                 {

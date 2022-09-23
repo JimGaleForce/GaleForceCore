@@ -388,6 +388,41 @@
             Assert.AreEqual(expected, actual);
         }
 
+        [TestMethod]
+        public void TestInListInts()
+        {
+            var data = this.GetData();
+
+            var intList = new List<int>() { 1, 2, 3 };
+
+            var actual = new SimpleSqlBuilder<SqlTestRecord>()
+                .From("TableName")
+                .Select(a => a.Int1)
+                .Where(a => intList.Contains(a.Int1))
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE Int1 IN (1,2,3)";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestInListStrings()
+        {
+            var data = this.GetData();
+
+            var stringList = new List<string>() { "a", "b", "c" };
+
+            var actual = new SimpleSqlBuilder<SqlTestRecord>()
+                .From("TableName")
+                .Select(a => a.Int1)
+                .Where(a => stringList.Contains(a.String1))
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE String1 IN ('a','b','c')";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;

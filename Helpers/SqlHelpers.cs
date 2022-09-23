@@ -6,6 +6,7 @@
 namespace GaleForceCore.Helpers
 {
     using System;
+    using System.Collections.Generic;
     using System.Reflection;
 
     /// <summary>
@@ -138,6 +139,20 @@ namespace GaleForceCore.Helpers
                     {
                         value = (int)Enum.Parse(type, value.ToString());
                         break;
+                    }
+                    else if (type.Name.StartsWith("List"))
+                    {
+                        var listOfInts = value as List<int>;
+                        if (listOfInts != null)
+                        {
+                            return "(" + string.Join(",", listOfInts) + ")";
+                        }
+
+                        var listOfStrings = value as List<string>;
+                        if (listOfStrings != null)
+                        {
+                            return "('" + string.Join("','", listOfStrings) + "')";
+                        }
                     }
 
 #if RELEASE
