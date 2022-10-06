@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.13</Version>
-    <AssemblyVersion>1.0.13.1</AssemblyVersion>
-    <FileVersion>1.0.13.1</FileVersion>
-    <PackageReleaseNotes>added Wildcard matching</PackageReleaseNotes>
+    <Version>1.0.14</Version>
+    <AssemblyVersion>1.0.14.1</AssemblyVersion>
+    <FileVersion>1.0.14.1</FileVersion>
+    <PackageReleaseNotes>fixed Take for multiple tables, selectas, and added concat()</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 

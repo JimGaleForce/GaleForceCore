@@ -16,7 +16,7 @@
         [TestMethod]
         public void TestExecute1()
         {
-            var data = this.GetData();
+            var data = GetData();
 
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
                 .From("TableName")
@@ -32,7 +32,7 @@
         [TestMethod]
         public void TestExecute2()
         {
-            var data = this.GetData();
+            var data = GetData();
 
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
                 .From("TableName")
@@ -50,7 +50,7 @@
         [TestMethod]
         public void TestExecute3()
         {
-            var data = this.GetData();
+            var data = GetData();
 
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
                 .From("TableName")
@@ -322,6 +322,56 @@
         }
 
         [TestMethod]
+        public void TestWhereAdditive()
+        {
+            var user = "abc@def";
+            var actual = new SimpleSqlBuilder<SqlTestRecord>()
+                .From("TableName")
+                .Select(r => r.Int1)
+                .Where(r => r.String1 == user + ".com")
+                .Take(1)
+                .Build();
+
+            var expected = "SELECT TOP 1 Int1 FROM TableName WHERE (String1 = CONCAT('abc@def','.com'))";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestWhereAdditive3()
+        {
+            var user = "abc@def";
+            var actual = new SimpleSqlBuilder<SqlTestRecord>()
+                .From("TableName")
+                .Select(r => r.Int1)
+                .Where(r => r.String1 == user + "." + "com")
+                .Take(1)
+                .Build();
+
+            var expected = "SELECT TOP 1 Int1 FROM TableName WHERE (String1 = CONCAT(CONCAT('abc@def','.'),'com'))";
+
+            // todo: collect param list and make one concat stringset
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestWhereAdditiveWithField()
+        {
+            var user = "abc@def";
+            var actual = new SimpleSqlBuilder<SqlTestRecord>()
+                .From("TableName")
+                .Select(r => r.Int1)
+                .Where(r => r.String1 == r.String2 + ".com")
+                .Take(1)
+                .Build();
+
+            var expected = "SELECT TOP 1 Int1 FROM TableName WHERE (String1 = CONCAT(String2,'.com'))";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
         public void TestInnerJoin1()
         {
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
@@ -389,9 +439,9 @@
         }
 
         [TestMethod]
-        public void TestConstant1()
+        public void TestInnerJoinStringCompare()
         {
-            var data = this.GetData();
+            var data = GetData();
 
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
                 .From("TableName", "TableName2")
@@ -405,9 +455,60 @@
         }
 
         [TestMethod]
+        public void TestJoinTake()
+        {
+            var data = GetData();
+
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2")
+                .Take(10)
+                .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
+                .Where((m, t) => m.String1 == data[0].String1)
+                .Select((m, t) => m.Int1)
+                .Build();
+
+            var expected = "SELECT TOP 10 TableName.Int1 FROM TableName INNER JOIN TableName2 ON (TableName.String1 = TableName2.String1) WHERE (TableName.String1 = 'String123')";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestSelectAndSelectAsDifferentTable()
+        {
+            var data = GetData();
+
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2")
+                .Select((m, t) => m.Int1)
+                .SelectAs(m => m.Int3, (m, t) => m.Int2)
+                .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
+                .Where((m, t) => m.String1 == data[0].String1)
+                .Build();
+
+            var expected = "SELECT TableName.Int1,TableName.Int2 AS Int3 FROM TableName INNER JOIN TableName2 ON (TableName.String1 = TableName2.String1) WHERE (TableName.String1 = 'String123')";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestSelectAndSelectAsSameTable()
+        {
+            var data = GetData();
+
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2")
+                .Select((m, t) => m.Int1)
+                .SelectAs(m => m.Int3, (m, t) => m.Int2)
+                .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
+                .Where((m, t) => m.String1 == data[0].String1)
+                .Build();
+
+            var expected = "SELECT TableName.Int1,TableName.Int2 AS Int3 FROM TableName INNER JOIN TableName2 ON (TableName.String1 = TableName2.String1) WHERE (TableName.String1 = 'String123')";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
         public void TestInListInts()
         {
-            var data = this.GetData();
+            var data = GetData();
 
             var intList = new List<int>() { 1, 2, 3 };
 
@@ -424,7 +525,7 @@
         [TestMethod]
         public void TestInListStrings()
         {
-            var data = this.GetData();
+            var data = GetData();
 
             var stringList = new List<string>() { "a", "b", "c" };
 
@@ -508,6 +609,10 @@
 
         public int Int2 { get; set; }
 
+        public int Int3 { get; set; }
+
         public string String1 { get; set; }
+
+        public string String2 { get; set; }
     }
 }
