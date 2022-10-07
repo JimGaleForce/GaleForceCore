@@ -382,9 +382,6 @@
 
             var expected = "SELECT (TableName.Int1 + TableName2.Int2) AS Int3 FROM TableName INNER JOIN TableName2 ON (TableName.String1 = TableName2.String1)";
 
-            // TODO: Fix to 'TableName' not type name, do positionally in lambda since names may be the same.
-            // TODO: try other clauses
-
             Assert.AreEqual(expected, actual);
         }
 
@@ -400,9 +397,6 @@
 
             var expected = "SELECT (TableName.Int1 + TableName2.Int2) AS Int3 FROM TableName INNER JOIN TableName2 ON (TableName.String1 = TableName2.String1) WHERE (Int3 > 0)";
 
-            // TODO: Fix to 'TableName' not type name, do positionally in lambda since names may be the same.
-            // TODO: try other clauses
-
             Assert.AreEqual(expected, actual);
         }
 
@@ -417,9 +411,6 @@
                 .Build();
 
             var expected = "SELECT TableName.Int1 FROM TableName INNER JOIN TableName2 ON (TableName.String1 = TableName2.String1) WHERE (Int3 > 0)";
-
-            // TODO: Fix to 'TableName' not type name, do positionally in lambda since names may be the same.
-            // TODO: try other clauses
 
             Assert.AreEqual(expected, actual);
         }
@@ -553,9 +544,6 @@
                 "LEFT OUTER JOIN TableName2 ON (TableName.Int1 = TableName2.Int1) " +
                 "WHERE (TableName.String1 IS NOT NULL)";
 
-            // TODO: Fix to 'TableName' not type name, do positionally in lambda since names may be the same.
-            // TODO: try other clauses
-
             Assert.AreEqual(expected, actual);
         }
 
@@ -573,8 +561,43 @@
                 "LEFT OUTER JOIN TableName2 ON (TableName.Int1 = TableName2.Int1) " +
                 "WHERE (TableName.String1 IS NOT NULL)";
 
-            // TODO: Fix to 'TableName' not type name, do positionally in lambda since names may be the same.
-            // TODO: try other clauses
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestOuterJoinMultiSelect3()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2", "TableName3")
+                .Select((t1, t2, t3) => t1.Int1, (t1, t2, t3) => t2.String1, (t1, t2, t3) => t3.Int2)
+                .LeftOuterJoinOn((TableName, TableName2, TableName3) => TableName.Int1 == TableName2.Int1)
+                .LeftOuterJoinOn((TableName, TableName2, TableName3) => TableName.Int1 == TableName3.Int1)
+                .Where((t1, t2, t3) => t1.String1 != null)
+                .Build();
+
+            var expected = "SELECT TableName.Int1,TableName2.String1,TableName3.Int2 FROM TableName " +
+                "LEFT OUTER JOIN TableName2 ON (TableName.Int1 = TableName2.Int1) " +
+                "LEFT OUTER JOIN TableName3 ON (TableName.Int1 = TableName3.Int1) " +
+                "WHERE (TableName.String1 IS NOT NULL)";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestOuterJoinMultiSelect3RegularParamsInsteadOfTableNames()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord, SqlTestRecord>()
+                .From("TableName", "TableName2", "TableName3")
+                .Select((t1, t2, t3) => t1.Int1, (t1, t2, t3) => t2.String1, (t1, t2, t3) => t3.Int2)
+                .LeftOuterJoinOn((t1, t2, t3) => t1.Int1 == t2.Int1)
+                .InnerJoinOn((t1, t2, t3) => t1.Int1 == t3.Int1)
+                .Where((t1, t2, t3) => t1.String1 != null)
+                .Build();
+
+            var expected = "SELECT TableName.Int1,TableName2.String1,TableName3.Int2 FROM TableName " +
+                "LEFT OUTER JOIN TableName2 ON (TableName.Int1 = TableName2.Int1) " +
+                "INNER JOIN TableName3 ON (TableName.Int1 = TableName3.Int1) " +
+                "WHERE (TableName.String1 IS NOT NULL)";
 
             Assert.AreEqual(expected, actual);
         }

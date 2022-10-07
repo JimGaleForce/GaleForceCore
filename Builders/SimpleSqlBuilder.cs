@@ -121,6 +121,12 @@ namespace GaleForceCore.Builders
         public Expression<Func<object, object, bool>> WhereExpression2 { get; protected set; } = null;
 
         /// <summary>
+        /// Gets the where condition expression (lambda).
+        /// </summary>
+        /// <value>The where expression.</value>
+        public Expression<Func<object, object, object, bool>> WhereExpression3 { get; protected set; } = null;
+
+        /// <summary>
         /// Adds the table name for the builder.
         /// </summary>
         /// <param name="tableName">Name of the table.</param>
@@ -343,6 +349,7 @@ namespace GaleForceCore.Builders
         /// <param name="exp">The exp.</param>
         /// <param name="isCondition">if set to <c>true</c> [is condition].</param>
         /// <param name="parameters">The parameters.</param>
+        /// <param name="hideSourceTable">if set to <c>true</c> [hide source table].</param>
         /// <returns>System.String.</returns>
         /// <exception cref="GaleForceCore.Builders.DynamicMethodException">Unable to prebuild SQL string with this method: " + meMethodName</exception>
         /// <exception cref="System.NotSupportedException">Unknown expression type for: " + exp.ToString()</exception>
@@ -454,12 +461,19 @@ namespace GaleForceCore.Builders
                     var operandMember = (exp as UnaryExpression).Operand as MemberExpression;
                     var declaringType = operandMember.Member.DeclaringType.Name;
 
+                    // if (operandMember.Expression is TypeMemberExpresion
+                    // {
+
+                    // }
+
+                    // var parmName = operandMember.Expression.Name;
+
                     var matchingType = GetMatchingType(types, declaringType);
                     if (matchingType != null)
                     {
                         var prefix = types == null || types.Length < 2 || hideSourceTable
                             ? string.Empty
-                            : (GetMatchingTableName(types, matchingType, parameters) + ".");
+                            : (GetMatchingTableName(types, matchingType, parameters, operandMember: operandMember) + ".");
                         var suffix = string.Empty;
                         if (isCondition &&
                             operandMember.Member is PropertyInfo &&
@@ -521,7 +535,7 @@ namespace GaleForceCore.Builders
                 var matchingType = GetMatchingType(types, declaringType);
                 var prefix = types == null || types.Length < 2 || matchingType == null || hideSourceTable
                     ? string.Empty
-                    : (GetMatchingTableName(types, matchingType, parameters, parmName) + ".");
+                    : (GetMatchingTableName(types, matchingType, parameters, parmName, operandMember: pe) + ".");
 
                 if (ce != null)
                 {
@@ -657,23 +671,38 @@ namespace GaleForceCore.Builders
         /// <param name="type">The type.</param>
         /// <param name="parameters">The parameters.</param>
         /// <param name="parmName">Name of the parm.</param>
+        /// <param name="operandMember">The operand member.</param>
         /// <returns>System.String.</returns>
         private string GetMatchingTableName(
             Type[] types,
             Type type,
             IReadOnlyCollection<ParameterExpression> parameters,
-            string parmName = null)
+            string parmName = null,
+            MemberExpression operandMember = null)
         {
             if (type == null)
             {
                 return null;
             }
 
+            string tableName = null;
+            var tpe = operandMember.Expression as ParameterExpression;
+            if (tpe != null)
+            {
+                var name = tpe.Name;
+                var nameIndex = parameters.Select(p => p.Name).ToList().IndexOf(name);
+                if (nameIndex > -1)
+                {
+                    tableName = TableNames[nameIndex];
+                    return tableName;
+                }
+            }
+
             var typeName = type.Name;
             var index = parmName != null
                 ? parameters.Select(p => p.Name).ToList().IndexOf(parmName)
                 : Array.IndexOf(Types.Select(t => t.Name).ToArray(), typeName);
-            var tableName = TableNames != null && Types != null && Types.Length > 0 ? TableNames[index] : typeName;
+            tableName = TableNames != null && Types != null && Types.Length > 0 ? TableNames[index] : typeName;
 
             return tableName;
         }
@@ -804,193 +833,6 @@ namespace GaleForceCore.Builders
             }
 
             return result;
-        }
-    }
-
-    /// <summary>
-    /// Class SimpleSqlBuilder.
-    /// </summary>
-    /// <typeparam name="TRecord">The type of the t record.</typeparam>
-    /// <typeparam name="TRecord1">The type of the t record1.</typeparam>
-    /// <typeparam name="TRecord2">The type of the t record2.</typeparam>
-    public class SimpleSqlBuilder<TRecord, TRecord1, TRecord2> : SimpleSqlBuilder<TRecord>
-    {
-        /// <summary>
-        /// Gets or sets the join key.
-        /// </summary>
-        /// <value>The join key.</value>
-        public Expression<Func<TRecord1, TRecord2, object>> JoinKey { get; protected set; }
-
-        /// <summary>
-        /// Gets or sets the join phrase.
-        /// </summary>
-        /// <value>The join phrase.</value>
-        public string JoinPhrase { get; set; }
-
-        /// <summary>
-        /// Gets the field expressions (lambda expressions for each field).
-        /// </summary>
-        /// <value>The field expressions.</value>
-        public new IEnumerable<Expression<Func<TRecord1, TRecord2, object>>> FieldExpressions
-        {
-            get;
-            protected set;
-        } = null;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord, TRecord1,
-        /// TRecord2}"/> class.
-        /// </summary>
-        public SimpleSqlBuilder()
-            : base(new Type[] { typeof(TRecord1), typeof(TRecord2) })
-        {
-        }
-
-        /// <summary>
-        /// Chooses SELECT as the command, specifying a field as an expressions (can build,
-        /// execute).
-        /// </summary>
-        /// <param name="field">The field.</param>
-        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Select(Expression<Func<TRecord1, TRecord2, object>> field)
-        {
-            return Select(new Expression<Func<TRecord1, TRecord2, object>>[] { field });
-        }
-
-        /// <summary>
-        /// Chooses SELECT as the command, specifying the fields as field names (can only build).
-        /// </summary>
-        /// <param name="fields">The fields.</param>
-        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Select(
-            params Expression<Func<TRecord1, TRecord2, object>>[] fields)
-        {
-            FieldExpressions = fields;
-            return Select(FieldExpressions);
-        }
-
-        /// <summary>
-        /// Chooses SELECT as the command, specifying the fields as expressions (can build,
-        /// execute).
-        /// </summary>
-        /// <param name="fields">The fields.</param>
-        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Select(
-            IEnumerable<Expression<Func<TRecord1, TRecord2, object>>> fields)
-        {
-            Command = "SELECT";
-            var names = fields.Select(field => IncludeAs(field)).ToList();
-            base.Select(names);
-            return this;
-        }
-
-        /// <summary>
-        /// Includes as.
-        /// </summary>
-        /// <param name="field">The field.</param>
-        /// <returns>System.String.</returns>
-        private string IncludeAs(Expression<Func<TRecord1, TRecord2, object>> field)
-        {
-            var expString = this.ParseExpression<TRecord>(Types, field.Body, parameters: field.Parameters);
-            if (AsFields != null && AsFields.ContainsKey(field))
-            {
-                var asStr = this.ParseExpression<TRecord>(
-                    Types,
-                    AsFields[field].Body,
-                    parameters: field.Parameters,
-                    hideSourceTable: true);
-                return expString + " AS " + asStr;
-            }
-
-            return expString;
-        }
-
-        /// <summary>
-        /// Adds the table name for the builder.
-        /// </summary>
-        /// <param name="tableName1">The table name1.</param>
-        /// <param name="tableName2">The table name2.</param>
-        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> From(string tableName1, string tableName2)
-        {
-            TableNames = new string[] { tableName1, tableName2 };
-            return this;
-        }
-
-        /// <summary>
-        /// Selects as.
-        /// </summary>
-        /// <param name="asField">As field.</param>
-        /// <param name="field">The field.</param>
-        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> SelectAs(
-            Expression<Func<TRecord, object>> asField,
-            Expression<Func<TRecord1, TRecord2, object>> field)
-        {
-            AsFields[field] = asField;
-            return Select(new Expression<Func<TRecord1, TRecord2, object>>[] { field });
-        }
-
-        /// <summary>
-        /// Inners the join on.
-        /// </summary>
-        /// <param name="joinKey">The join key.</param>
-        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> InnerJoinOn(
-            Expression<Func<TRecord1, TRecord2, object>> joinKey)
-        {
-            JoinPhrase = "INNER";
-            JoinKey = joinKey;
-            return this;
-        }
-
-        /// <summary>
-        /// Lefts the outer join on.
-        /// </summary>
-        /// <param name="joinKey">The join key.</param>
-        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> LeftOuterJoinOn(
-            Expression<Func<TRecord1, TRecord2, object>> joinKey)
-        {
-            JoinPhrase = "LEFT OUTER";
-            JoinKey = joinKey;
-            return this;
-        }
-
-        /// <summary>
-        /// Injects the inner clauses.
-        /// </summary>
-        /// <param name="sb">The sb.</param>
-        public override void InjectInnerClauses(StringBuilder sb)
-        {
-            if (JoinKey != null)
-            {
-                var keys = this.ParseExpression<TRecord>(Types, JoinKey.Body, true, parameters: JoinKey.Parameters);
-                sb.Append($"{JoinPhrase} JOIN {TableNames[1]} ON {keys} ");
-            }
-        }
-
-        /// <summary>
-        /// Wheres the specified condition.
-        /// </summary>
-        /// <param name="condition">The condition.</param>
-        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord1, TRecord2, bool>> condition)
-        {
-            WhereExpression2 = condition as Expression<Func<object, object, bool>>;
-            WhereString = this.ParseExpression<TRecord>(Types, condition.Body, true, parameters: condition.Parameters);
-            return this;
-        }
-
-        /// <summary>
-        /// Sets the maximum count for returned records.
-        /// </summary>
-        /// <param name="count">The count.</param>
-        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Take(int count)
-        {
-            Count = count;
-            return this;
         }
     }
 }
