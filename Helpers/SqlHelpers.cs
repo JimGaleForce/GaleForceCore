@@ -140,7 +140,9 @@ namespace GaleForceCore.Helpers
                         value = (int)Enum.Parse(type, value.ToString());
                         break;
                     }
-                    else if (type.Name.StartsWith("List"))
+                    else if (type.Name.StartsWith("List") ||
+                        type.Name.StartsWith("String[]") ||
+                        type.Name.StartsWith("Enumerable"))
                     {
                         var listOfInts = value as List<int>;
                         if (listOfInts != null)
@@ -152,6 +154,14 @@ namespace GaleForceCore.Helpers
                         if (listOfStrings != null)
                         {
                             return "('" + string.Join("','", listOfStrings) + "')";
+                        }
+                        else
+                        {
+                            var listOfStrings2 = value as string[];
+                            if (listOfStrings2 != null)
+                            {
+                                return "('" + string.Join("','", listOfStrings2) + "')";
+                            }
                         }
                     }
 

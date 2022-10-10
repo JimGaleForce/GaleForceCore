@@ -16,10 +16,10 @@
         [TestMethod]
         public void TestExecute1()
         {
-            var data = GetData();
+            var data = this.GetData();
 
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1, r => r.Int2)
                 .Where(r => r.Int2 == 102)
                 .Execute(data);
@@ -32,10 +32,10 @@
         [TestMethod]
         public void TestExecute2()
         {
-            var data = GetData();
+            var data = this.GetData();
 
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1, r => r.Int2, r => r.String1)
                 .OrderBy(r => r.String1)
                 .Execute(data);
@@ -50,10 +50,10 @@
         [TestMethod]
         public void TestExecute3()
         {
-            var data = GetData();
+            var data = this.GetData();
 
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1, r => r.Int2, r => r.String1)
                 .OrderBy(r => r.Int2)
                 .ThenByDescending(r => r.String1)
@@ -74,7 +74,7 @@
         public void TestSelect()
         {
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.DateTime1)
                 .OrderByDescending(r => r.DateTime1)
                 .Take(1)
@@ -92,7 +92,7 @@
         public void TestSelectFields()
         {
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1, r => r.Int2)
                 .Build();
 
@@ -108,7 +108,7 @@
         public void TestSelectWhereBool()
         {
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .OrderByDescending(r => r.Int2)
                 .Take(10)
@@ -128,7 +128,7 @@
         {
             var dt = DateTime.Parse("2022-09-10T11:12:13Z", null, DateTimeStyles.RoundtripKind);
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .OrderByDescending(r => r.Int2)
                 .Take(10)
@@ -148,7 +148,7 @@
         {
             DateTime? aDate = new DateTime(2022, 01, 01).AddDays(1);
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .OrderByDescending(r => r.Int2)
                 .Take(10)
@@ -167,7 +167,7 @@
         public void TestSelectWhereDateTimeDirect()
         {
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .OrderByDescending(r => r.Int2)
                 .Take(10)
@@ -186,7 +186,7 @@
         public void TestSelectWhereInts()
         {
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .OrderByDescending(r => r.Int2)
                 .Take(10)
@@ -205,7 +205,7 @@
         public void TestSelectWhereString()
         {
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .OrderByDescending(r => r.Int2)
                 .Take(10)
@@ -224,7 +224,7 @@
         public void TestSelectWhereStringContains()
         {
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .OrderByDescending(r => r.Int2)
                 .Take(10)
@@ -245,7 +245,7 @@
             var abcdefg = "ABCDEFG";
             var abc = "ABC";
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .OrderByDescending(r => r.Int2)
                 .Take(10)
@@ -262,7 +262,7 @@
         {
             var user = "abc@def.com";
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Bool1)
                 .Where(r => r.String1 == user && r.Bool1)
                 .Take(1)
@@ -278,7 +278,7 @@
         {
             var user = "abc@def.com";
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .Where(r => r.String1 == user && !r.Bool1)
                 .Take(1)
@@ -294,7 +294,7 @@
         {
             var user = "abc@def.com";
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .Where(r => r.String1 == user && r.Bool1 == r.Bool1)
                 .Take(1)
@@ -310,7 +310,7 @@
         {
             var user = "abc@def.com";
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .Where(r => !r.Bool1)
                 .Take(1)
@@ -326,7 +326,7 @@
         {
             var user = "abc@def";
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .Where(r => r.String1 == user + ".com")
                 .Take(1)
@@ -342,7 +342,7 @@
         {
             var user = "abc@def";
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .Where(r => r.String1 == user + "." + "com")
                 .Take(1)
@@ -360,7 +360,7 @@
         {
             var user = "abc@def";
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
                 .Where(r => r.String1 == r.String2 + ".com")
                 .Take(1)
@@ -375,7 +375,7 @@
         public void TestInnerJoin1()
         {
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
-                .From("TableName", "TableName2")
+                .From(SqlTestRecord.TableName, "TableName2")
                 .SelectAs(tResult => tResult.Int3, (t1, t2) => t1.Int1 + t2.Int2)
                 .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
                 .Build();
@@ -389,7 +389,7 @@
         public void TestInnerJoinWithWhere()
         {
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
-                .From("TableName", "TableName2")
+                .From(SqlTestRecord.TableName, "TableName2")
                 .SelectAs(tResult => tResult.Int3, (t1, t2) => t1.Int1 + t2.Int2)
                 .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
                 .Where(tResult => tResult.Int3 > 0)
@@ -404,7 +404,7 @@
         public void TestInnerJoinSelect()
         {
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
-                .From("TableName", "TableName2")
+                .From(SqlTestRecord.TableName, "TableName2")
                 .Select((t1, t2) => t1.Int1)
                 .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
                 .Where(tResult => tResult.Int3 > 0)
@@ -419,7 +419,7 @@
         public void TestWhere2()
         {
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
-                .From("TableName", "TableName2")
+                .From(SqlTestRecord.TableName, "TableName2")
                 .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
                 .Where((m, t) => m.String1 == "String123")
                 .Select((m, t) => m.Int1)
@@ -432,10 +432,10 @@
         [TestMethod]
         public void TestInnerJoinStringCompare()
         {
-            var data = GetData();
+            var data = this.GetData();
 
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
-                .From("TableName", "TableName2")
+                .From(SqlTestRecord.TableName, "TableName2")
                 .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
                 .Where((m, t) => m.String1 == data[0].String1)
                 .Select((m, t) => m.Int1)
@@ -448,10 +448,10 @@
         [TestMethod]
         public void TestJoinTake()
         {
-            var data = GetData();
+            var data = this.GetData();
 
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
-                .From("TableName", "TableName2")
+                .From(SqlTestRecord.TableName, "TableName2")
                 .Take(10)
                 .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
                 .Where((m, t) => m.String1 == data[0].String1)
@@ -465,10 +465,10 @@
         [TestMethod]
         public void TestSelectAndSelectAsDifferentTable()
         {
-            var data = GetData();
+            var data = this.GetData();
 
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
-                .From("TableName", "TableName2")
+                .From(SqlTestRecord.TableName, "TableName2")
                 .Select((m, t) => m.Int1)
                 .SelectAs(m => m.Int3, (m, t) => m.Int2)
                 .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
@@ -482,10 +482,10 @@
         [TestMethod]
         public void TestSelectAndSelectAsSameTable()
         {
-            var data = GetData();
+            var data = this.GetData();
 
             var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTestRecord>()
-                .From("TableName", "TableName2")
+                .From(SqlTestRecord.TableName, "TableName2")
                 .Select((m, t) => m.Int1)
                 .SelectAs(m => m.Int3, (m, t) => m.Int2)
                 .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
@@ -499,12 +499,12 @@
         [TestMethod]
         public void TestInListInts()
         {
-            var data = GetData();
+            var data = this.GetData();
 
             var intList = new List<int>() { 1, 2, 3 };
 
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(a => a.Int1)
                 .Where(a => intList.Contains(a.Int1))
                 .Build();
@@ -516,12 +516,12 @@
         [TestMethod]
         public void TestInListStrings()
         {
-            var data = GetData();
+            var data = this.GetData();
 
             var stringList = new List<string>() { "a", "b", "c" };
 
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
-                .From("TableName")
+                .From(SqlTestRecord.TableName)
                 .Select(a => a.Int1)
                 .Where(a => stringList.Contains(a.String1))
                 .Build();
@@ -534,7 +534,7 @@
         public void TestOuterJoinSelect()
         {
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
-                .From("TableName", "TableName2")
+                .From(SqlTestRecord.TableName, "TableName2")
                 .Select((t1, t2) => t1.Int1)
                 .LeftOuterJoinOn((TableName, TableName2) => TableName.Int1 == TableName2.Int1)
                 .Where((t1, t2) => t1.String1 != null)
@@ -551,7 +551,7 @@
         public void TestOuterJoinMultiSelect()
         {
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
-                .From("TableName", "TableName2")
+                .From(SqlTestRecord.TableName, "TableName2")
                 .Select((t1, t2) => t1.Int1, (t1, t2) => t2.String1)
                 .LeftOuterJoinOn((TableName, TableName2) => TableName.Int1 == TableName2.Int1)
                 .Where((t1, t2) => t1.String1 != null)
@@ -602,6 +602,27 @@
             Assert.AreEqual(expected, actual);
         }
 
+        [TestMethod]
+        public void TestDeepWhere()
+        {
+            var emotionSet = new string[] { "ABC" };
+            var from = 0;
+            var toto = 10;
+            var piece = "DEF";
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                    .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
+                .Select((e, t) => e.Int3, (e, t) => t.String2)
+                .Where(
+                    (e, t) => t.Int1 > from &&
+                        t.Int1 < toto &&
+                        (t.String2.Contains(piece + ":Reviewed") || t.String2.Contains(piece + "Non-Actionable")) &&
+                        emotionSet.Contains(e.String1))
+                .OrderByDescending(ep => ep.Int3)
+                .Build();
+
+            var i = 0;
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
@@ -622,6 +643,8 @@
 
     public class SqlTestRecord
     {
+        public const string TableName = "TableName";
+
         public bool Bool1 { get; set; }
 
         public DateTime DateTime1 { get; set; }
