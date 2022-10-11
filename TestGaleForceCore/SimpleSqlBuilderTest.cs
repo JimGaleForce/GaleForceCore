@@ -612,6 +612,7 @@
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
                     .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
                 .Select((e, t) => e.Int3, (e, t) => t.String2)
+                .InnerJoinOn((e, t) => e.Int3 == t.Int3)
                 .Where(
                     (e, t) => t.Int1 > from &&
                         t.Int1 < toto &&
@@ -620,7 +621,37 @@
                 .OrderByDescending(ep => ep.Int3)
                 .Build();
 
-            var i = 0;
+            var expected = "SELECT TableName.Int3,TableName.String2 " +
+                "FROM TableName " +
+                "INNER JOIN TableName ON (TableName.Int3 = TableName.Int3) " +
+                "WHERE ((((TableName.Int1 > 0) AND (TableName.Int1 < 10)) " +
+                "AND (TableName.String2 LIKE '%CONCAT('DEF',':Reviewed')%' " +
+                "OR TableName.String2 LIKE '%CONCAT('DEF','Non-Actionable')%')) " +
+                "AND TableName.String1 IN ('ABC')) ORDER BY Int3 DESC";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestOrderBy3()
+        {
+            var emotionSet = new string[] { "ABC" };
+            var from = 0;
+            var toto = 10;
+            var piece = "DEF";
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                    .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
+                .Select((e, t) => e.Int3, (e, t) => t.String2)
+                .InnerJoinOn((e, t) => e.Int3 == t.Int3)
+                .OrderBy((a, b, c) => a.Int3)
+                .Build();
+
+            var expected = "SELECT TableName.Int3,TableName.String2 " +
+                "FROM TableName " +
+                "INNER JOIN TableName ON (TableName.Int3 = TableName.Int3) " +
+                "ORDER BY Int3 DESC";
+
+            Assert.AreEqual(expected, actual);
         }
 
         private List<SqlTestRecord> GetData()

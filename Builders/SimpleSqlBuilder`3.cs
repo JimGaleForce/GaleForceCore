@@ -41,6 +41,12 @@ namespace GaleForceCore.Builders
             protected set;
         } = null;
 
+        public new List<SqlBuilderOrderItem<TRecord, TRecord1, TRecord2>> OrderByList
+        {
+            get;
+            protected set;
+        } = new List<SqlBuilderOrderItem<TRecord, TRecord1, TRecord2>>();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord,
         /// TRecord1,&#xD;&#xA;TRecord2}"/> class.
@@ -58,7 +64,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Select(Expression<Func<TRecord1, TRecord2, object>> field)
         {
-            return Select(new Expression<Func<TRecord1, TRecord2, object>>[] { field });
+            return this.Select(new Expression<Func<TRecord1, TRecord2, object>>[] { field });
         }
 
         /// <summary>
@@ -69,8 +75,8 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Select(
             params Expression<Func<TRecord1, TRecord2, object>>[] fields)
         {
-            FieldExpressions = fields;
-            return Select(FieldExpressions);
+            this.FieldExpressions = fields;
+            return this.Select(this.FieldExpressions);
         }
 
         /// <summary>
@@ -82,9 +88,9 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Select(
             IEnumerable<Expression<Func<TRecord1, TRecord2, object>>> fields)
         {
-            Command = "SELECT";
-            var names = fields.Select(field => IncludeAs(field)).ToList();
-            Select(names);
+            this.Command = "SELECT";
+            var names = fields.Select(field => this.IncludeAs(field)).ToList();
+            this.Select(names);
             return this;
         }
 
@@ -95,12 +101,12 @@ namespace GaleForceCore.Builders
         /// <returns>System.String.</returns>
         private string IncludeAs(Expression<Func<TRecord1, TRecord2, object>> field)
         {
-            var expString = ParseExpression<TRecord>(Types, field.Body, parameters: field.Parameters);
-            if (AsFields != null && AsFields.ContainsKey(field))
+            var expString = ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters);
+            if (this.AsFields != null && this.AsFields.ContainsKey(field))
             {
                 var asStr = ParseExpression<TRecord>(
-                    Types,
-                    AsFields[field].Body,
+                    this.Types,
+                    this.AsFields[field].Body,
                     parameters: field.Parameters,
                     hideSourceTable: true);
                 return expString + " AS " + asStr;
@@ -117,7 +123,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> From(string tableName1, string tableName2)
         {
-            TableNames = new string[] { tableName1, tableName2 };
+            this.TableNames = new string[] { tableName1, tableName2 };
             return this;
         }
 
@@ -131,8 +137,8 @@ namespace GaleForceCore.Builders
             Expression<Func<TRecord, object>> asField,
             Expression<Func<TRecord1, TRecord2, object>> field)
         {
-            AsFields[field] = asField;
-            return Select(new Expression<Func<TRecord1, TRecord2, object>>[] { field });
+            this.AsFields[field] = asField;
+            return this.Select(new Expression<Func<TRecord1, TRecord2, object>>[] { field });
         }
 
         /// <summary>
@@ -143,8 +149,8 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> InnerJoinOn(
             Expression<Func<TRecord1, TRecord2, object>> joinKey)
         {
-            JoinPhrase = "INNER";
-            JoinKey = joinKey;
+            this.JoinPhrase = "INNER";
+            this.JoinKey = joinKey;
             return this;
         }
 
@@ -156,8 +162,8 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> LeftOuterJoinOn(
             Expression<Func<TRecord1, TRecord2, object>> joinKey)
         {
-            JoinPhrase = "LEFT OUTER";
-            JoinKey = joinKey;
+            this.JoinPhrase = "LEFT OUTER";
+            this.JoinKey = joinKey;
             return this;
         }
 
@@ -167,10 +173,14 @@ namespace GaleForceCore.Builders
         /// <param name="sb">The sb.</param>
         public override void InjectInnerClauses(StringBuilder sb)
         {
-            if (JoinKey != null)
+            if (this.JoinKey != null)
             {
-                var keys = ParseExpression<TRecord>(Types, JoinKey.Body, true, parameters: JoinKey.Parameters);
-                sb.Append($"{JoinPhrase} JOIN {TableNames[1]} ON {keys} ");
+                var keys = ParseExpression<TRecord>(
+                    this.Types,
+                    this.JoinKey.Body,
+                    true,
+                    parameters: this.JoinKey.Parameters);
+                sb.Append($"{this.JoinPhrase} JOIN {this.TableNames[1]} ON {keys} ");
             }
         }
 
@@ -181,8 +191,12 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord1, TRecord2, bool>> condition)
         {
-            WhereExpression2 = condition as Expression<Func<object, object, bool>>;
-            WhereString = ParseExpression<TRecord>(Types, condition.Body, true, parameters: condition.Parameters);
+            this.WhereExpression2 = condition as Expression<Func<object, object, bool>>;
+            this.WhereString = ParseExpression<TRecord>(
+                this.Types,
+                condition.Body,
+                true,
+                parameters: condition.Parameters);
             return this;
         }
 
@@ -193,7 +207,51 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Take(int count)
         {
-            Count = count;
+            this.Count = count;
+            return this;
+        }
+
+        /// <summary>
+        /// Adds an order-by expression ascending (can build, execute).
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> OrderBy(
+            Expression<Func<TRecord, TRecord1, TRecord2, object>> field)
+        {
+            var name = this.ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters);
+            return this.OrderBy(name, true, field);
+        }
+
+        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2> OrderBy(
+            string fieldName,
+            bool isAscending,
+            Expression<Func<TRecord, TRecord1, TRecord2, object>> expression = null)
+        {
+            this.OrderByList.Clear();
+            return this.ThenBy(fieldName, isAscending, expression);
+        }
+
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> ThenBy(
+            Expression<Func<TRecord, TRecord1, TRecord2, object>> field)
+        {
+            var name = this.ParseExpression<TRecord>(this.Types, field.Body);
+            return this.ThenBy(name, true, field);
+        }
+
+        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2> ThenBy(
+            string fieldName,
+            bool isAscending,
+            Expression<Func<TRecord, TRecord1, TRecord2, object>> expression = null)
+        {
+            this.OrderByList
+                .Add(
+                    new SqlBuilderOrderItem<TRecord, TRecord1, TRecord2>
+                    {
+                        Name = fieldName,
+                        IsAscending = isAscending,
+                        Expression = expression
+                    });
             return this;
         }
     }

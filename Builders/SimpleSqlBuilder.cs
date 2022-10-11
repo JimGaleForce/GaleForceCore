@@ -76,6 +76,8 @@ namespace GaleForceCore.Builders
             protected set;
         } = new List<SqlBuilderOrderItem<TRecord>>();
 
+        public List<string> OrderByStrings { get; protected set; } = new List<string>();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord}"/> class.
         /// </summary>
@@ -470,7 +472,8 @@ namespace GaleForceCore.Builders
                     {
                         var prefix = types == null || types.Length < 2 || hideSourceTable
                             ? string.Empty
-                            : (GetMatchingTableName(types, matchingType, parameters, operandMember: operandMember) + ".");
+                            : (this.GetMatchingTableName(types, matchingType, parameters, operandMember: operandMember) +
+                                ".");
                         var suffix = string.Empty;
                         if (isCondition &&
                             operandMember.Member is PropertyInfo &&
@@ -532,7 +535,7 @@ namespace GaleForceCore.Builders
                 var matchingType = this.GetMatchingType(types, declaringType);
                 var prefix = types == null || types.Length < 2 || matchingType == null || hideSourceTable
                     ? string.Empty
-                    : (GetMatchingTableName(types, matchingType, parameters, parmName, operandMember: pe) + ".");
+                    : (this.GetMatchingTableName(types, matchingType, parameters, parmName, operandMember: pe) + ".");
 
                 if (ce != null)
                 {
@@ -612,7 +615,14 @@ namespace GaleForceCore.Builders
                     var subValue = this.RemoveOuterQuotes(
                         this.ParseExpression<TRecord>(types, me.Arguments[0], parameters: parameters));
                     var obj = this.ParseExpression<TRecord>(types, me.Object ?? me.Arguments[1], parameters: parameters);
-                    return $"{subValue} IN {obj}";
+                    if (subValue.StartsWith("(") && !obj.StartsWith("("))
+                    {
+                        return $"{obj} IN {subValue}";
+                    }
+                    else
+                    {
+                        return $"{subValue} IN {obj}";
+                    }
                 }
 
                 try
@@ -691,7 +701,7 @@ namespace GaleForceCore.Builders
                 var nameIndex = parameters.Select(p => p.Name).ToList().IndexOf(name);
                 if (nameIndex > -1)
                 {
-                    tableName = TableNames[nameIndex];
+                    tableName = this.TableNames[nameIndex];
                     return tableName;
                 }
             }
@@ -699,8 +709,10 @@ namespace GaleForceCore.Builders
             var typeName = type.Name;
             var index = parmName != null
                 ? parameters.Select(p => p.Name).ToList().IndexOf(parmName)
-                : Array.IndexOf(Types.Select(t => t.Name).ToArray(), typeName);
-            tableName = TableNames != null && Types != null && Types.Length > 0 ? TableNames[index] : typeName;
+                : Array.IndexOf(this.Types.Select(t => t.Name).ToArray(), typeName);
+            tableName = this.TableNames != null && this.Types != null && this.Types.Length > 0
+                ? this.TableNames[index]
+                : typeName;
 
             return tableName;
         }

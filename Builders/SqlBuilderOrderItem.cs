@@ -32,4 +32,25 @@ namespace GaleForceCore.Builders
         /// <value>The expression.</value>
         public Expression<Func<TRecord, object>> Expression { get; set; }
     }
+
+    public class SqlBuilderOrderItem<TRecord, TRecord1, TRecord2>
+    {
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance is ascending.
+        /// </summary>
+        /// <value><c>true</c> if this instance is ascending; otherwise, <c>false</c>.</value>
+        public bool IsAscending { get; set; }
+
+        /// <summary>
+        /// Gets or sets the expression.
+        /// </summary>
+        /// <value>The expression.</value>
+        public Expression<Func<TRecord, TRecord1, TRecord2, object>> Expression { get; set; }
+    }
 }
