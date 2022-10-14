@@ -58,7 +58,7 @@ namespace GaleForceCore.Builders
         /// Gets the command (only SELECT active currently).
         /// </summary>
         /// <value>The command.</value>
-        public string Command { get; protected set; } = string.Empty;
+        public string Command { get; protected set; } = "SELECT";
 
         /// <summary>
         /// Gets the where condition string.
@@ -169,7 +169,6 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Select(IEnumerable<Expression<Func<TRecord, object>>> fields)
         {
-            this.Command = "SELECT";
             var names = fields.Select(
                 field => this.ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters))
                 .ToList();
@@ -194,6 +193,16 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> Select(IEnumerable<string> fieldNames)
         {
             this.Fields.AddRange(fieldNames);
+            return this.Select();
+        }
+
+        /// <summary>
+        /// Selects this instance.
+        /// </summary>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Select()
+        {
+            this.Command = "SELECT";
             return this;
         }
 

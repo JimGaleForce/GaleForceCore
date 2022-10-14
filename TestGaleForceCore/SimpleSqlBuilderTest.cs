@@ -654,6 +654,18 @@
             Assert.AreEqual(expected, actual);
         }
 
+        [TestMethod]
+        public void TestSelectAll()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>()
+            .From(SqlTestRecord.TableName)
+                .Where(a => a.Int1 == 1)
+                .Build();
+
+            var expected = "SELECT * FROM TableName WHERE (Int1 = 1)";
+            Assert.AreEqual(expected, actual);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
