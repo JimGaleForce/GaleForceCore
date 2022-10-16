@@ -49,6 +49,12 @@ namespace GaleForceCore.Builders
         public List<string> Fields { get; protected set; } = new List<string>();
 
         /// <summary>
+        /// Gets the update field names.
+        /// </summary>
+        /// <value>The fields.</value>
+        public List<string> Updates { get; protected set; } = new List<string>();
+
+        /// <summary>
         /// Gets the maximum count for returned items.
         /// </summary>
         /// <value>The count.</value>
@@ -65,6 +71,26 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <value>The where string.</value>
         public string WhereString { get; protected set; } = null;
+
+        /// <summary>
+        /// Gets or sets the join key.
+        /// </summary>
+        /// <value>The join key.</value>
+        public Expression<Func<TRecord, object>> MatchKey1 { get; protected set; }
+
+        public string MatchKeyStr1 { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the join key.
+        /// </summary>
+        /// <value>The join key.</value>
+        public Expression<Func<TRecord, TRecord, object>> MatchKey2 { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the join phrase.
+        /// </summary>
+        /// <value>The join phrase.</value>
+        public string MatchPhrase { get; set; }
 
         /// <summary>
         /// Gets the 'order by' list, including 'then by'.
@@ -88,6 +114,14 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord}"/> class.
         /// </summary>
+        public SimpleSqlBuilder(string tableName)
+        {
+            this.From(tableName);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord}"/> class.
+        /// </summary>
         /// <param name="types">The types.</param>
         public SimpleSqlBuilder(Type[] types)
         {
@@ -99,6 +133,12 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <value>The field expressions.</value>
         public IEnumerable<Expression<Func<TRecord, object>>> FieldExpressions { get; protected set; } = null;
+
+        /// <summary>
+        /// Gets the field expressions (lambda expressions for each field).
+        /// </summary>
+        /// <value>The field expressions.</value>
+        public IEnumerable<Expression<Func<TRecord, object>>> UpdateExpressions { get; protected set; } = null;
 
         /// <summary>
         /// Gets the order by expressions (lambda expressions for order-by's and then-by's).
@@ -203,6 +243,73 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> Select()
         {
             this.Command = "SELECT";
+            return this;
+        }
+
+        /// <summary>
+        /// Chooses SELECT as the command, specifying a field as an expressions (can build,
+        /// execute).
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Update(Expression<Func<TRecord, object>> field)
+        {
+            return this.Update(new Expression<Func<TRecord, object>>[] { field });
+        }
+
+        /// <summary>
+        /// Chooses SELECT as the command, specifying the fields as field names (can only build).
+        /// </summary>
+        /// <param name="fields">The fields.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Update(params Expression<Func<TRecord, object>>[] fields)
+        {
+            this.UpdateExpressions = fields;
+            return this.Update(this.UpdateExpressions);
+        }
+
+        /// <summary>
+        /// Chooses SELECT as the command, specifying the fields as expressions (can build,
+        /// execute).
+        /// </summary>
+        /// <param name="fields">The fields.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Update(IEnumerable<Expression<Func<TRecord, object>>> fields)
+        {
+            var names = fields.Select(
+                field => this.ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters))
+                .ToList();
+            return this.Update(names);
+        }
+
+        /// <summary>
+        /// Chooses SELECT as the command, specifying a field as a field names (can only build).
+        /// </summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Update(string fieldName)
+        {
+            return this.Update(new string[] { fieldName });
+        }
+
+        /// <summary>
+        /// Chooses SELECT as the command, specifying the fields as field names (can only build).
+        /// </summary>
+        /// <param name="fieldNames">The field names.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Update(IEnumerable<string> fieldNames)
+        {
+            this.Updates.AddRange(fieldNames);
+            return this.Update();
+        }
+
+        /// <summary>
+        /// Selects this instance.
+        /// </summary>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Update()
+        {
+            this.Command = "UPDATE";
             return this;
         }
 
@@ -342,6 +449,24 @@ namespace GaleForceCore.Builders
                 condition.Body,
                 true,
                 parameters: condition.Parameters);
+            return this;
+        }
+
+        public SimpleSqlBuilder<TRecord> Match(
+            Expression<Func<TRecord, TRecord, object>> matchKey)
+        {
+            this.MatchKey2 = matchKey;
+            return this;
+        }
+
+        public SimpleSqlBuilder<TRecord> Match(
+            Expression<Func<TRecord, object>> matchKey)
+        {
+            this.MatchKey1 = matchKey;
+            this.MatchKeyStr1 = this.ParseExpression<TRecord>(
+                this.Types,
+                matchKey.Body,
+                parameters: matchKey.Parameters);
             return this;
         }
 
@@ -735,11 +860,38 @@ namespace GaleForceCore.Builders
             return;
         }
 
+        public string Build()
+        {
+            switch (this.Command)
+            {
+                case "SELECT":
+                    return this.BuildSelect();
+            }
+
+            return null;
+        }
+
+        public string Build(TRecord record)
+        {
+            return this.Build(new List<TRecord>() { record });
+        }
+
+        public string Build(IEnumerable<TRecord> records)
+        {
+            switch (this.Command)
+            {
+                case "UPDATE":
+                    return this.BuildUpdate(records);
+            }
+
+            return null;
+        }
+
         /// <summary>
         /// Builds the sql-server friendly string.
         /// </summary>
         /// <returns>System.String.</returns>
-        public string Build()
+        private string BuildSelect()
         {
             var sb = new StringBuilder();
             sb.Append(this.Command);
@@ -750,8 +902,6 @@ namespace GaleForceCore.Builders
                 sb.Append($"TOP {this.Count} ");
             }
 
-            // assuming SELECT atm
-            // todo: do other commands when needed
             if (this.Fields.Count > 0)
             {
                 sb.Append(string.Join(",", this.Fields));
@@ -799,11 +949,113 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
+        /// Builds the sql-server friendly string.
+        /// </summary>
+        /// <returns>System.String.</returns>
+        private string BuildUpdate(IEnumerable<TRecord> records)
+        {
+            var sb = new StringBuilder();
+            var props = typeof(TRecord).GetProperties();
+
+            List<string> matchFields = new List<string>();
+            if (!string.IsNullOrEmpty(this.MatchKeyStr1))
+            {
+                matchFields.Add(this.MatchKeyStr1);
+            }
+
+            var count = 0;
+            foreach (var record in records)
+            {
+                if (count > 0)
+                {
+                    sb.AppendLine(";");
+                }
+
+                sb.Append(this.Command);
+
+                if (this.TableNames != null && this.TableNames.Length > 0)
+                {
+                    sb.Append($" {this.TableNames[0]} ");
+                }
+                else
+                {
+                    sb.Append($" {this.TableName} ");
+                }
+
+                sb.Append("SET ");
+
+                var fields = this.Updates;
+                if (fields.Count() == 0)
+                {
+                    // get all
+                    fields = this.GetFields();
+                }
+
+                var setValues = this.CreateFieldEqualsValues(fields, record, props);
+                sb.Append(string.Join(", ", setValues));
+
+                var matchValues = matchFields.Count() > 0
+                    ? (string.Join(" AND ", this.CreateFieldEqualsValues(matchFields, record, props)) +
+                        (!string.IsNullOrEmpty(this.WhereString) ? " AND " : ""))
+                    : "";
+
+                if (!string.IsNullOrEmpty(this.WhereString) || !string.IsNullOrEmpty(matchValues))
+                {
+                    sb.Append($" WHERE {matchValues}{this.WhereString}");
+                }
+
+                count++;
+            }
+
+            if (count > 1)
+            {
+                sb.AppendLine(";");
+                sb.AppendLine("GO;");
+            }
+
+            return sb.ToString().Trim();
+        }
+
+        private List<string> CreateFieldEqualsValues(IEnumerable<string> fields, TRecord record, PropertyInfo[] props)
+        {
+            var list = new List<string>();
+            foreach (var field in fields)
+            {
+                list.Add($"{field} = {this.GetAsSqlValue(record, field, props)}");
+            }
+
+            return list;
+        }
+
+        public IEnumerable<TRecord> Execute(IEnumerable<TRecord> records)
+        {
+            switch (this.Command)
+            {
+                case "SELECT":
+                    return this.ExecuteSelect(records);
+            }
+
+            return null;
+        }
+
+        public IEnumerable<TRecord> Execute(IEnumerable<TRecord> source, IEnumerable<TRecord> target)
+        {
+            switch (this.Command)
+            {
+                case "UPDATE":
+                    this.ExecuteUpdate(source, target);
+                    return target;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Executes the expressions within this builder upon these records, returning the results.
         /// </summary>
         /// <param name="records">The records.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
-        public IEnumerable<TRecord> Execute(IEnumerable<TRecord> records)
+        private IEnumerable<TRecord> ExecuteSelect(IEnumerable<TRecord> records)
         {
             var result = new List<TRecord>();
 
@@ -852,6 +1104,62 @@ namespace GaleForceCore.Builders
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Executes the expressions within this builder upon these records, returning the results.
+        /// </summary>
+        /// <param name="records">The records.</param>
+        /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        public int ExecuteUpdate(IEnumerable<TRecord> source, IEnumerable<TRecord> target)
+        {
+            var result = new List<TRecord>();
+
+            // todo: reform to execute on string fields, not only expressions
+
+            var current = target;
+            if (this.WhereExpression != null)
+            {
+                current = current.Where(this.WhereExpression.Compile());
+            }
+
+            var type = typeof(TRecord);
+            var props = type.GetProperties();
+
+            var keyProp = props.FirstOrDefault(p => p.Name == this.MatchKeyStr1);
+
+            // assumes 1key
+            int count = 0;
+            foreach (var record in source)
+            {
+                var sourceKey = keyProp.GetValue(record);
+                var targets = current.Where(t => object.Equals(keyProp.GetValue(t), sourceKey));
+
+                foreach (var target1 in targets)
+                {
+                    foreach (var field in this.Updates)
+                    {
+                        var prop = props.FirstOrDefault(p => p.Name == field);
+                        prop.SetValue(target1, prop.GetValue(record));
+                    }
+
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private List<string> GetFields()
+        {
+            return typeof(TRecord).GetProperties().Select(p => p.Name).ToList();
+        }
+
+        private string GetAsSqlValue(TRecord record, string fieldName, PropertyInfo[] props)
+        {
+            var prop = props.First(p => p.Name == fieldName);
+            var value = prop.GetValue(record);
+            return SqlHelpers.GetAsSQLValue(value.GetType(), value);
         }
     }
 }

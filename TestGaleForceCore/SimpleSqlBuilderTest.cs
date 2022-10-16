@@ -666,6 +666,142 @@
             Assert.AreEqual(expected, actual);
         }
 
+        [TestMethod]
+        public void TestUpdate()
+        {
+            var dt = DateTime.MinValue;
+            var newRecord = new SqlTestRecord
+            {
+                Int1 = 3,
+                Int2 = 202,
+                String1 = "String999",
+                Bool1 = false,
+                DateTime1 = dt
+            };
+
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Match(s => s.Int1)
+                .Update(s => s.Int2, s => s.Bool1)
+                .Build(newRecord);
+
+            var expected = "UPDATE TableName SET Int2 = 202, Bool1 = 0 WHERE Int1 = 3";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestUpdateWithWhere()
+        {
+            var dt = DateTime.MinValue;
+            var newRecord = new SqlTestRecord
+            {
+                Int1 = 3,
+                Int2 = 202,
+                String1 = "String999",
+                Bool1 = false,
+                DateTime1 = dt
+            };
+
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Match(s => s.Int1)
+                .Update(s => s.Int2, s => s.Bool1)
+                .Where(s => s.String1 == "String022")
+                .Build(newRecord);
+
+            var expected = "UPDATE TableName SET Int2 = 202, Bool1 = 0 WHERE Int1 = 3 AND (String1 = 'String022')";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestUpdateMultiple()
+        {
+            var dt = DateTime.MinValue;
+            var records = new List<SqlTestRecord>();
+            var newRecord = new SqlTestRecord
+            {
+                Int1 = 3,
+                Int2 = 202,
+                String1 = "String999",
+                Bool1 = false,
+                DateTime1 = dt
+            };
+
+            records.Add(newRecord);
+
+            newRecord = new SqlTestRecord
+            {
+                Int1 = 4,
+                Int2 = 201,
+                String1 = "String999",
+                Bool1 = true,
+                DateTime1 = dt
+            };
+
+            records.Add(newRecord);
+
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Match(s => s.Int1)
+                .Update(s => s.Int2, s => s.Bool1)
+                .Where(s => s.String1 == "String022")
+                .Build(records);
+
+            var expected = "UPDATE TableName SET Int2 = 202, Bool1 = 0 WHERE Int1 = 3 AND (String1 = 'String022');\r\n" +
+                "UPDATE TableName SET Int2 = 201, Bool1 = 1 WHERE Int1 = 4 AND (String1 = 'String022');\r\n" +
+                "GO;";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestUpdateExecute()
+        {
+            var dt = DateTime.MinValue;
+            var source = new List<SqlTestRecord>();
+            var newRecord = new SqlTestRecord
+            {
+                Int1 = 3,
+                Int2 = 202,
+                String1 = "String999",
+                Bool1 = false,
+                DateTime1 = dt
+            };
+
+            source.Add(newRecord);
+
+            newRecord = new SqlTestRecord
+            {
+                Int1 = 4,
+                Int2 = 201,
+                String1 = "String999",
+                Bool1 = true,
+                DateTime1 = dt
+            };
+
+            source.Add(newRecord);
+
+            var target = this.GetData();
+            var count = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Match(s => s.Int1)
+                .Update(s => s.Int2, s => s.Bool1)
+                .Where(s => s.String1 == "String022")
+                .ExecuteUpdate(source, target);
+
+            Assert.AreEqual(1, count);
+
+            Assert.AreEqual(1, target[0].Int1);
+            Assert.AreEqual(103, target[0].Int2);
+            Assert.AreEqual("String123", target[0].String1);
+
+            Assert.AreEqual(3, target[2].Int1);
+            Assert.AreEqual(202, target[2].Int2);
+            Assert.AreEqual("String022", target[2].String1);
+
+            Assert.AreEqual(4, target[3].Int1);
+            Assert.AreEqual(101, target[3].Int2);
+            Assert.AreEqual("String112", target[3].String1);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
