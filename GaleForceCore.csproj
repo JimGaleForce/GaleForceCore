@@ -9,9 +9,9 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.16</Version>
-    <AssemblyVersion>1.0.16.1</AssemblyVersion>
-    <FileVersion>1.0.16.1</FileVersion>
+    <Version>1.0.17</Version>
+    <AssemblyVersion>1.0.17.1</AssemblyVersion>
+    <FileVersion>1.0.17.1</FileVersion>
     <PackageReleaseNotes>added beginning support for Update command</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
