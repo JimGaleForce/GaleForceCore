@@ -227,6 +227,16 @@ namespace GaleForceCore.Builders
         public bool AreTableNamesRequired { get; set; }
 
         /// <summary>
+        /// Gets or sets the distinct on expression.
+        /// </summary>
+        public Expression<Func<TRecord, object>> DistinctOnExpression { get; set; }
+
+        /// <summary>
+        /// Gets or sets the distinct on string.
+        /// </summary>
+        public string DistinctOnStr { get; set; }
+
+        /// <summary>
         /// Adds the table name for the builder.
         /// </summary>
         /// <param name="tableName">Name of the table.</param>
@@ -329,12 +339,34 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
-        /// Selects this instance.
+        /// Begins the Select command.
         /// </summary>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Select()
         {
             this.Command = "SELECT";
+            return this;
+        }
+
+        /// <summary>
+        /// Begins the Delete command.
+        /// </summary>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Delete()
+        {
+            this.Command = "DELETE";
+            return this;
+        }
+
+        public SimpleSqlBuilder<TRecord> DistinctOn(Expression<Func<TRecord, object>> field)
+        {
+            this.DistinctOnExpression = field;
+            this.DistinctOnStr = this.ParseExpression<TRecord>(
+                this.Types,
+                field.Body,
+                false,
+                parameters: field.Parameters);
+
             return this;
         }
 
@@ -1203,6 +1235,8 @@ namespace GaleForceCore.Builders
                     return this.BuildUpdate(null);
                 case "INSERT":
                     return this.BuildInsert(null);
+                case "DELETE":
+                    return this.BuildDelete();
             }
 
             return null;
@@ -1236,6 +1270,48 @@ namespace GaleForceCore.Builders
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Builds the sql-server friendly string for DELETE.
+        /// </summary>
+        /// <returns>System.String.</returns>
+        private string BuildDelete()
+        {
+            var sb = new StringBuilder();
+
+            var tableName = this.TableNames != null && this.TableNames.Length > 0 ? this.TableNames[0] : this.TableName;
+
+            if (this.DistinctOnStr != null)
+            {
+                sb.Append(
+                    $"with ctr AS (SELECT {this.DistinctOnStr}, row_number() over (partition by {this.DistinctOnStr} order by {this.DistinctOnStr}) as Temp from {tableName}) ");
+            }
+
+            sb.Append(this.Command);
+            sb.Append(" ");
+
+            sb.Append($"FROM {tableName} ");
+
+            // this.InjectInnerClauses(sb);
+
+            if (!string.IsNullOrEmpty(this.WhereString))
+            {
+                sb.Append($"WHERE {this.WhereString} ");
+                if (this.DistinctOnStr != null)
+                {
+                    sb.Append("AND Temp > 1 ");
+                }
+            }
+            else
+            {
+                if (this.DistinctOnStr != null)
+                {
+                    sb.Append("WHERE Temp > 1 ");
+                }
+            }
+
+            return sb.ToString().Trim();
         }
 
         /// <summary>
@@ -1848,6 +1924,31 @@ namespace GaleForceCore.Builders
             }
 
             return count;
+        }
+
+        /// <summary>
+        /// Executes the delete command against records.
+        /// </summary>
+        /// <param name="target">The target set of records.</param>
+        /// <returns>Count of deleted records.</returns>
+        public int ExecuteDelete(List<TRecord> target)
+        {
+            var current = target;
+
+            if (this.DistinctOnStr != null)
+            {
+                var distExp = this.DistinctOnExpression.Compile();
+                current = current.GroupBy(r => distExp(r)).SelectMany(r => r.Skip(1)).ToList();
+            }
+
+            if (this.WhereExpression != null)
+            {
+                current = current.Where(this.WhereExpression.Compile()).ToList();
+            }
+
+            var count = target.Count();
+            target.RemoveAll(t => current.Contains(t));
+            return count - target.Count();
         }
 
         /// <summary>

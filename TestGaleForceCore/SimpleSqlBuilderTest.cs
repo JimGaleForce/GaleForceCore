@@ -1107,6 +1107,114 @@ GO;";
             }
         }
 
+        [TestMethod]
+        public void TestDelete()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Delete()
+                .Build();
+
+            var expected = "DELETE FROM TableName";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestDeleteWhere()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Delete()
+                .Where(s => s.Int1 == 5)
+                .Build();
+
+            var expected = "DELETE FROM TableName WHERE (Int1 = 5)";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestDeleteDistinct()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Delete()
+                .DistinctOn(s => s.Int2)
+                .Build();
+
+            var expected = 
+                @"with ctr AS (SELECT Int2, row_number() over (partition by Int2 order by Int2) as Temp from TableName) DELETE FROM TableName WHERE Temp > 1";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestDeleteDistinctWhere()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Delete()
+                .DistinctOn(s => s.Int2)
+                .Where(s => s.Int1 == 5)
+                .Build();
+
+            var expected = 
+                @"with ctr AS (SELECT Int2, row_number() over (partition by Int2 order by Int2) as Temp from TableName) DELETE FROM TableName WHERE (Int1 = 5) AND Temp > 1";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestExecuteDelete1()
+        {
+            var data = this.GetData();
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Delete()
+                .ExecuteDelete(data);
+
+            Assert.AreEqual(5, actual);
+            Assert.AreEqual(0, data.Count());
+        }
+
+        [TestMethod]
+        public void TestExecuteDeleteWhere()
+        {
+            var data = this.GetData();
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Delete()
+                .Where(s => s.Int1 == 5)
+                .ExecuteDelete(data);
+
+            Assert.AreEqual(1, actual);
+            Assert.AreEqual(4, data.Count());
+        }
+
+        [TestMethod]
+        public void TestExecuteDeleteDistinct()
+        {
+            var data = this.GetData();
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Delete()
+                .DistinctOn(s => s.Int2)
+                .ExecuteDelete(data);
+
+            Assert.AreEqual(2, actual);
+            Assert.AreEqual(3, data.Count());
+            Assert.AreEqual(101, data[2].Int2);
+        }
+
+        [TestMethod]
+        public void TestExecuteDeleteDistinctWhere()
+        {
+            var data = this.GetData();
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Delete()
+                .DistinctOn(s => s.Int2)
+                .Where(s => s.Int1 == 5)
+                .ExecuteDelete(data);
+
+            Assert.AreEqual(1, actual);
+            Assert.AreEqual(4, data.Count());
+            Assert.AreEqual(4, data[3].Int1);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
