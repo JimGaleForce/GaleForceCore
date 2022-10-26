@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.18</Version>
-    <AssemblyVersion>1.0.18.1</AssemblyVersion>
-    <FileVersion>1.0.18.1</FileVersion>
-    <PackageReleaseNotes>added Update, Insert, Merge, Delete, and Delete Distinct (duplicates) for build, execute, and tests.</PackageReleaseNotes>
+    <Version>1.0.19</Version>
+    <AssemblyVersion>1.0.19.1</AssemblyVersion>
+    <FileVersion>1.0.19.1</FileVersion>
+    <PackageReleaseNotes>added arrayhelper to split ienums</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
