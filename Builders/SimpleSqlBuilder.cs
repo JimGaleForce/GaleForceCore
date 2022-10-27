@@ -35,7 +35,11 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// As fields
         /// </summary>
-        public Dictionary<object, Expression<Func<TRecord, object>>> AsFields = new Dictionary<object, Expression<Func<TRecord, object>>>();
+        public Dictionary<object, Expression<Func<TRecord, object>>> AsFields
+        {
+            get;
+            protected set;
+        } = new Dictionary<object, Expression<Func<TRecord, object>>>();
 
         /// <summary>
         /// Gets the name of the table.
@@ -117,7 +121,12 @@ namespace GaleForceCore.Builders
         /// Gets or sets the join phrase.
         /// </summary>
         /// <value>The join phrase.</value>
-        public string MatchPhrase { get; set; }
+        public string MatchPhrase { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the metadata.
+        /// </summary>
+        public Dictionary<string, object> Metadata { get; protected set; } = new Dictionary<string, object>();
 
         /// <summary>
         /// Gets the 'order by' list, including 'then by'.
@@ -204,6 +213,12 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <value>The where expression.</value>
         public Expression<Func<object, object, bool>> WhereExpression2 { get; protected set; } = null;
+
+        /// <summary>
+        /// Gets the where condition string.
+        /// </summary>
+        /// <value>The where string.</value>
+        public string WhereString2 { get; protected set; } = null;
 
         /// <summary>
         /// Gets the where condition expression (lambda).
@@ -1314,6 +1329,24 @@ namespace GaleForceCore.Builders
             return sb.ToString().Trim();
         }
 
+        private string JoinedWhereString()
+        {
+            if (!string.IsNullOrEmpty(this.WhereString) && !string.IsNullOrEmpty(this.WhereString2))
+            {
+                return $"WHERE {this.WhereString} AND {this.WhereString2} ";
+            }
+            else if (!string.IsNullOrEmpty(this.WhereString))
+            {
+                return $"WHERE {this.WhereString} ";
+            }
+            else if (!string.IsNullOrEmpty(this.WhereString2))
+            {
+                return $"WHERE {this.WhereString2} ";
+            }
+
+            return "";
+        }
+
         /// <summary>
         /// Builds the sql-server friendly string.
         /// </summary>
@@ -1349,10 +1382,7 @@ namespace GaleForceCore.Builders
 
             this.InjectInnerClauses(sb);
 
-            if (!string.IsNullOrEmpty(this.WhereString))
-            {
-                sb.Append($"WHERE {this.WhereString} ");
-            }
+            sb.Append(this.JoinedWhereString());
 
             if (this.OrderByList.Count > 0)
             {
@@ -1698,9 +1728,9 @@ namespace GaleForceCore.Builders
             {
                 case "SELECT":
                     return this.ExecuteSelect(records);
+                default:
+                    throw new NotImplementedException($"{this.Command} is not supported as a query.");
             }
-
-            return null;
         }
 
         /// <summary>
@@ -1709,22 +1739,53 @@ namespace GaleForceCore.Builders
         /// <param name="source">The source.</param>
         /// <param name="target">The target.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
-        public IEnumerable<TRecord> Execute(IEnumerable<TRecord> source, List<TRecord> target)
+        public int ExecuteNonQuery(IEnumerable<TRecord> source, List<TRecord> target)
         {
             switch (this.Command)
             {
                 case "UPDATE":
-                    this.ExecuteUpdate(source, target);
-                    return target;
+                    return this.ExecuteUpdate(source, target);
                 case "INSERT":
-                    this.ExecuteInsert(source, target);
-                    return target;
+                    return this.ExecuteInsert(source, target);
                 case "MERGE":
-                    this.ExecuteMerge(source, target);
-                    return target;
+                    return this.ExecuteMerge(source, target);
+                default:
+                    throw new NotImplementedException($"{this.Command} is not supported as a 2 table non-query.");
             }
+        }
 
-            return null;
+        /// <summary>
+        /// Executes the specified source.
+        /// </summary>
+        /// <param name="source">The source.</param>
+        /// <param name="target">The target.</param>
+        /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        public int ExecuteNonQuery(List<TRecord> target)
+        {
+            switch (this.Command)
+            {
+                case "DELETE":
+                    return this.ExecuteDelete(target);
+                default:
+                    throw new NotImplementedException($"{this.Command} is not supported as a 1 table non-query.");
+            }
+        }
+
+        public int ExecuteRequiresTableCount()
+        {
+            switch (this.Command)
+            {
+                case "SELECT":
+                    return this.TableNames.Count();
+                case "DELETE":
+                    return 1;
+                case "UPDATE":
+                case "INSERT":
+                case "MERGE":
+                    return 2;
+                default:
+                    return 0;
+            }
         }
 
         /// <summary>
@@ -1912,13 +1973,13 @@ namespace GaleForceCore.Builders
                 if (whenMatchedSSB != null && targets.Any())
                 {
                     // matched
-                    whenMatchedSSB.Execute(new List<TRecord> { s }, targets);
+                    whenMatchedSSB.ExecuteNonQuery(new List<TRecord> { s }, targets);
                     count++;
                 }
                 else if (whenNotMatchedSSB != null && !targets.Any())
                 {
                     // not matched
-                    whenNotMatchedSSB.Execute(new List<TRecord> { s }, target);
+                    whenNotMatchedSSB.ExecuteNonQuery(new List<TRecord> { s }, target);
                     count++;
                 }
             }

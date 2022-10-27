@@ -33,7 +33,7 @@ namespace GaleForceCore.Builders
         public Expression<Func<TRecord, object>> Expression { get; set; }
     }
 
-    public class SqlBuilderOrderItem<TRecord, TRecord1, TRecord2>
+    public class SqlBuilderOrderItem<TRecord1, TRecord2>
     {
         /// <summary>
         /// Gets or sets the name.
@@ -51,6 +51,6 @@ namespace GaleForceCore.Builders
         /// Gets or sets the expression.
         /// </summary>
         /// <value>The expression.</value>
-        public Expression<Func<TRecord, TRecord1, TRecord2, object>> Expression { get; set; }
+        public Expression<Func<TRecord1, TRecord2, object>> Expression { get; set; }
     }
 }

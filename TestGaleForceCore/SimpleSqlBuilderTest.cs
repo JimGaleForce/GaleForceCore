@@ -643,13 +643,13 @@
                     .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
                 .Select((e, t) => e.Int3, (e, t) => t.String2)
                 .InnerJoinOn((e, t) => e.Int3 == t.Int3)
-                .OrderBy((a, b, c) => a.Int3)
+                .OrderBy((e, t) => e.Int3)
                 .Build();
 
             var expected = "SELECT TableName.Int3,TableName.String2 " +
                 "FROM TableName " +
                 "INNER JOIN TableName ON (TableName.Int3 = TableName.Int3) " +
-                "ORDER BY Int3 DESC";
+                "ORDER BY TableName.Int3 DESC";
 
             // Assert.AreEqual(expected, actual);
         }
@@ -1213,6 +1213,65 @@ GO;";
             Assert.AreEqual(1, actual);
             Assert.AreEqual(4, data.Count());
             Assert.AreEqual(4, data[3].Int1);
+        }
+
+        [TestMethod]
+        public void TestInnerJoinExecute1()
+        {
+            var data1 = this.GetData();
+            var data2 = this.GetData();
+
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                .From(SqlTestRecord.TableName, "TableName2")
+                .SelectAs(tResult => tResult.Int3, (t1, t2) => t1.Int1 + t2.Int2)
+                .InnerJoinOn(
+                    (TableName, TableName2) => TableName.String1 == TableName2.String1)
+                .ExecuteSelect(data1, data2)
+                .ToList();
+
+            Assert.AreEqual(5, actual.Count());
+            Assert.AreEqual(104, actual[0].Int3);
+            Assert.AreEqual(106, actual[4].Int3);
+        }
+
+        [TestMethod]
+        public void TestInnerJoinExecuteSelect()
+        {
+            var data1 = this.GetData();
+            var data2 = this.GetData();
+
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTestRecord>()
+                .From(SqlTestRecord.TableName, "TableName2")
+                .Select((t1, t2) => t1.Int1)
+                .InnerJoinOn((TableName, TableName2) => TableName.String1 == TableName2.String1)
+                .Where(tResult => tResult.Int1 > 3)
+                .ExecuteSelect(data1, data2)
+                .ToList();
+
+            Assert.AreEqual(2, actual.Count());
+            Assert.AreEqual(4, actual[0].Int1);
+            Assert.AreEqual(5, actual[1].Int1);
+        }
+
+        [TestMethod]
+        public void TestInnerJoinExecuteSelectAcross()
+        {
+            var data1 = this.GetData();
+            var data2 = new List<SqlTestRecord>() { new SqlTestRecord { Int1 = 100, Int2 = 200 } };
+
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTestRecord>()
+                .From(SqlTestRecord.TableName, "TableName2")
+                .Select((t1, t2) => t1.Int1, (t1, t2) => t2.Int2)
+                .InnerJoinOn((TableName, TableName2) => TableName2.Int2 == 200)
+                .Where(tResult => tResult.Int1 > 3)
+                .ExecuteSelect(data1, data2)
+                .ToList();
+
+            Assert.AreEqual(2, actual.Count());
+            Assert.AreEqual(4, actual[0].Int1);
+            Assert.AreEqual(200, actual[0].Int2);
+            Assert.AreEqual(5, actual[1].Int1);
+            Assert.AreEqual(200, actual[1].Int2);
         }
 
         private List<SqlTestRecord> GetData()

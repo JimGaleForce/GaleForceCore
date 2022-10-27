@@ -9,6 +9,7 @@ namespace GaleForceCore.Builders
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
+    using System.Reflection;
     using System.Text;
 
     /// <summary>
@@ -23,7 +24,7 @@ namespace GaleForceCore.Builders
         /// Gets or sets the join key.
         /// </summary>
         /// <value>The join key.</value>
-        public Expression<Func<TRecord1, TRecord2, object>> JoinKey { get; protected set; }
+        public Expression<Func<TRecord1, TRecord2, bool>> JoinKey { get; protected set; }
 
         /// <summary>
         /// Gets or sets the join phrase.
@@ -41,11 +42,11 @@ namespace GaleForceCore.Builders
             protected set;
         } = null;
 
-        public new List<SqlBuilderOrderItem<TRecord, TRecord1, TRecord2>> OrderByList
+        public new List<SqlBuilderOrderItem<TRecord1, TRecord2>> OrderByList
         {
             get;
             protected set;
-        } = new List<SqlBuilderOrderItem<TRecord, TRecord1, TRecord2>>();
+        } = new List<SqlBuilderOrderItem<TRecord1, TRecord2>>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord,
@@ -147,7 +148,7 @@ namespace GaleForceCore.Builders
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> InnerJoinOn(
-            Expression<Func<TRecord1, TRecord2, object>> joinKey)
+            Expression<Func<TRecord1, TRecord2, bool>> joinKey)
         {
             this.JoinPhrase = "INNER";
             this.JoinKey = joinKey;
@@ -160,7 +161,7 @@ namespace GaleForceCore.Builders
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> LeftOuterJoinOn(
-            Expression<Func<TRecord1, TRecord2, object>> joinKey)
+            Expression<Func<TRecord1, TRecord2, bool>> joinKey)
         {
             this.JoinPhrase = "LEFT OUTER";
             this.JoinKey = joinKey;
@@ -192,7 +193,23 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord1, TRecord2, bool>> condition)
         {
             this.WhereExpression2 = condition as Expression<Func<object, object, bool>>;
-            this.WhereString = ParseExpression<TRecord>(
+            this.WhereString2 = ParseExpression<TRecord>(
+                this.Types,
+                condition.Body,
+                true,
+                parameters: condition.Parameters);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the where condition as an expression (can build, execute).
+        /// </summary>
+        /// <param name="condition">The condition.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord, bool>> condition)
+        {
+            this.WhereExpression = condition;
+            this.WhereString = this.ParseExpression<TRecord>(
                 this.Types,
                 condition.Body,
                 true,
@@ -217,23 +234,155 @@ namespace GaleForceCore.Builders
         /// <param name="field">The field.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> OrderBy(
-            Expression<Func<TRecord, TRecord1, TRecord2, object>> field)
+            Expression<Func<TRecord1, TRecord2, object>> field)
         {
             var name = this.ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters);
             return this.OrderBy(name, true, field);
         }
 
+        /// <summary>
+        /// Executes the specified records.
+        /// </summary>
+        /// <param name="records">The records.</param>
+        /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        public IEnumerable<TRecord> Execute(IEnumerable<TRecord1> records1, IEnumerable<TRecord2> records2)
+        {
+            switch (this.Command)
+            {
+                case "SELECT":
+                    return this.ExecuteSelect(records1, records2);
+                default:
+                    throw new NotImplementedException($"{this.Command} is not supported as a query.");
+            }
+        }
+
+        ///// <summary>
+        ///// Executes the specified source.
+        ///// </summary>
+        ///// <param name="source">The source.</param>
+        ///// <param name="target">The target.</param>
+        ///// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        // public int ExecuteNonQuery(IEnumerable<TRecord> source, List<TRecord> target)
+        // {
+        // switch (this.Command)
+        // {
+        // case "UPDATE":
+        // return this.ExecuteUpdate(source, target);
+        // case "INSERT":
+        // return this.ExecuteInsert(source, target);
+        // case "MERGE":
+        // return this.ExecuteMerge(source, target);
+        // default:
+        // throw new NotImplementedException($"{this.Command} is not supported as a 2 table non-query.");
+        // }
+        // }
+
+        /// <summary>
+        /// Executes the expressions within this builder upon these records, returning the results.
+        /// </summary>
+        /// <param name="records">The records.</param>
+        /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        public IEnumerable<TRecord> ExecuteSelect(IEnumerable<TRecord1> records1, IEnumerable<TRecord2> records2)
+        {
+            var result = new List<TRecord>();
+
+            // todo: reform to execute on string fields, not only expressions
+
+            // todo: handle differently based on join type - currently only innerjoin
+
+            IEnumerable<Tuple<TRecord1, TRecord2>> records = new List<Tuple<TRecord1, TRecord2>>();
+            var joinKey = this.JoinKey.Compile();
+            switch (this.JoinPhrase)
+            {
+                case "INNER":
+                    records = records1.SelectMany(
+                        r1 => records2.Where(r2 => joinKey(r1, r2))
+                            .Select(r2 => new Tuple<TRecord1, TRecord2>(r1, r2)))
+                        .ToList();
+                    break;
+            }
+
+            var current = records;
+            if (this.WhereExpression2 != null)
+            {
+                var we2 = this.WhereExpression2.Compile();
+                current = current.Where(t => we2(t.Item1, t.Item2));
+            }
+
+            if (this.OrderByList.Count > 0)
+            {
+                for (var i = this.OrderByList.Count - 1; i > -1; i--)
+                {
+                    var orderBy = this.OrderByList[i];
+                    var orderByX = orderBy.Expression.Compile();
+                    if (orderBy.IsAscending)
+                    {
+                        current = current.OrderBy(t => orderByX(t.Item1, t.Item2));
+                    }
+                    else
+                    {
+                        current = current.OrderByDescending(t => orderByX(t.Item1, t.Item2));
+                    }
+                }
+            }
+
+            if (this.Count < int.MaxValue)
+            {
+                current = current.Take(this.Count);
+            }
+
+            var type = typeof(TRecord);
+            var props = type.GetProperties();
+
+            var asFieldComps = this.AsFields.ToDictionary(af => af.Key, af => af.Value.Compile());
+            var fieldExpressions = this.FieldExpressions.Select(fe => fe.Compile()).ToList();
+
+            var propFields = new List<PropertyInfo>();
+            for (var i = 0; i < this.Fields.Count(); i++)
+            {
+                var field = this.Fields[i];
+                var fieldName = field.Contains(" AS ") ? this.GrabAs(field) : field;
+                fieldName = fieldName.Contains(".") ? fieldName.Substring(fieldName.IndexOf(".") + 1) : fieldName;
+                propFields.Add(props.FirstOrDefault(p => p.Name == fieldName));
+            }
+
+            foreach (var record in current)
+            {
+                var newRecord = (TRecord)Activator.CreateInstance(type);
+                for (var i = 0; i < this.Fields.Count(); i++)
+                {
+                    var value = fieldExpressions[i](record.Item1, record.Item2);
+                    propFields[i].SetValue(newRecord, value);
+                }
+
+                result.Add(newRecord);
+            }
+
+            if (this.WhereExpression != null)
+            {
+                var we1 = this.WhereExpression.Compile();
+                result = result.Where(t => we1(t)).ToList();
+            }
+
+            return result;
+        }
+
+        private string GrabAs(string field)
+        {
+            return field.Contains(" AS ") ? field.Substring(field.IndexOf(" AS ") + 4) : field;
+        }
+
         private SimpleSqlBuilder<TRecord, TRecord1, TRecord2> OrderBy(
             string fieldName,
             bool isAscending,
-            Expression<Func<TRecord, TRecord1, TRecord2, object>> expression = null)
+            Expression<Func<TRecord1, TRecord2, object>> expression = null)
         {
             this.OrderByList.Clear();
             return this.ThenBy(fieldName, isAscending, expression);
         }
 
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> ThenBy(
-            Expression<Func<TRecord, TRecord1, TRecord2, object>> field)
+            Expression<Func<TRecord1, TRecord2, object>> field)
         {
             var name = this.ParseExpression<TRecord>(this.Types, field.Body);
             return this.ThenBy(name, true, field);
@@ -242,11 +391,11 @@ namespace GaleForceCore.Builders
         private SimpleSqlBuilder<TRecord, TRecord1, TRecord2> ThenBy(
             string fieldName,
             bool isAscending,
-            Expression<Func<TRecord, TRecord1, TRecord2, object>> expression = null)
+            Expression<Func<TRecord1, TRecord2, object>> expression = null)
         {
             this.OrderByList
                 .Add(
-                    new SqlBuilderOrderItem<TRecord, TRecord1, TRecord2>
+                    new SqlBuilderOrderItem<TRecord1, TRecord2>
                     {
                         Name = fieldName,
                         IsAscending = isAscending,
