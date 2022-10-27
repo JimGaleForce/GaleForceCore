@@ -102,10 +102,10 @@ namespace GaleForceCore.Builders
         /// <returns>System.String.</returns>
         private string IncludeAs(Expression<Func<TRecord1, TRecord2, object>> field)
         {
-            var expString = ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters);
+            var expString = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
             if (this.AsFields != null && this.AsFields.ContainsKey(field))
             {
-                var asStr = ParseExpression<TRecord>(
+                var asStr = this.ParseExpression(
                     this.Types,
                     this.AsFields[field].Body,
                     parameters: field.Parameters,
@@ -122,7 +122,7 @@ namespace GaleForceCore.Builders
         /// <param name="tableName1">The table name1.</param>
         /// <param name="tableName2">The table name2.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> From(string tableName1, string tableName2)
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> From(string tableName1, string tableName2)
         {
             this.TableNames = new string[] { tableName1, tableName2 };
             return this;
@@ -176,7 +176,7 @@ namespace GaleForceCore.Builders
         {
             if (this.JoinKey != null)
             {
-                var keys = ParseExpression<TRecord>(
+                var keys = this.ParseExpression(
                     this.Types,
                     this.JoinKey.Body,
                     true,
@@ -193,7 +193,7 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord1, TRecord2, bool>> condition)
         {
             this.WhereExpression2 = condition as Expression<Func<object, object, bool>>;
-            this.WhereString2 = ParseExpression<TRecord>(
+            this.WhereString2 = this.ParseExpression(
                 this.Types,
                 condition.Body,
                 true,
@@ -206,10 +206,10 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="condition">The condition.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord, bool>> condition)
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord, bool>> condition)
         {
             this.WhereExpression = condition;
-            this.WhereString = this.ParseExpression<TRecord>(
+            this.WhereString = this.ParseExpression(
                 this.Types,
                 condition.Body,
                 true,
@@ -236,7 +236,7 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> OrderBy(
             Expression<Func<TRecord1, TRecord2, object>> field)
         {
-            var name = this.ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters);
+            var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
             return this.OrderBy(name, true, field);
         }
 
@@ -384,7 +384,7 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> ThenBy(
             Expression<Func<TRecord1, TRecord2, object>> field)
         {
-            var name = this.ParseExpression<TRecord>(this.Types, field.Body);
+            var name = this.ParseExpression(this.Types, field.Body);
             return this.ThenBy(name, true, field);
         }
 

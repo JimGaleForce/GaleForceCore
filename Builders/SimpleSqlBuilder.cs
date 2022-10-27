@@ -129,6 +129,11 @@ namespace GaleForceCore.Builders
         public Dictionary<string, object> Metadata { get; protected set; } = new Dictionary<string, object>();
 
         /// <summary>
+        /// Gets or sets the source data.
+        /// </summary>
+        public IEnumerable<TRecord> SourceData { get; protected set; } = new List<TRecord>();
+
+        /// <summary>
         /// Gets the 'order by' list, including 'then by'.
         /// </summary>
         /// <value>The order by list.</value>
@@ -327,7 +332,7 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> Select(IEnumerable<Expression<Func<TRecord, object>>> fields)
         {
             var names = fields.Select(
-                field => this.ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters))
+                field => this.ParseExpression(this.Types, field.Body, parameters: field.Parameters))
                 .ToList();
             return this.Select(names);
         }
@@ -373,15 +378,74 @@ namespace GaleForceCore.Builders
             return this;
         }
 
-        public SimpleSqlBuilder<TRecord> DistinctOn(Expression<Func<TRecord, object>> field)
+        /// <summary>
+        /// Allows the delete command to delete duplicates based on this field.
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> ExceptDistinctBy(Expression<Func<TRecord, object>> field)
         {
             this.DistinctOnExpression = field;
-            this.DistinctOnStr = this.ParseExpression<TRecord>(
+            this.DistinctOnStr = this.ParseExpression(
                 this.Types,
                 field.Body,
                 false,
                 parameters: field.Parameters);
 
+            return this;
+        }
+
+        /// <summary>
+        /// Chooses SELECT as the command, specifying the fields as field names (can only build).
+        /// </summary>
+        /// <param name="fields">The fields.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Update(
+            IEnumerable<TRecord> records,
+            params Expression<Func<TRecord, object>>[] fields)
+        {
+            this.Update(records);
+            return this.Update(fields);
+        }
+
+        public SimpleSqlBuilder<TRecord> Update(
+            TRecord record,
+            params Expression<Func<TRecord, object>>[] fields)
+        {
+            this.Update(new List<TRecord> { record });
+            return this.Update(fields);
+        }
+
+        /// <summary>
+        /// Chooses SELECT as the command, specifying the fields as expressions (can build,
+        /// execute).
+        /// </summary>
+        /// <param name="fields">The fields.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Update(
+            IEnumerable<TRecord> records,
+            IEnumerable<Expression<Func<TRecord, object>>> fields)
+        {
+            this.Update(records);
+            return this.Update(fields);
+        }
+
+        public SimpleSqlBuilder<TRecord> Update(
+            TRecord record,
+            IEnumerable<Expression<Func<TRecord, object>>> fields)
+        {
+            this.Update(new List<TRecord> { record });
+            return this.Update(fields);
+        }
+
+        public SimpleSqlBuilder<TRecord> Update(TRecord record)
+        {
+            return this.Update(new List<TRecord> { record });
+        }
+
+        public SimpleSqlBuilder<TRecord> Update(IEnumerable<TRecord> records)
+        {
+            this.SourceData = records;
             return this;
         }
 
@@ -416,7 +480,7 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> Update(IEnumerable<Expression<Func<TRecord, object>>> fields)
         {
             var names = fields.Select(
-                field => this.ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters))
+                field => this.ParseExpression(this.Types, field.Body, parameters: field.Parameters))
                 .ToList();
             return this.Update(names);
         }
@@ -452,6 +516,42 @@ namespace GaleForceCore.Builders
             return this;
         }
 
+        public SimpleSqlBuilder<TRecord> Insert(
+            IEnumerable<TRecord> records,
+            IEnumerable<Expression<Func<TRecord, object>>> fields)
+        {
+            this.Insert(records);
+            return this.Insert(fields);
+        }
+
+        public SimpleSqlBuilder<TRecord> Insert(
+            TRecord record)
+        {
+            return this.Insert(new List<TRecord> { record });
+        }
+
+        public SimpleSqlBuilder<TRecord> Insert(
+            TRecord record,
+            IEnumerable<Expression<Func<TRecord, object>>> fields)
+        {
+            this.Insert(new List<TRecord> { record });
+            return this.Insert(fields);
+        }
+
+        public SimpleSqlBuilder<TRecord> Insert(
+            IEnumerable<TRecord> records,
+            params Expression<Func<TRecord, object>>[] fields)
+        {
+            this.Insert(records);
+            return this.Insert(fields);
+        }
+
+        public SimpleSqlBuilder<TRecord> Insert(IEnumerable<TRecord> records)
+        {
+            this.SourceData = records;
+            return this;
+        }
+
         /// <summary>
         /// Chooses SELECT as the command, specifying a field as an expressions (can build,
         /// execute).
@@ -483,7 +583,7 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> Insert(IEnumerable<Expression<Func<TRecord, object>>> fields)
         {
             var names = fields.Select(
-                field => this.ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters))
+                field => this.ParseExpression(this.Types, field.Body, parameters: field.Parameters))
                 .ToList();
             return this.Insert(names);
         }
@@ -550,7 +650,7 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> Values(IEnumerable<Expression<Func<TRecord, object>>> fields)
         {
             var names = fields.Select(
-                field => this.ParseExpression<TRecord>(
+                field => this.ParseExpression(
                     this.Types,
                     field.Body,
                     parameters: field.Parameters,
@@ -587,7 +687,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> OrderBy(Expression<Func<TRecord, object>> field)
         {
-            var name = this.ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters);
+            var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
             return this.OrderBy(name, true, field);
         }
 
@@ -624,7 +724,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> ThenBy(Expression<Func<TRecord, object>> field)
         {
-            var name = this.ParseExpression<TRecord>(this.Types, field.Body);
+            var name = this.ParseExpression(this.Types, field.Body);
             return this.ThenBy(name, true, field);
         }
 
@@ -668,7 +768,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> OrderByDescending(Expression<Func<TRecord, object>> field)
         {
-            var name = this.ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters);
+            var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
             return this.OrderBy(name, false, field);
         }
 
@@ -689,7 +789,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> ThenByDescending(Expression<Func<TRecord, object>> field)
         {
-            var name = this.ParseExpression<TRecord>(this.Types, field.Body, parameters: field.Parameters);
+            var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
             return this.ThenBy(name, false, field);
         }
 
@@ -711,7 +811,7 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> Where(Expression<Func<TRecord, bool>> condition)
         {
             this.WhereExpression = condition;
-            this.WhereString = this.ParseExpression<TRecord>(
+            this.WhereString = this.ParseExpression(
                 this.Types,
                 condition.Body,
                 true,
@@ -728,7 +828,7 @@ namespace GaleForceCore.Builders
             Expression<Func<TRecord, object>> matchKey)
         {
             this.MatchKey1 = matchKey;
-            this.MatchKeyStr1 = this.ParseExpression<TRecord>(
+            this.MatchKeyStr1 = this.ParseExpression(
                 this.Types,
                 matchKey.Body,
                 parameters: matchKey.Parameters);
@@ -744,7 +844,7 @@ namespace GaleForceCore.Builders
             Expression<Func<TRecord, TRecord, bool>> matchKey)
         {
             this.MatchKey2 = matchKey;
-            this.MatchKeyStr2 = ParseExpression<TRecord>(
+            this.MatchKeyStr2 = this.ParseExpression(
                 this.Types,
                 matchKey.Body,
                 true,
@@ -799,7 +899,7 @@ namespace GaleForceCore.Builders
         /// <returns>System.String.</returns>
         /// <exception cref="GaleForceCore.Builders.DynamicMethodException">Unable to prebuild SQL string with this method: " + meMethodName</exception>
         /// <exception cref="System.NotSupportedException">Unknown expression type for: " + exp.ToString()</exception>
-        protected string ParseExpression<TRecord>(
+        protected string ParseExpression(
             Type[] types,
             Expression exp,
             bool isCondition = false,
@@ -814,13 +914,13 @@ namespace GaleForceCore.Builders
                 var op = bExp.NodeType;
                 var isCompare = op == ExpressionType.Equal || op == ExpressionType.NotEqual;
 
-                var left = this.ParseExpression<TRecord>(
+                var left = this.ParseExpression(
                     types,
                     bExp.Left,
                     isCondition && !isCompare,
                     parameters,
                     tableNames: tableNames);
-                var right = this.ParseExpression<TRecord>(
+                var right = this.ParseExpression(
                     types,
                     bExp.Right,
                     isCondition && !isCompare,
@@ -973,7 +1073,7 @@ namespace GaleForceCore.Builders
                 }
                 else
                 {
-                    return this.ParseExpression<TRecord>(
+                    return this.ParseExpression(
                         types,
                         operand,
                         isCondition,
@@ -1068,12 +1168,12 @@ namespace GaleForceCore.Builders
                     {
                         case "Contains":
                             subValue = this.RemoveOuterQuotes(
-                                this.ParseExpression<TRecord>(
+                                this.ParseExpression(
                                     types,
                                     me.Arguments[0],
                                     parameters: parameters,
                                     tableNames: tableNames));
-                            obj = this.ParseExpression<TRecord>(
+                            obj = this.ParseExpression(
                                 types,
                                 me.Object,
                                 parameters: parameters,
@@ -1081,12 +1181,12 @@ namespace GaleForceCore.Builders
                             return $"{obj} LIKE '%{subValue}%'";
                         case "StartsWith":
                             subValue = this.RemoveOuterQuotes(
-                                this.ParseExpression<TRecord>(
+                                this.ParseExpression(
                                     types,
                                     me.Arguments[0],
                                     parameters: parameters,
                                     tableNames: tableNames));
-                            obj = this.ParseExpression<TRecord>(
+                            obj = this.ParseExpression(
                                 types,
                                 me.Object,
                                 parameters: parameters,
@@ -1094,12 +1194,12 @@ namespace GaleForceCore.Builders
                             return $"{obj} LIKE '{subValue}%'";
                         case "EndsWith":
                             subValue = this.RemoveOuterQuotes(
-                                this.ParseExpression<TRecord>(
+                                this.ParseExpression(
                                     types,
                                     me.Arguments[0],
                                     parameters: parameters,
                                     tableNames: tableNames));
-                            obj = this.ParseExpression<TRecord>(
+                            obj = this.ParseExpression(
                                 types,
                                 me.Object,
                                 parameters: parameters,
@@ -1111,12 +1211,12 @@ namespace GaleForceCore.Builders
                     meMethodName == "Contains")
                 {
                     var subValue = this.RemoveOuterQuotes(
-                        this.ParseExpression<TRecord>(
+                        this.ParseExpression(
                             types,
                             me.Arguments[0],
                             parameters: parameters,
                             tableNames: tableNames));
-                    var obj = this.ParseExpression<TRecord>(
+                    var obj = this.ParseExpression(
                         types,
                         me.Object ?? me.Arguments[1],
                         parameters: parameters,
@@ -1247,41 +1347,13 @@ namespace GaleForceCore.Builders
                 case "SELECT":
                     return this.BuildSelect();
                 case "UPDATE":
-                    return this.BuildUpdate(null);
+                    return this.BuildUpdate();
                 case "INSERT":
-                    return this.BuildInsert(null);
+                    return this.BuildInsert();
                 case "DELETE":
                     return this.BuildDelete();
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Builds the specified record.
-        /// </summary>
-        /// <param name="record">The record.</param>
-        /// <returns>System.String.</returns>
-        public string Build(TRecord record)
-        {
-            return this.Build(new List<TRecord>() { record });
-        }
-
-        /// <summary>
-        /// Builds the specified records.
-        /// </summary>
-        /// <param name="records">The records.</param>
-        /// <returns>System.String.</returns>
-        public string Build(IEnumerable<TRecord> records)
-        {
-            switch (this.Command)
-            {
-                case "UPDATE":
-                    return this.BuildUpdate(records);
-                case "INSERT":
-                    return this.BuildInsert(records);
                 case "MERGE":
-                    return this.BuildMerge(records);
+                    return this.BuildMerge();
             }
 
             return null;
@@ -1410,7 +1482,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="records">The records.</param>
         /// <returns>System.String.</returns>
-        private string BuildUpdate(IEnumerable<TRecord> records)
+        private string BuildUpdate()
         {
             var sb = new StringBuilder();
             var props = typeof(TRecord).GetProperties();
@@ -1428,7 +1500,8 @@ namespace GaleForceCore.Builders
                 fields = this.GetFields();
             }
 
-            if (records == null)
+            var records = this.SourceData;
+            if (records == null || records.Count() == 0)
             {
                 // this is an update segment for an outside instruction, do field to field or field to value
                 var setValues = this.CreateFieldEqualsExpressionValues(fields, this.Valueset, this.TableNames);
@@ -1489,7 +1562,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="records">The records.</param>
         /// <returns>System.String.</returns>
-        private string BuildInsert(IEnumerable<TRecord> records)
+        private string BuildInsert()
         {
             var sb = new StringBuilder();
             var props = typeof(TRecord).GetProperties();
@@ -1503,7 +1576,8 @@ namespace GaleForceCore.Builders
 
             var fieldString = string.Join(",", fields);
 
-            if (records == null)
+            var records = this.SourceData;
+            if (records == null || records.Count() == 0)
             {
                 var prefix0 = this.Command +
                     $" ({fieldString}) VALUES ";
@@ -1556,7 +1630,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="records">The records.</param>
         /// <returns>System.String.</returns>
-        private string BuildMerge(IEnumerable<TRecord> records)
+        private string BuildMerge()
         {
             var sb = new StringBuilder();
             var props = typeof(TRecord).GetProperties();
@@ -1581,7 +1655,7 @@ namespace GaleForceCore.Builders
             }
             else if (this.MatchKey2 != null)
             {
-                var matchKeyStr2 = this.ParseExpression<TRecord>(
+                var matchKeyStr2 = this.ParseExpression(
                     this.Types,
                     this.MatchKey2.Body,
                     true,
@@ -1739,52 +1813,20 @@ namespace GaleForceCore.Builders
         /// <param name="source">The source.</param>
         /// <param name="target">The target.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
-        public int ExecuteNonQuery(IEnumerable<TRecord> source, List<TRecord> target)
+        public int ExecuteNonQuery(List<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
             switch (this.Command)
             {
                 case "UPDATE":
-                    return this.ExecuteUpdate(source, target);
+                    return this.ExecuteUpdate(target, overrideSource);
                 case "INSERT":
-                    return this.ExecuteInsert(source, target);
+                    return this.ExecuteInsert(target, overrideSource);
                 case "MERGE":
-                    return this.ExecuteMerge(source, target);
-                default:
-                    throw new NotImplementedException($"{this.Command} is not supported as a 2 table non-query.");
-            }
-        }
-
-        /// <summary>
-        /// Executes the specified source.
-        /// </summary>
-        /// <param name="source">The source.</param>
-        /// <param name="target">The target.</param>
-        /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
-        public int ExecuteNonQuery(List<TRecord> target)
-        {
-            switch (this.Command)
-            {
+                    return this.ExecuteMerge(target, overrideSource);
                 case "DELETE":
                     return this.ExecuteDelete(target);
                 default:
-                    throw new NotImplementedException($"{this.Command} is not supported as a 1 table non-query.");
-            }
-        }
-
-        public int ExecuteRequiresTableCount()
-        {
-            switch (this.Command)
-            {
-                case "SELECT":
-                    return this.TableNames.Count();
-                case "DELETE":
-                    return 1;
-                case "UPDATE":
-                case "INSERT":
-                case "MERGE":
-                    return 2;
-                default:
-                    return 0;
+                    throw new NotImplementedException($"{this.Command} is not supported as a non-query.");
             }
         }
 
@@ -1850,7 +1892,7 @@ namespace GaleForceCore.Builders
         /// <param name="source">The source.</param>
         /// <param name="target">The target.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
-        public int ExecuteUpdate(IEnumerable<TRecord> source, IEnumerable<TRecord> target)
+        public int ExecuteUpdate(IEnumerable<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
             var result = new List<TRecord>();
 
@@ -1872,12 +1914,12 @@ namespace GaleForceCore.Builders
 
             // assumes 1key
             int count = 0;
-            foreach (var record in source)
+            foreach (var record in overrideSource ?? this.SourceData)
             {
                 var sourceKey = keyProp?.GetValue(record);
                 var targets = keyProp == null
                     ? current
-                    : current.Where(t => object.Equals(keyProp.GetValue(t), sourceKey));
+                    : current.Where(t => object.Equals(keyProp.GetValue(t), sourceKey)).ToList();
 
                 foreach (var target1 in targets)
                 {
@@ -1903,7 +1945,7 @@ namespace GaleForceCore.Builders
         /// <param name="source">The source.</param>
         /// <param name="target">The target.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
-        public int ExecuteInsert(IEnumerable<TRecord> source, List<TRecord> target)
+        public int ExecuteInsert(List<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
             // todo: reform to execute on string fields, not only expressions
 
@@ -1914,7 +1956,7 @@ namespace GaleForceCore.Builders
             var values = hasValues ? this.ValueExpressions.Select(v => v.Compile()).ToList() : null;
 
             var count = 0;
-            foreach (var record in source)
+            foreach (var record in overrideSource ?? this.SourceData)
             {
                 var newRecord = (TRecord)Activator.CreateInstance(type);
                 var fieldIndex = 0;
@@ -1940,13 +1982,13 @@ namespace GaleForceCore.Builders
         /// <param name="target">The target.</param>
         /// <returns>System.Int32.</returns>
         /// <exception cref="System.Exception">source record matches multiple targets (record #{index})</exception>
-        public int ExecuteMerge(IEnumerable<TRecord> source, List<TRecord> target)
+        public int ExecuteMerge(List<TRecord> target, IEnumerable<TRecord> source)
         {
             Func<TRecord, TRecord, bool> match;
             if (this.MatchKeyStr1 != null)
             {
                 var prop = typeof(TRecord).GetProperty(this.MatchKeyStr1);
-                match = (s, t) => prop.GetValue(s) == prop.GetValue(t);
+                match = (s, t) => prop.GetValue(s).Equals(prop.GetValue(t));
             }
             else
             {
@@ -1973,13 +2015,13 @@ namespace GaleForceCore.Builders
                 if (whenMatchedSSB != null && targets.Any())
                 {
                     // matched
-                    whenMatchedSSB.ExecuteNonQuery(new List<TRecord> { s }, targets);
+                    whenMatchedSSB.ExecuteNonQuery(targets, new List<TRecord> { s });
                     count++;
                 }
                 else if (whenNotMatchedSSB != null && !targets.Any())
                 {
                     // not matched
-                    whenNotMatchedSSB.ExecuteNonQuery(new List<TRecord> { s }, target);
+                    whenNotMatchedSSB.ExecuteNonQuery(target, new List<TRecord> { s });
                     count++;
                 }
             }

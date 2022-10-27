@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
+    using System.Threading.Tasks;
     using GaleForceCore.Builders;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -308,7 +309,6 @@
         [TestMethod]
         public void TestWhereNotBoolCompare()
         {
-            var user = "abc@def.com";
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
                 .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
@@ -358,7 +358,6 @@
         [TestMethod]
         public void TestWhereAdditiveWithField()
         {
-            var user = "abc@def";
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
                 .From(SqlTestRecord.TableName)
                 .Select(r => r.Int1)
@@ -632,27 +631,27 @@
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod]
-        public void TestOrderBy3() //fails at the moment - not built yet
-        {
-            var emotionSet = new string[] { "ABC" };
-            var from = 0;
-            var toto = 10;
-            var piece = "DEF";
-            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
-                    .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
-                .Select((e, t) => e.Int3, (e, t) => t.String2)
-                .InnerJoinOn((e, t) => e.Int3 == t.Int3)
-                .OrderBy((e, t) => e.Int3)
-                .Build();
+        // [TestMethod]
+        // public void TestOrderBy3() //fails at the moment - not built yet
+        // {
+        // var emotionSet = new string[] { "ABC" };
+        // var from = 0;
+        // var toto = 10;
+        // var piece = "DEF";
+        // var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+        // .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
+        // .Select((e, t) => e.Int3, (e, t) => t.String2)
+        // .InnerJoinOn((e, t) => e.Int3 == t.Int3)
+        // .OrderBy((e, t) => e.Int3)
+        // .Build();
 
-            var expected = "SELECT TableName.Int3,TableName.String2 " +
-                "FROM TableName " +
-                "INNER JOIN TableName ON (TableName.Int3 = TableName.Int3) " +
-                "ORDER BY TableName.Int3 DESC";
+        // var expected = "SELECT TableName.Int3,TableName.String2 " +
+        // "FROM TableName " +
+        // "INNER JOIN TableName ON (TableName.Int3 = TableName.Int3) " +
+        // "ORDER BY TableName.Int3 DESC";
 
-            // Assert.AreEqual(expected, actual);
-        }
+        // // Assert.AreEqual(expected, actual);
+        // }
 
         [TestMethod]
         public void TestSelectAll()
@@ -681,8 +680,8 @@
 
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .Match(s => s.Int1)
-                .Update(s => s.Int2, s => s.Bool1)
-                .Build(newRecord);
+                .Update(newRecord, s => s.Int2, s => s.Bool1)
+                .Build();
 
             var expected = "UPDATE TableName SET Int2 = 202, Bool1 = 0 WHERE Int1 = 3";
 
@@ -704,9 +703,9 @@
 
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .Match(s => s.Int1)
-                .Update(s => s.Int2, s => s.Bool1)
+                .Update(newRecord, s => s.Int2, s => s.Bool1)
                 .Where(s => s.String1 == "String022")
-                .Build(newRecord);
+                .Build();
 
             var expected = "UPDATE TableName SET Int2 = 202, Bool1 = 0 WHERE Int1 = 3 AND (String1 = 'String022')";
 
@@ -742,9 +741,9 @@
 
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .Match(s => s.Int1)
-                .Update(s => s.Int2, s => s.Bool1)
+                .Update(records, s => s.Int2, s => s.Bool1)
                 .Where(s => s.String1 == "String022")
-                .Build(records);
+                .Build();
 
             var expected = "UPDATE TableName SET Int2 = 202, Bool1 = 0 WHERE Int1 = 3 AND (String1 = 'String022');\r\n" +
                 "UPDATE TableName SET Int2 = 201, Bool1 = 1 WHERE Int1 = 4 AND (String1 = 'String022');\r\n" +
@@ -783,9 +782,9 @@
             var target = this.GetData();
             var count = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .Match(s => s.Int1)
-                .Update(s => s.Int2, s => s.Bool1)
+                .Update(source, s => s.Int2, s => s.Bool1)
                 .Where(s => s.String1 == "String022")
-                .ExecuteUpdate(source, target);
+                .ExecuteUpdate(target);
 
             Assert.AreEqual(1, count);
 
@@ -831,8 +830,8 @@
 
             var target = this.GetData();
             var count = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
-                .Insert(s => s.Int2, s => s.Bool1)
-                .ExecuteInsert(source, target);
+                .Insert(source, s => s.Int2, s => s.Bool1)
+                .ExecuteInsert(target);
 
             Assert.AreEqual(2, count);
             Assert.AreEqual(7, target.Count());
@@ -875,9 +874,9 @@
 
             var target = this.GetData();
             var count = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
-                .Insert(s => s.Int2, s => s.Bool1, s => s.Int1)
+                .Insert(source, s => s.Int2, s => s.Bool1, s => s.Int1)
                 .Values(s => 2 + s.Int2, s => !s.Bool1, s => 6)
-                .ExecuteInsert(source, target);
+                .ExecuteInsert(target);
 
             Assert.AreEqual(2, count);
             Assert.AreEqual(7, target.Count());
@@ -922,8 +921,8 @@
 
             var target = this.GetData();
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
-                .Insert(s => s.Int2, s => s.Bool1)
-                .Build(source);
+                .Insert(source, s => s.Int2, s => s.Bool1)
+                .Build();
 
             var expected = @"INSERT INTO TableName (Int2,Bool1) VALUES (202,0);
 INSERT INTO TableName (Int2,Bool1) VALUES (201,1);
@@ -961,9 +960,9 @@ GO;";
 
             var target = this.GetData();
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
-                .Insert(s => s.Int1, s => s.Int2, s => s.Bool1)
+                .Insert(source, s => s.Int1, s => s.Int2, s => s.Bool1)
                 .Values(s => s.Int1, s => 10, s => !s.Bool1)
-                .Build(source);
+                .Build();
 
             var expected = @"INSERT INTO TableName (Int1,Int2,Bool1) VALUES (3,10,1);
 INSERT INTO TableName (Int1,Int2,Bool1) VALUES (4,10,0);
@@ -975,30 +974,6 @@ GO;";
         [TestMethod]
         public void TestMerge()
         {
-            var dt = DateTime.MinValue;
-            var source = new List<SqlTestRecord>();
-            var newRecord = new SqlTestRecord
-            {
-                Int1 = 3,
-                Int2 = 202,
-                String1 = "String999",
-                Bool1 = false,
-                DateTime1 = dt
-            };
-
-            source.Add(newRecord);
-
-            newRecord = new SqlTestRecord
-            {
-                Int1 = 4,
-                Int2 = 201,
-                String1 = "String999",
-                Bool1 = true,
-                DateTime1 = dt
-            };
-
-            source.Add(newRecord);
-
             var target = this.GetData();
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .MergeInto(SqlTestRecord.TableName)
@@ -1006,7 +981,7 @@ GO;";
                 .Where(s => s.Int2 == 101)
                 .WhenMatched(s => s.Update(s => s.Int2))
                 .WhenNotMatched(s => s.Insert(s => s.Int1, s => s.Int2, s => s.String1))
-                .Build(source);
+                .Build();
 
             var expected = @"MERGE INTO TableName AS Target USING TableName AS Source ON ((Source.Int1 = Target.Int1) AND (Source.String1 = 'String123')) WHEN MATCHED THEN UPDATE SET Target.Int2 = Source.Int2 WHEN NOT MATCHED THEN INSERT (Int1,Int2,String1) VALUES (Source.Int1, Source.Int2, Source.String1)";
 
@@ -1016,30 +991,6 @@ GO;";
         [TestMethod]
         public void TestMergeValues()
         {
-            var dt = DateTime.MinValue;
-            var source = new List<SqlTestRecord>();
-            var newRecord = new SqlTestRecord
-            {
-                Int1 = 3,
-                Int2 = 202,
-                String1 = "String999",
-                Bool1 = false,
-                DateTime1 = dt
-            };
-
-            source.Add(newRecord);
-
-            newRecord = new SqlTestRecord
-            {
-                Int1 = 4,
-                Int2 = 201,
-                String1 = "String999",
-                Bool1 = true,
-                DateTime1 = dt
-            };
-
-            source.Add(newRecord);
-
             var target = this.GetData();
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .MergeInto(SqlTestRecord.TableName)
@@ -1047,7 +998,7 @@ GO;";
                 .WhenMatched(s => s.Update(s => s.Int2).Values(s => 5))
                 .WhenNotMatched(
                     s => s.Insert(s => s.Int1, s => s.Int2, s => s.String1).Values(s => s.Int1 + 1, s => 20, s => "X"))
-                .Build(source);
+                .Build();
 
             var expected = @"MERGE INTO TableName AS Target USING TableName AS Source ON ((Source.Int1 = Target.Int1) AND (Source.String1 = 'String123')) WHEN MATCHED THEN UPDATE SET Target.Int2 = 5 WHEN NOT MATCHED THEN INSERT (Int1,Int2,String1) VALUES ((Source.Int1 + 1), 20, 'X')";
 
@@ -1088,7 +1039,7 @@ GO;";
                 .WhenMatched(s => s.Update(s => s.Int2).Values(s => 5))
                 .WhenNotMatched(
                     s => s.Insert(s => s.Int1, s => s.Int2, s => s.String1).Values(s => s.Int1 + 1, s => 20, s => "X"))
-                .ExecuteMerge(source, target);
+                .ExecuteMerge(target, source);
 
             var originalData = this.GetData();
 
@@ -1105,6 +1056,39 @@ GO;";
                     Assert.AreEqual(originalData[i].Int1, target[i].Int1);
                 }
             }
+        }
+
+        [TestMethod]
+        public async Task TestMergeFromGeneric()
+        {
+            var target = this.GetData();
+            target.RemoveAt(2);
+
+            var source = this.GetData();
+            for (var i = 0; i < source.Count; i++)
+            {
+                source[i].Int2 = 1000 + i;
+            }
+
+            var sourceIEnum = source as IEnumerable<SqlTestRecord>;
+
+            // Assert.AreNotEqual(source[0].Int1, target[0].Int1);
+            // Assert.AreNotEqual(source[1].Int1, target[1].Int1);
+            // Assert.AreNotEqual(source[2].Int1, target[2].Int1);
+
+            var count = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName + "_temp")
+                .MergeInto(SqlTestRecord.TableName)
+                .Match(l => l.Int1)
+                .WhenMatched(s => s.Update(l => l.Int1, l => l.String1, l => l.Int2))
+                .WhenNotMatched(s => s.Insert(l => l.Int1, l => l.String1, l => l.Int2))
+                .ExecuteMerge(target, sourceIEnum);
+
+            var sortedTarget = target.OrderBy(t => t.Int1).ToList();
+
+            Assert.AreEqual(5, target.Count);
+            Assert.AreEqual(source[0].Int1, sortedTarget[0].Int1);
+            Assert.AreEqual(source[1].Int1, sortedTarget[1].Int1);
+            Assert.AreEqual(source[2].Int1, sortedTarget[2].Int1);
         }
 
         [TestMethod]
@@ -1137,7 +1121,7 @@ GO;";
         {
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .Delete()
-                .DistinctOn(s => s.Int2)
+                .ExceptDistinctBy(s => s.Int2)
                 .Build();
 
             var expected = 
@@ -1151,7 +1135,7 @@ GO;";
         {
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .Delete()
-                .DistinctOn(s => s.Int2)
+                .ExceptDistinctBy(s => s.Int2)
                 .Where(s => s.Int1 == 5)
                 .Build();
 
@@ -1192,7 +1176,7 @@ GO;";
             var data = this.GetData();
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .Delete()
-                .DistinctOn(s => s.Int2)
+                .ExceptDistinctBy(s => s.Int2)
                 .ExecuteDelete(data);
 
             Assert.AreEqual(2, actual);
@@ -1206,7 +1190,7 @@ GO;";
             var data = this.GetData();
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .Delete()
-                .DistinctOn(s => s.Int2)
+                .ExceptDistinctBy(s => s.Int2)
                 .Where(s => s.Int1 == 5)
                 .ExecuteDelete(data);
 

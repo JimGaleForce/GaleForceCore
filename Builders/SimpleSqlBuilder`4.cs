@@ -64,7 +64,7 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Select(
             Expression<Func<TRecord1, TRecord2, TRecord3, object>> field)
         {
-            return Select(new Expression<Func<TRecord1, TRecord2, TRecord3, object>>[] { field });
+            return this.Select(new Expression<Func<TRecord1, TRecord2, TRecord3, object>>[] { field });
         }
 
         /// <summary>
@@ -75,8 +75,8 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Select(
             params Expression<Func<TRecord1, TRecord2, TRecord3, object>>[] fields)
         {
-            FieldExpressions = fields;
-            return Select(FieldExpressions);
+            this.FieldExpressions = fields;
+            return this.Select(this.FieldExpressions);
         }
 
         /// <summary>
@@ -88,9 +88,9 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Select(
             IEnumerable<Expression<Func<TRecord1, TRecord2, TRecord3, object>>> fields)
         {
-            Command = "SELECT";
-            var names = fields.Select(field => IncludeAs(field)).ToList();
-            Select(names);
+            this.Command = "SELECT";
+            var names = fields.Select(field => this.IncludeAs(field)).ToList();
+            this.Select(names);
             return this;
         }
 
@@ -101,12 +101,12 @@ namespace GaleForceCore.Builders
         /// <returns>System.String.</returns>
         private string IncludeAs(Expression<Func<TRecord1, TRecord2, TRecord3, object>> field)
         {
-            var expString = ParseExpression<TRecord>(Types, field.Body, parameters: field.Parameters);
-            if (AsFields != null && AsFields.ContainsKey(field))
+            var expString = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
+            if (this.AsFields != null && this.AsFields.ContainsKey(field))
             {
-                var asStr = ParseExpression<TRecord>(
-                    Types,
-                    AsFields[field].Body,
+                var asStr = this.ParseExpression(
+                    this.Types,
+                    this.AsFields[field].Body,
                     parameters: field.Parameters,
                     hideSourceTable: true);
                 return expString + " AS " + asStr;
@@ -127,7 +127,7 @@ namespace GaleForceCore.Builders
             string tableName2,
             string tableName3)
         {
-            TableNames = new string[] { tableName1, tableName2, tableName3 };
+            this.TableNames = new string[] { tableName1, tableName2, tableName3 };
             return this;
         }
 
@@ -141,8 +141,8 @@ namespace GaleForceCore.Builders
             Expression<Func<TRecord, object>> asField,
             Expression<Func<TRecord1, TRecord2, TRecord3, object>> field)
         {
-            AsFields[field] = asField;
-            return Select(new Expression<Func<TRecord1, TRecord2, TRecord3, object>>[] { field });
+            this.AsFields[field] = asField;
+            return this.Select(new Expression<Func<TRecord1, TRecord2, TRecord3, object>>[] { field });
         }
 
         /// <summary>
@@ -153,8 +153,8 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> InnerJoinOn(
             Expression<Func<TRecord1, TRecord2, TRecord3, object>> joinKey)
         {
-            JoinPhrase.Add("INNER");
-            JoinKey.Add(joinKey);
+            this.JoinPhrase.Add("INNER");
+            this.JoinKey.Add(joinKey);
             return this;
         }
 
@@ -166,8 +166,8 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> LeftOuterJoinOn(
             Expression<Func<TRecord1, TRecord2, TRecord3, object>> joinKey)
         {
-            JoinPhrase.Add("LEFT OUTER");
-            JoinKey.Add(joinKey);
+            this.JoinPhrase.Add("LEFT OUTER");
+            this.JoinKey.Add(joinKey);
             return this;
         }
 
@@ -177,15 +177,15 @@ namespace GaleForceCore.Builders
         /// <param name="sb">The sb.</param>
         public override void InjectInnerClauses(StringBuilder sb)
         {
-            if (JoinKey.Any())
+            if (this.JoinKey.Any())
             {
-                for (var i = 0; i < JoinKey.Count; i++)
+                for (var i = 0; i < this.JoinKey.Count; i++)
                 {
-                    var joinKey = JoinKey[i];
-                    var joinPhrase = JoinPhrase[i];
+                    var joinKey = this.JoinKey[i];
+                    var joinPhrase = this.JoinPhrase[i];
 
-                    var keys = ParseExpression<TRecord>(Types, joinKey.Body, true, parameters: joinKey.Parameters);
-                    sb.Append($"{joinPhrase} JOIN {TableNames[i + 1]} ON {keys} ");
+                    var keys = this.ParseExpression(this.Types, joinKey.Body, true, parameters: joinKey.Parameters);
+                    sb.Append($"{joinPhrase} JOIN {this.TableNames[i + 1]} ON {keys} ");
                 }
             }
         }
@@ -198,8 +198,8 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Where(
             Expression<Func<TRecord1, TRecord2, TRecord3, bool>> condition)
         {
-            WhereExpression3 = condition as Expression<Func<object, object, object, bool>>;
-            WhereString = ParseExpression<TRecord>(Types, condition.Body, true, parameters: condition.Parameters);
+            this.WhereExpression3 = condition as Expression<Func<object, object, object, bool>>;
+            this.WhereString = this.ParseExpression(this.Types, condition.Body, true, parameters: condition.Parameters);
             return this;
         }
 
@@ -210,7 +210,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Take(int count)
         {
-            Count = count;
+            this.Count = count;
             return this;
         }
     }
