@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.22.2</Version>
-    <AssemblyVersion>1.0.22.2</AssemblyVersion>
-    <FileVersion>1.0.22.2</FileVersion>
-    <PackageReleaseNotes>fixed ExecuteMerge to allow ienum changes</PackageReleaseNotes>
+    <Version>1.0.22.3</Version>
+    <AssemblyVersion>1.0.22.3</AssemblyVersion>
+    <FileVersion>1.0.22.3</FileVersion>
+    <PackageReleaseNotes>fixed Select,Insert for default-all-fields, fixed Insert,Update cmd ref, fixed nullable value types ref to orig var</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 

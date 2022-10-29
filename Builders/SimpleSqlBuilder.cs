@@ -446,7 +446,7 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> Update(IEnumerable<TRecord> records)
         {
             this.SourceData = records;
-            return this;
+            return this.Update();
         }
 
         /// <summary>
@@ -549,7 +549,7 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> Insert(IEnumerable<TRecord> records)
         {
             this.SourceData = records;
-            return this;
+            return this.Insert();
         }
 
         /// <summary>
@@ -1137,8 +1137,17 @@ namespace GaleForceCore.Builders
                     }
                 }
 
-                //
-                return prefix + pe.Member.Name + suffix;
+                // special case to get name of .Value references
+                var memberName = pe.Member.Name;
+
+                var isNullable = pe.Member.DeclaringType.Name.StartsWith("Nullable");
+                var isValueType = (pe.Member as PropertyInfo)?.PropertyType.BaseType.Name == "ValueType";
+                if (isValueType && isNullable)
+                {
+                    memberName = (pe.Expression as MemberExpression)?.Member.Name;
+                }
+
+                return prefix + memberName + suffix;
             }
             else if (exp is ConstantExpression)
             {
@@ -1794,14 +1803,14 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Executes the specified records.
         /// </summary>
-        /// <param name="records">The records.</param>
+        /// <param name="source">The records.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
-        public IEnumerable<TRecord> Execute(IEnumerable<TRecord> records)
+        public IEnumerable<TRecord> Execute(IEnumerable<TRecord> source)
         {
             switch (this.Command)
             {
                 case "SELECT":
-                    return this.ExecuteSelect(records);
+                    return this.ExecuteSelect(source);
                 default:
                     throw new NotImplementedException($"{this.Command} is not supported as a query.");
             }
@@ -1870,11 +1879,12 @@ namespace GaleForceCore.Builders
 
             var type = typeof(TRecord);
             var props = type.GetProperties();
+            var fields = this.FieldList(this.Fields);
 
             foreach (var record in current)
             {
                 var newRecord = (TRecord)Activator.CreateInstance(type);
-                foreach (var field in this.Fields)
+                foreach (var field in fields)
                 {
                     var prop = props.FirstOrDefault(p => p.Name == field);
                     prop.SetValue(newRecord, prop.GetValue(record));
@@ -1940,6 +1950,18 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
+        /// Get a field list, or default to all fields
+        /// </summary>
+        /// <param name="list">The list.</param>
+        /// <returns>List&lt;System.String&gt;.</returns>
+        public List<string> FieldList(List<string> list)
+        {
+            return list != null && list.Count() > 0
+                ? list
+                : typeof(TRecord).GetProperties().Select(p => p.Name).ToList();
+        }
+
+        /// <summary>
         /// Executes the expressions within this builder upon these records, returning the results.
         /// </summary>
         /// <param name="source">The source.</param>
@@ -1955,12 +1977,14 @@ namespace GaleForceCore.Builders
             var hasValues = this.Valueset.Count() > 0;
             var values = hasValues ? this.ValueExpressions.Select(v => v.Compile()).ToList() : null;
 
+            var fields = this.FieldList(this.Inserts);
+
             var count = 0;
             foreach (var record in overrideSource ?? this.SourceData)
             {
                 var newRecord = (TRecord)Activator.CreateInstance(type);
                 var fieldIndex = 0;
-                foreach (var field in this.Inserts)
+                foreach (var field in fields)
                 {
                     var prop = props.FirstOrDefault(p => p.Name == field);
                     var value = hasValues ? values[fieldIndex].Invoke(record) : prop.GetValue(record);

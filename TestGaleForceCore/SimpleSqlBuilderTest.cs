@@ -4,7 +4,6 @@
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
-    using System.Threading.Tasks;
     using GaleForceCore.Builders;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -1059,7 +1058,7 @@ GO;";
         }
 
         [TestMethod]
-        public async Task TestMergeFromGeneric()
+        public void TestMergeFromGeneric()
         {
             var target = this.GetData();
             target.RemoveAt(2);
@@ -1258,6 +1257,34 @@ GO;";
             Assert.AreEqual(200, actual[1].Int2);
         }
 
+        [TestMethod]
+        public void TestBoolNull()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Where(s => s.Bool2.Value)
+                .Build();
+
+            var expected = $"SELECT * FROM {SqlTestRecord.TableName} WHERE Bool2 = 1";
+            Assert.AreEqual(expected, actual.ToString());
+        }
+
+        [TestMethod]
+        public void TestSelectAllExecute()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select()
+                .Execute(this.GetData())
+                .ToList();
+
+            var expected = this.GetData();
+            Assert.AreEqual(expected.Count(), actual.Count());
+            Assert.AreEqual(expected[0].Int1, actual[0].Int1);
+            Assert.AreEqual(expected[0].Int2, actual[0].Int2);
+            Assert.AreEqual(expected[0].String1, actual[0].String1);
+            Assert.AreEqual(expected[0].Bool1, actual[0].Bool1);
+            Assert.AreEqual(expected[0].DateTime1, actual[0].DateTime1);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
@@ -1295,5 +1322,7 @@ GO;";
         public string String1 { get; set; }
 
         public string String2 { get; set; }
+
+        public bool? Bool2 { get; set; }
     }
 }
