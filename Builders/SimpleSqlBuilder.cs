@@ -174,6 +174,39 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord}"/> class.
+        /// </summary>
+        /// <param name="tableNames">The table names.</param>
+        public SimpleSqlBuilder(string[] tableNames)
+        {
+            this.From(tableNames);
+        }
+
+        /// <summary>
+        /// Sets the option.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> SetOption(string name, object value)
+        {
+            this.Metadata[name] = value;
+            return this;
+        }
+
+        /// <summary>
+        /// Gets the option.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="name">The name.</param>
+        /// <param name="defaultValue">The default value.</param>
+        /// <returns>T.</returns>
+        public T GetOption<T>(string name, T defaultValue)
+        {
+            return this.Metadata.ContainsKey(name) ? (T)this.Metadata[name] : defaultValue;
+        }
+
+        /// <summary>
         /// Gets the field expressions (lambda expressions for each field).
         /// </summary>
         /// <value>The field expressions.</value>
@@ -276,6 +309,17 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> From(string tableNameSource, string tableNameTarget)
         {
             this.TableNames = new string[] { tableNameSource, tableNameTarget };
+            return this;
+        }
+
+        /// <summary>
+        /// Adds the table name for the builder.
+        /// </summary>
+        /// <param name="tableNames">The table names.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> From(string[] tableNames)
+        {
+            this.TableNames = tableNames;
             return this;
         }
 
@@ -398,6 +442,7 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Chooses SELECT as the command, specifying the fields as field names (can only build).
         /// </summary>
+        /// <param name="records">The records.</param>
         /// <param name="fields">The fields.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Update(
@@ -408,6 +453,12 @@ namespace GaleForceCore.Builders
             return this.Update(fields);
         }
 
+        /// <summary>
+        /// Updates the specified record.
+        /// </summary>
+        /// <param name="record">The record.</param>
+        /// <param name="fields">The fields.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Update(
             TRecord record,
             params Expression<Func<TRecord, object>>[] fields)
@@ -420,6 +471,7 @@ namespace GaleForceCore.Builders
         /// Chooses SELECT as the command, specifying the fields as expressions (can build,
         /// execute).
         /// </summary>
+        /// <param name="records">The records.</param>
         /// <param name="fields">The fields.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Update(
@@ -430,6 +482,12 @@ namespace GaleForceCore.Builders
             return this.Update(fields);
         }
 
+        /// <summary>
+        /// Updates the specified record.
+        /// </summary>
+        /// <param name="record">The record.</param>
+        /// <param name="fields">The fields.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Update(
             TRecord record,
             IEnumerable<Expression<Func<TRecord, object>>> fields)
@@ -438,11 +496,21 @@ namespace GaleForceCore.Builders
             return this.Update(fields);
         }
 
+        /// <summary>
+        /// Updates the specified record.
+        /// </summary>
+        /// <param name="record">The record.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Update(TRecord record)
         {
             return this.Update(new List<TRecord> { record });
         }
 
+        /// <summary>
+        /// Updates the specified records.
+        /// </summary>
+        /// <param name="records">The records.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Update(IEnumerable<TRecord> records)
         {
             this.SourceData = records;
@@ -516,6 +584,12 @@ namespace GaleForceCore.Builders
             return this;
         }
 
+        /// <summary>
+        /// Inserts the specified records.
+        /// </summary>
+        /// <param name="records">The records.</param>
+        /// <param name="fields">The fields.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Insert(
             IEnumerable<TRecord> records,
             IEnumerable<Expression<Func<TRecord, object>>> fields)
@@ -524,12 +598,23 @@ namespace GaleForceCore.Builders
             return this.Insert(fields);
         }
 
+        /// <summary>
+        /// Inserts the specified record.
+        /// </summary>
+        /// <param name="record">The record.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Insert(
             TRecord record)
         {
             return this.Insert(new List<TRecord> { record });
         }
 
+        /// <summary>
+        /// Inserts the specified record.
+        /// </summary>
+        /// <param name="record">The record.</param>
+        /// <param name="fields">The fields.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Insert(
             TRecord record,
             IEnumerable<Expression<Func<TRecord, object>>> fields)
@@ -538,6 +623,12 @@ namespace GaleForceCore.Builders
             return this.Insert(fields);
         }
 
+        /// <summary>
+        /// Inserts the specified records.
+        /// </summary>
+        /// <param name="records">The records.</param>
+        /// <param name="fields">The fields.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Insert(
             IEnumerable<TRecord> records,
             params Expression<Func<TRecord, object>>[] fields)
@@ -546,6 +637,11 @@ namespace GaleForceCore.Builders
             return this.Insert(fields);
         }
 
+        /// <summary>
+        /// Inserts the specified records.
+        /// </summary>
+        /// <param name="records">The records.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Insert(IEnumerable<TRecord> records)
         {
             this.SourceData = records;
@@ -889,13 +985,13 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Parses different supported expressions to sql-friendly text.
         /// </summary>
-        /// <typeparam name="TRecord">The type of the t record.</typeparam>
         /// <param name="types">The types.</param>
         /// <param name="exp">The exp.</param>
         /// <param name="isCondition">if set to <c>true</c> [is condition].</param>
         /// <param name="parameters">The parameters.</param>
         /// <param name="hideSourceTable">if set to <c>true</c> [hide source table].</param>
         /// <param name="tableNames">The table names.</param>
+        /// <param name="evalInfo">The eval information.</param>
         /// <returns>System.String.</returns>
         /// <exception cref="GaleForceCore.Builders.DynamicMethodException">Unable to prebuild SQL string with this method: " + meMethodName</exception>
         /// <exception cref="System.NotSupportedException">Unknown expression type for: " + exp.ToString()</exception>
@@ -905,12 +1001,14 @@ namespace GaleForceCore.Builders
             bool isCondition = false,
             IReadOnlyCollection<ParameterExpression> parameters = null,
             bool hideSourceTable = false,
-            string[] tableNames = null)
+            string[] tableNames = null,
+            EvalInfo evalInfo = null)
         {
             var sb = new StringBuilder();
             if (exp is BinaryExpression)
             {
                 var bExp = exp as BinaryExpression;
+                evalInfo?.Register(bExp, typeof(BinaryExpression));
                 var op = bExp.NodeType;
                 var isCompare = op == ExpressionType.Equal || op == ExpressionType.NotEqual;
 
@@ -919,13 +1017,15 @@ namespace GaleForceCore.Builders
                     bExp.Left,
                     isCondition && !isCompare,
                     parameters,
-                    tableNames: tableNames);
+                    tableNames: tableNames,
+                    evalInfo: evalInfo);
                 var right = this.ParseExpression(
                     types,
                     bExp.Right,
                     isCondition && !isCompare,
                     parameters,
-                    tableNames: tableNames);
+                    tableNames: tableNames,
+                    evalInfo: evalInfo);
 
                 var prefixLeft = "(";
                 if (bExp.Left.NodeType == ExpressionType.Not)
@@ -1008,14 +1108,21 @@ namespace GaleForceCore.Builders
                 sb.Append(addRight);
                 sb.Append(suffixRight);
 
-                return sb.ToString();
+                var value = sb.ToString();
+                var parent = evalInfo?.Register(bExp, typeof(BinaryExpression), value);
+                evalInfo?.RegisterChildren(parent, bExp.Left, bExp.Right);
+
+                return value;
             }
             else if (exp is UnaryExpression)
             {
+                var uParent = evalInfo?.Register(exp, typeof(UnaryExpression));
                 var operand = (exp as UnaryExpression).Operand;
                 if (operand is MemberExpression)
                 {
                     var operandMember = (exp as UnaryExpression).Operand as MemberExpression;
+                    var uParent2 = evalInfo?.Register(operandMember, typeof(MemberExpression));
+                    evalInfo?.RegisterChildren(uParent, operand);
                     var declaringType = operandMember.Member.DeclaringType.Name;
 
                     var matchingType = this.GetMatchingType(types, declaringType);
@@ -1042,13 +1149,19 @@ namespace GaleForceCore.Builders
                             suffix = exp.NodeType == ExpressionType.Not ? " = 0" : " = 1";
                         }
 
-                        return prefix + operandMember.Member.Name + suffix;
+                        var value = prefix + operandMember.Member.Name + suffix;
+                        evalInfo?.Register(operand, typeof(MemberExpression), value);
+                        return value;
                     }
                     else
                     {
                         // eval
                         var pe = operandMember;
                         var ce = operandMember.Expression as ConstantExpression;
+
+                        evalInfo?.Register(ce, typeof(ConstantExpression));
+                        evalInfo?.RegisterChildren(uParent2, ce);
+
                         if (ce != null)
                         {
                             if (pe.Member is FieldInfo)
@@ -1056,6 +1169,7 @@ namespace GaleForceCore.Builders
                                 object container = ce.Value;
                                 object value = ((FieldInfo)pe.Member).GetValue(container);
                                 var sqlValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
+                                evalInfo?.Register(operand, typeof(MemberExpression), sqlValue);
                                 return sqlValue;
                             }
                             else if (pe.Member is PropertyInfo)
@@ -1063,22 +1177,27 @@ namespace GaleForceCore.Builders
                                 object container = ce.Value;
                                 object value = ((PropertyInfo)pe.Member).GetValue(container);
                                 var sqlValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
+                                evalInfo?.Register(operand, typeof(MemberExpression), sqlValue);
                                 return sqlValue;
                             }
                         }
 
-                        //
+                        evalInfo?.Register(pe, typeof(MemberExpression), pe.Member.Name);
                         return pe.Member.Name;
                     }
                 }
                 else
                 {
-                    return this.ParseExpression(
+                    var value = this.ParseExpression(
                         types,
                         operand,
                         isCondition,
                         parameters,
-                        tableNames: tableNames);
+                        tableNames: tableNames,
+                        evalInfo: evalInfo);
+
+                    evalInfo?.Register(operand, typeof(MemberExpression), value);
+                    return value;
                 }
             }
             else if (exp is MemberExpression)
@@ -1086,10 +1205,13 @@ namespace GaleForceCore.Builders
                 if (exp.ToString().StartsWith("value("))
                 {
                     var value = Expression.Lambda(exp).Compile().DynamicInvoke();
-                    return SqlHelpers.GetAsSQLValue(value.GetType(), value);
+                    var xValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
+                    evalInfo?.Register(exp, typeof(ConstantExpression), xValue);
+                    return xValue;
                 }
 
                 var pe = exp as MemberExpression;
+                evalInfo?.Register(pe, typeof(MemberExpression));
 
                 var ce = pe.Expression as ConstantExpression;
                 var suffix = string.Empty;
@@ -1118,6 +1240,7 @@ namespace GaleForceCore.Builders
                         object container = ce.Value;
                         object value = ((FieldInfo)pe.Member).GetValue(container);
                         var sqlValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
+                        evalInfo?.Register(pe, typeof(MemberExpression), sqlValue);
                         return sqlValue;
                     }
                     else if (pe.Member is PropertyInfo)
@@ -1125,6 +1248,7 @@ namespace GaleForceCore.Builders
                         object container = ce.Value;
                         object value = ((PropertyInfo)pe.Member).GetValue(container);
                         var sqlValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
+                        evalInfo?.Register(pe, typeof(MemberExpression), sqlValue);
                         return sqlValue;
                     }
                 }
@@ -1147,7 +1271,9 @@ namespace GaleForceCore.Builders
                     memberName = (pe.Expression as MemberExpression)?.Member.Name;
                 }
 
-                return prefix + memberName + suffix;
+                var value2 = prefix + memberName + suffix;
+                evalInfo?.Register(pe, typeof(MemberExpression), value2);
+                return value2;
             }
             else if (exp is ConstantExpression)
             {
@@ -1158,7 +1284,56 @@ namespace GaleForceCore.Builders
                     valueStr = "'" + valueStr + "'";
                 }
 
+                evalInfo?.Register(exp, typeof(ConstantExpression), valueStr);
+
                 return valueStr;
+            }
+            else if (exp is ConditionalExpression)
+            {
+                var ce = exp as ConditionalExpression;
+                var test = ce.Test;
+                var ei = evalInfo ?? new EvalInfo();
+                var testExp = this.ParseExpression(
+                    types,
+                    test,
+                    tableNames: tableNames,
+                    evalInfo: ei);
+
+                if (this.GetOption<bool>("EarlyConditionalEval", true))
+                {
+                    if (ei.HasOnlyConstants(test))
+                    {
+                        var testResult = (bool) Expression.Lambda(test).Compile().DynamicInvoke();
+                        testExp = this.ParseExpression(
+                            types,
+                            testResult ? ce.IfTrue : ce.IfFalse,
+                            tableNames: tableNames,
+                            evalInfo: ei,
+                            isCondition: true);
+
+                        evalInfo?.Register(ce, typeof(ConstantExpression), testExp);
+                        return testExp;
+                    }
+                }
+
+                var expTrue = this.ParseExpression(
+                    types,
+                    ce.IfTrue,
+                    tableNames: tableNames,
+                    evalInfo: ei);
+
+                var expFalse = this.ParseExpression(
+                    types,
+                    ce.IfFalse,
+                    tableNames: tableNames,
+                    evalInfo: ei);
+
+                var value = $"1 = IIF({testExp},IIF({expTrue},1,0),IIF({expFalse},1,0))";
+
+                var parent = evalInfo?.Register(ce, typeof(ConstantExpression), value);
+                evalInfo?.RegisterChildren(parent, ce.IfTrue, ce.IfFalse);
+
+                return value;
             }
             else if (exp is MethodCallExpression)
             {
@@ -1173,47 +1348,44 @@ namespace GaleForceCore.Builders
                 {
                     string subValue;
                     string obj;
-                    switch (meMethodName)
+                    EvalNode parent = null;
+
+                    string[] stringMethods = new string[] { "Contains", "StartsWith", "EndWidth" };
+                    var isStringContainer = stringMethods.Contains(meMethodName);
+
+                    if (isStringContainer)
                     {
-                        case "Contains":
-                            subValue = this.RemoveOuterQuotes(
-                                this.ParseExpression(
-                                    types,
-                                    me.Arguments[0],
-                                    parameters: parameters,
-                                    tableNames: tableNames));
-                            obj = this.ParseExpression(
+                        subValue = this.RemoveOuterQuotes(
+                            this.ParseExpression(
                                 types,
-                                me.Object,
+                                me.Arguments[0],
                                 parameters: parameters,
-                                tableNames: tableNames);
-                            return $"{obj} LIKE '%{subValue}%'";
-                        case "StartsWith":
-                            subValue = this.RemoveOuterQuotes(
-                                this.ParseExpression(
-                                    types,
-                                    me.Arguments[0],
-                                    parameters: parameters,
-                                    tableNames: tableNames));
-                            obj = this.ParseExpression(
-                                types,
-                                me.Object,
-                                parameters: parameters,
-                                tableNames: tableNames);
-                            return $"{obj} LIKE '{subValue}%'";
-                        case "EndsWith":
-                            subValue = this.RemoveOuterQuotes(
-                                this.ParseExpression(
-                                    types,
-                                    me.Arguments[0],
-                                    parameters: parameters,
-                                    tableNames: tableNames));
-                            obj = this.ParseExpression(
-                                types,
-                                me.Object,
-                                parameters: parameters,
-                                tableNames: tableNames);
-                            return $"{obj} LIKE '%{subValue}'";
+                                tableNames: tableNames,
+                                evalInfo: evalInfo));
+
+                        obj = this.ParseExpression(
+                            types,
+                            me.Object,
+                            parameters: parameters,
+                            tableNames: tableNames);
+
+                        string value = null;
+                        switch (meMethodName)
+                        {
+                            case "Contains":
+                                value = $"{obj} LIKE '%{subValue}%'";
+                                break;
+                            case "StartsWith":
+                                value = $"{obj} LIKE '{subValue}%'";
+                                break;
+                            case "EndsWith":
+                                value = $"{obj} LIKE '%{subValue}'";
+                                break;
+                        }
+
+                        parent = evalInfo?.Register(me, typeof(MethodCallExpression), value);
+                        evalInfo?.RegisterChildren(parent, me.Arguments[0], me.Object);
+                        return value;
                     }
                 }
                 else if ((meContainingType.StartsWith("List") || meContainingType.StartsWith("Enumerable")) &&
@@ -1224,26 +1396,36 @@ namespace GaleForceCore.Builders
                             types,
                             me.Arguments[0],
                             parameters: parameters,
-                            tableNames: tableNames));
+                            tableNames: tableNames,
+                            evalInfo: evalInfo));
                     var obj = this.ParseExpression(
                         types,
                         me.Object ?? me.Arguments[1],
                         parameters: parameters,
-                        tableNames: tableNames);
+                        tableNames: tableNames,
+                        evalInfo: evalInfo);
+
+                    string value;
                     if (subValue.StartsWith("(") && !obj.StartsWith("("))
                     {
-                        return $"{obj} IN {subValue}";
+                        value = $"{obj} IN {subValue}";
                     }
                     else
                     {
-                        return $"{subValue} IN {obj}";
+                        value = $"{subValue} IN {obj}";
                     }
+
+                    var parent = evalInfo?.Register(me, typeof(MethodCallExpression), value);
+                    evalInfo?.RegisterChildren(parent, me.Arguments[0], me.Object ?? me.Arguments[1]);
+
+                    return value;
                 }
 
                 try
                 {
                     object value = Expression.Lambda(me).Compile().DynamicInvoke();
                     var sqlValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
+                    evalInfo?.Register(me, typeof(MethodCallExpression), sqlValue);
                     return sqlValue;
                 }
                 catch (InvalidOperationException ioe)
@@ -1410,6 +1592,10 @@ namespace GaleForceCore.Builders
             return sb.ToString().Trim();
         }
 
+        /// <summary>
+        /// Joineds the where string.
+        /// </summary>
+        /// <returns>System.String.</returns>
         private string JoinedWhereString()
         {
             if (!string.IsNullOrEmpty(this.WhereString) && !string.IsNullOrEmpty(this.WhereString2))
@@ -1489,7 +1675,6 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Builds the sql-server friendly string.
         /// </summary>
-        /// <param name="records">The records.</param>
         /// <returns>System.String.</returns>
         private string BuildUpdate()
         {
@@ -1569,7 +1754,6 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Builds the sql-server friendly string.
         /// </summary>
-        /// <param name="records">The records.</param>
         /// <returns>System.String.</returns>
         private string BuildInsert()
         {
@@ -1637,7 +1821,6 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Builds the sql-server friendly string.
         /// </summary>
-        /// <param name="records">The records.</param>
         /// <returns>System.String.</returns>
         private string BuildMerge()
         {
@@ -1805,6 +1988,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="source">The records.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public IEnumerable<TRecord> Execute(IEnumerable<TRecord> source)
         {
             switch (this.Command)
@@ -1819,9 +2003,10 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Executes the specified source.
         /// </summary>
-        /// <param name="source">The source.</param>
         /// <param name="target">The target.</param>
+        /// <param name="overrideSource">The override source.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public int ExecuteNonQuery(List<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
             switch (this.Command)
@@ -1899,8 +2084,8 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Executes the expressions within this builder upon these records, returning the results.
         /// </summary>
-        /// <param name="source">The source.</param>
         /// <param name="target">The target.</param>
+        /// <param name="overrideSource">The override source.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         public int ExecuteUpdate(IEnumerable<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
@@ -1964,8 +2149,8 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Executes the expressions within this builder upon these records, returning the results.
         /// </summary>
-        /// <param name="source">The source.</param>
         /// <param name="target">The target.</param>
+        /// <param name="overrideSource">The override source.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         public int ExecuteInsert(List<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
@@ -2002,8 +2187,8 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Executes the merge.
         /// </summary>
-        /// <param name="source">The source.</param>
         /// <param name="target">The target.</param>
+        /// <param name="source">The source.</param>
         /// <returns>System.Int32.</returns>
         /// <exception cref="System.Exception">source record matches multiple targets (record #{index})</exception>
         public int ExecuteMerge(List<TRecord> target, IEnumerable<TRecord> source)
@@ -2074,6 +2259,9 @@ namespace GaleForceCore.Builders
             }
 
             var count = target.Count();
+
+            // issue: if the test records were duplicated, then they are also dups here and will be removed,
+            // even the source records.
             target.RemoveAll(t => current.Contains(t));
             return count - target.Count();
         }

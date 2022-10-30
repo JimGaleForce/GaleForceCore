@@ -1184,6 +1184,19 @@ GO;";
         }
 
         [TestMethod]
+        public void TestExecuteDeleteDistinctStr()
+        {
+            var data = this.GetData();
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Delete()
+                .ExceptDistinctBy(s => s.String1)
+                .ExecuteDelete(data);
+
+            Assert.AreEqual(0, actual);
+            Assert.AreEqual(5, data.Count());
+        }
+
+        [TestMethod]
         public void TestExecuteDeleteDistinctWhere()
         {
             var data = this.GetData();
@@ -1283,6 +1296,92 @@ GO;";
             Assert.AreEqual(expected[0].String1, actual[0].String1);
             Assert.AreEqual(expected[0].Bool1, actual[0].Bool1);
             Assert.AreEqual(expected[0].DateTime1, actual[0].DateTime1);
+        }
+
+        [TestMethod]
+        public void TestIIFLate()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName) 
+                .Select(s => s.Int1)
+                .Where(s => s.Int1 > 2 ? s.Int2 == 102 : s.Int2 == 103)
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE 1 = IIF((Int1 > 2),IIF((Int2 = 102),1,0),IIF((Int2 = 103),1,0))";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestIIFEarly()
+        {
+            var value = 5;
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName) 
+                .Select(s => s.Int1)
+                .SetOption("EarlyConditionalEval", true)
+                .Where(s => value == 5 ? s.Int2 == 102 : s.Int2 == 103)
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE (Int2 = 102)";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestIIFEarlyNested()
+        {
+            var value = 5;
+            var value2 = 10;
+            var value3 = 15;
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName) 
+                .Select(s => s.Int1)
+                .SetOption("EarlyConditionalEval", true)
+                .Where(
+                    s => value == 5 ? value2 == 10 ? s.Int2 == 102 : s.Int2 == 103 : value3 == 15 ? s.Bool1 : !s.Bool1)
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE (Int2 = 102)";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestIIFEarlyNestedNots()
+        {
+            var value = 1;
+            var value2 = 10;
+            var value3 = 11;
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName) 
+                .Select(s => s.Int1)
+                .SetOption("EarlyConditionalEval", true)
+                .Where(
+                    s => value == 5 ? value2 == 10 ? s.Int2 == 102 : s.Int2 == 103 : value3 == 15 ? s.Bool1 : !s.Bool1)
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE Bool1 = 0";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestNot()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName) 
+                .Select(s => s.Int1)
+                .Where(s => !s.Bool1)
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE Bool1 = 0";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestIIFLatePurposeful()
+        {
+            var value = 5;
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName) 
+                .Select(s => s.Int1)
+                .SetOption("EarlyConditionalEval", false)
+                .Where(s => value == 5 ? s.Int2 == 102 : s.Int2 == 103)
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE 1 = IIF((5 = 5),IIF((Int2 = 102),1,0),IIF((Int2 = 103),1,0))";
+            Assert.AreEqual(expected, actual);
         }
 
         private List<SqlTestRecord> GetData()
