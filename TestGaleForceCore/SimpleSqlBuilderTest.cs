@@ -1384,6 +1384,25 @@ GO;";
             Assert.AreEqual(expected, actual);
         }
 
+        [TestMethod]
+        public void SelectAs2WhereConditional()
+        {
+            var condition = true;
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTestRecord>()
+                .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
+                .SelectAs(m => m.Int1, (t, a) => t.Int1 + a.Int1)
+                .SelectAs(m => m.Int2, (t, a) => a.Int2)
+                .InnerJoinOn((t, a) => t.Int1 == a.Int1)
+                .Where(
+                    (t, a) => (condition
+                            ? t.Int2 > 101
+                            : t.Int1 > 2) &&
+                        a.String1.Contains("ring"))
+                .ExecuteSelect(this.GetData(), this.GetData());
+
+            Assert.AreEqual(3, actual.Count());
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;

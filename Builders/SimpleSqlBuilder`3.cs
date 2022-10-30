@@ -27,6 +27,12 @@ namespace GaleForceCore.Builders
         public Expression<Func<TRecord1, TRecord2, bool>> JoinKey { get; protected set; }
 
         /// <summary>
+        /// Gets the where condition expression (lambda).
+        /// </summary>
+        /// <value>The where expression.</value>
+        public Expression<Func<TRecord1, TRecord2, bool>> WhereExpression2 { get; protected set; } = null;
+
+        /// <summary>
         /// Gets or sets the join phrase.
         /// </summary>
         /// <value>The join phrase.</value>
@@ -36,11 +42,11 @@ namespace GaleForceCore.Builders
         /// Gets the field expressions (lambda expressions for each field).
         /// </summary>
         /// <value>The field expressions.</value>
-        public new IEnumerable<Expression<Func<TRecord1, TRecord2, object>>> FieldExpressions
+        public new List<Expression<Func<TRecord1, TRecord2, object>>> FieldExpressions
         {
             get;
             protected set;
-        } = null;
+        } = new List<Expression<Func<TRecord1, TRecord2, object>>>();
 
         public new List<SqlBuilderOrderItem<TRecord1, TRecord2>> OrderByList
         {
@@ -76,8 +82,8 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Select(
             params Expression<Func<TRecord1, TRecord2, object>>[] fields)
         {
-            this.FieldExpressions = fields;
-            return this.Select(this.FieldExpressions);
+            this.FieldExpressions.AddRange(fields);
+            return this.Select(fields.ToList());
         }
 
         /// <summary>
@@ -192,7 +198,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord1, TRecord2, bool>> condition)
         {
-            this.WhereExpression2 = condition as Expression<Func<object, object, bool>>;
+            this.WhereExpression2 = condition;
             this.WhereString2 = this.ParseExpression(
                 this.Types,
                 condition.Body,

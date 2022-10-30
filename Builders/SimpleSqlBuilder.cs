@@ -210,7 +210,11 @@ namespace GaleForceCore.Builders
         /// Gets the field expressions (lambda expressions for each field).
         /// </summary>
         /// <value>The field expressions.</value>
-        public IEnumerable<Expression<Func<TRecord, object>>> FieldExpressions { get; protected set; } = null;
+        public List<Expression<Func<TRecord, object>>> FieldExpressions
+        {
+            get;
+            protected set;
+        } = new List<Expression<Func<TRecord, object>>>();
 
         /// <summary>
         /// Gets the field expressions (lambda expressions for each field).
@@ -245,12 +249,6 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <value>The where expression.</value>
         public Expression<Func<TRecord, bool>> WhereExpression { get; protected set; } = null;
-
-        /// <summary>
-        /// Gets the where condition expression (lambda).
-        /// </summary>
-        /// <value>The where expression.</value>
-        public Expression<Func<object, object, bool>> WhereExpression2 { get; protected set; } = null;
 
         /// <summary>
         /// Gets the where condition string.
@@ -363,7 +361,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Select(params Expression<Func<TRecord, object>>[] fields)
         {
-            this.FieldExpressions = fields;
+            this.FieldExpressions.AddRange(fields);
             return this.Select(this.FieldExpressions);
         }
 
@@ -1309,6 +1307,8 @@ namespace GaleForceCore.Builders
                             testResult ? ce.IfTrue : ce.IfFalse,
                             tableNames: tableNames,
                             evalInfo: ei,
+                            hideSourceTable: hideSourceTable,
+                            parameters: parameters,
                             isCondition: true);
 
                         evalInfo?.Register(ce, typeof(ConstantExpression), testExp);
@@ -1320,13 +1320,19 @@ namespace GaleForceCore.Builders
                     types,
                     ce.IfTrue,
                     tableNames: tableNames,
-                    evalInfo: ei);
+                    hideSourceTable: hideSourceTable,
+                    parameters: parameters,
+                    evalInfo: ei,
+                    isCondition: true);
 
                 var expFalse = this.ParseExpression(
                     types,
                     ce.IfFalse,
                     tableNames: tableNames,
-                    evalInfo: ei);
+                    hideSourceTable: hideSourceTable,
+                    parameters: parameters,
+                    evalInfo: ei,
+                    isCondition: true);
 
                 var value = $"1 = IIF({testExp},IIF({expTrue},1,0),IIF({expFalse},1,0))";
 
