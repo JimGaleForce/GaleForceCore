@@ -1403,6 +1403,33 @@ GO;";
             Assert.AreEqual(3, actual.Count());
         }
 
+        [TestMethod]
+        public void ThreeTest()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest3Record>()
+                .From(SqlTestRecord.TableName, SqlTest2Record.TableName, SqlTest3Record.TableName)
+                .Select((a, b, c) => a.Int1, (a, b, c) => b.Int2, (a, b, c) => c.String1)
+                .InnerJoinOn((a, b, c) => a.Int1 == b.Int1)
+                .LeftOuterJoinOn((a, b, c) => a.Int1 == c.Int1)
+                .Where((a, b, c) => b.Bool1)
+                .Build();
+
+            var i = 0;
+        }
+
+        [TestMethod]
+
+        public void TestIntNullInt()
+        {
+            var value = 1;
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest3Record>()
+                .From(SqlTestRecord.TableName, SqlTest2Record.TableName, SqlTest3Record.TableName)
+                .LeftOuterJoinOn((a, b, c) => a.Int1 == b.Int1 && a.Int4 == value)
+                .Build();
+
+            var i = 0;
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
@@ -1412,6 +1439,31 @@ GO;";
             data.Add(new SqlTestRecord { Int1 = 3, Int2 = 102, String1 = "String022", Bool1 = true, DateTime1 = dt });
             data.Add(new SqlTestRecord { Int1 = 4, Int2 = 101, String1 = "String112", Bool1 = false, DateTime1 = dt });
             data.Add(new SqlTestRecord { Int1 = 5, Int2 = 101, String1 = "String132", Bool1 = true, DateTime1 = dt });
+            return data;
+        }
+
+        private List<SqlTest2Record> GetData2()
+        {
+            var dt = DateTime.MaxValue;
+            var data = new List<SqlTest2Record>();
+            data.Add(new SqlTest2Record { Int1 = 1, Int2 = 203, String1 = "String123b", Bool1 = true, DateTime1 = dt });
+            data.Add(new SqlTest2Record { Int1 = 2, Int2 = 202, String1 = "String111b", Bool1 = false, DateTime1 = dt });
+            data.Add(new SqlTest2Record { Int1 = 3, Int2 = 202, String1 = "String022b", Bool1 = true, DateTime1 = dt });
+            data.Add(new SqlTest2Record { Int1 = 4, Int2 = 201, String1 = "String112b", Bool1 = false, DateTime1 = dt });
+            data.Add(new SqlTest2Record { Int1 = 15, Int2 = 201, String1 = "String132b", Bool1 = true, DateTime1 = dt });
+            return data;
+        }
+
+        private List<SqlTest3Record> GetData3()
+        {
+            var dt = DateTime.MaxValue;
+            var data = new List<SqlTest3Record>();
+            data.Add(new SqlTest3Record { Int1 = 1, Int2 = 303, String1 = "String123c", Bool1 = true, DateTime1 = dt });
+            data.Add(new SqlTest3Record { Int1 = 2, Int2 = 302, String1 = "String111c", Bool1 = false, DateTime1 = dt });
+            data.Add(new SqlTest3Record { Int1 = 10, Int2 = 302, String1 = "String022c", Bool1 = true, DateTime1 = dt });
+            data.Add(
+                new SqlTest3Record { Int1 = 11, Int2 = 301, String1 = "String112c", Bool1 = false, DateTime1 = dt });
+            data.Add(new SqlTest3Record { Int1 = 12, Int2 = 301, String1 = "String132c", Bool1 = true, DateTime1 = dt });
             return data;
         }
     }
@@ -1424,6 +1476,54 @@ GO;";
     public class SqlTestRecord
     {
         public const string TableName = "TableName";
+
+        public bool Bool1 { get; set; }
+
+        public DateTime DateTime1 { get; set; }
+
+        public DateTime? DateTime2 { get; set; }
+
+        public int Int1 { get; set; }
+
+        public int Int2 { get; set; }
+
+        public int Int3 { get; set; }
+
+        public string String1 { get; set; }
+
+        public string String2 { get; set; }
+
+        public bool? Bool2 { get; set; }
+
+        public int? Int4 { get; set; }
+    }
+
+    public class SqlTest2Record
+    {
+        public const string TableName = "TableName2";
+
+        public bool Bool1 { get; set; }
+
+        public DateTime DateTime1 { get; set; }
+
+        public DateTime? DateTime2 { get; set; }
+
+        public int Int1 { get; set; }
+
+        public int Int2 { get; set; }
+
+        public int Int3 { get; set; }
+
+        public string String1 { get; set; }
+
+        public string String2 { get; set; }
+
+        public bool? Bool2 { get; set; }
+    }
+
+    public class SqlTest3Record
+    {
+        public const string TableName = "TableName3";
 
         public bool Bool1 { get; set; }
 
