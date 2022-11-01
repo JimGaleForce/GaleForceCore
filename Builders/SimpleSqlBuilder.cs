@@ -2221,10 +2221,10 @@ namespace GaleForceCore.Builders
                 match = this.MatchKey2.Compile();
             }
 
-            var whenMatchedSSB = new SimpleSqlBuilder<TRecord>();
+            var whenMatchedSSB = this.WhenMatchedExpression != null ? new SimpleSqlBuilder<TRecord>() : null;
             this.WhenMatchedExpression?.Compile().Invoke(whenMatchedSSB);
 
-            var whenNotMatchedSSB = new SimpleSqlBuilder<TRecord>();
+            var whenNotMatchedSSB = this.WhenNotMatchedExpression != null ? new SimpleSqlBuilder<TRecord>() : null;
             this.WhenNotMatchedExpression?.Compile().Invoke(whenNotMatchedSSB);
 
             var index = 0;
