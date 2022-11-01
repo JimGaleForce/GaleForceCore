@@ -51,6 +51,11 @@ namespace GaleForceCore.Builders
         /// <returns>EvalNode.</returns>
         public EvalNode Register(Expression exp, Type typeOfExpression)
         {
+            if (exp == null)
+            {
+                return null;
+            }
+
             var node = new EvalNode { Exp = exp, TypeOfExpression = typeOfExpression };
             this.Nodes.Add(exp, node);
             return node;
@@ -63,7 +68,10 @@ namespace GaleForceCore.Builders
         /// <param name="children">The children.</param>
         public void RegisterChildren(EvalNode parent, params Expression[] children)
         {
-            parent.Children.AddRange(children.Select(c => this.Nodes[c]));
+            if (parent != null)
+            {
+                parent.Children.AddRange(children.Where(c => c != null).Select(c => this.Nodes[c]));
+            }
         }
 
         /// <summary>

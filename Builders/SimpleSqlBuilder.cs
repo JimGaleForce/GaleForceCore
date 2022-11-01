@@ -257,10 +257,10 @@ namespace GaleForceCore.Builders
         public string WhereString2 { get; protected set; } = null;
 
         /// <summary>
-        /// Gets the where condition expression (lambda).
+        /// Gets the where condition string.
         /// </summary>
-        /// <value>The where expression.</value>
-        public Expression<Func<object, object, object, bool>> WhereExpression3 { get; protected set; } = null;
+        /// <value>The where string.</value>
+        public string WhereString3 { get; protected set; } = null;
 
         /// <summary>
         /// Gets or sets the when matched expression.
@@ -1179,6 +1179,19 @@ namespace GaleForceCore.Builders
                                 return sqlValue;
                             }
                         }
+                        else if (operand.NodeType == ExpressionType.MemberAccess)
+                        {
+                            var value = this.ParseExpression(
+                                types,
+                                operand,
+                                isCondition,
+                                parameters,
+                                tableNames: tableNames,
+                                evalInfo: evalInfo);
+
+                            evalInfo?.Register(operand, typeof(MemberExpression), value);
+                            return value;
+                        }
 
                         evalInfo?.Register(pe, typeof(MemberExpression), pe.Member.Name);
                         return pe.Member.Name;
@@ -1604,17 +1617,12 @@ namespace GaleForceCore.Builders
         /// <returns>System.String.</returns>
         private string JoinedWhereString()
         {
-            if (!string.IsNullOrEmpty(this.WhereString) && !string.IsNullOrEmpty(this.WhereString2))
+            var wheres = (new List<string>() { this.WhereString, this.WhereString2, this.WhereString3 }).Where(
+                w => !string.IsNullOrEmpty(w))
+                .ToList();
+            if (wheres.Count > 0)
             {
-                return $"WHERE {this.WhereString} AND {this.WhereString2} ";
-            }
-            else if (!string.IsNullOrEmpty(this.WhereString))
-            {
-                return $"WHERE {this.WhereString} ";
-            }
-            else if (!string.IsNullOrEmpty(this.WhereString2))
-            {
-                return $"WHERE {this.WhereString2} ";
+                return $"WHERE {string.Join(" AND ",wheres)} ";
             }
 
             return "";
@@ -2077,7 +2085,10 @@ namespace GaleForceCore.Builders
                 var newRecord = (TRecord)Activator.CreateInstance(type);
                 foreach (var field in fields)
                 {
-                    var prop = props.FirstOrDefault(p => p.Name == field);
+                    var prop = ExceptionHelpers.ThrowIfNull<PropertyInfo, MissingMemberException>(
+                        props.FirstOrDefault(p => p.Name == field),
+                        $"{field} property missing from {type.Name}");
+
                     prop.SetValue(newRecord, prop.GetValue(record));
                 }
 

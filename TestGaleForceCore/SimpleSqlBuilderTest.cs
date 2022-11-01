@@ -504,7 +504,7 @@
             var actual = new SimpleSqlBuilder<SqlTestRecord>()
                 .From(SqlTestRecord.TableName)
                 .Select(a => a.Int1)
-                .Where(a => intList.Contains(a.Int1))
+                .Where(a => intList.Contains((int)a.Int1))
                 .Build();
 
             var expected = "SELECT Int1 FROM TableName WHERE Int1 IN (1,2,3)";
@@ -568,8 +568,8 @@
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord, SqlTestRecord>()
                 .From("TableName", "TableName2", "TableName3")
                 .Select((t1, t2, t3) => t1.Int1, (t1, t2, t3) => t2.String1, (t1, t2, t3) => t3.Int2)
-                .LeftOuterJoinOn((TableName, TableName2, TableName3) => TableName.Int1 == TableName2.Int1)
-                .LeftOuterJoinOn((TableName, TableName2, TableName3) => TableName.Int1 == TableName3.Int1)
+                .LeftOuterJoin12On((TableName, TableName2) => TableName.Int1 == TableName2.Int1)
+                .LeftOuterJoin13On((TableName, TableName3) => TableName.Int1 == TableName3.Int1)
                 .Where((t1, t2, t3) => t1.String1 != null)
                 .Build();
 
@@ -587,8 +587,8 @@
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord, SqlTestRecord>()
                 .From("TableName", "TableName2", "TableName3")
                 .Select((t1, t2, t3) => t1.Int1, (t1, t2, t3) => t2.String1, (t1, t2, t3) => t3.Int2)
-                .LeftOuterJoinOn((t1, t2, t3) => t1.Int1 == t2.Int1)
-                .InnerJoinOn((t1, t2, t3) => t1.Int1 == t3.Int1)
+                .LeftOuterJoin12On((t1, t2) => t1.Int1 == t2.Int1)
+                .InnerJoin13On((t1, t3) => t1.Int1 == t3.Int1)
                 .Where((t1, t2, t3) => t1.String1 != null)
                 .Build();
 
@@ -1409,8 +1409,8 @@ GO;";
             var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest3Record>()
                 .From(SqlTestRecord.TableName, SqlTest2Record.TableName, SqlTest3Record.TableName)
                 .Select((a, b, c) => a.Int1, (a, b, c) => b.Int2, (a, b, c) => c.String1)
-                .InnerJoinOn((a, b, c) => a.Int1 == b.Int1)
-                .LeftOuterJoinOn((a, b, c) => a.Int1 == c.Int1)
+                .InnerJoin12On((a, b) => a.Int1 == b.Int1)
+                .LeftOuterJoin13On((a, c) => a.Int1 == c.Int1)
                 .Where((a, b, c) => b.Bool1)
                 .Build();
 
@@ -1424,10 +1424,192 @@ GO;";
             var value = 1;
             var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest3Record>()
                 .From(SqlTestRecord.TableName, SqlTest2Record.TableName, SqlTest3Record.TableName)
-                .LeftOuterJoinOn((a, b, c) => a.Int1 == b.Int1 && a.Int4 == value)
+                .LeftOuterJoin12On((a, b) => a.Int1 == b.Int1 && a.Int4 == value)
                 .Build();
 
             var i = 0;
+        }
+
+        [TestMethod]
+        public void TestJoin3Build()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest3Record>()
+                .From("TableName", "TableName2", "TableName3")
+                .Select((a, b, c) => c.Int1, (a, b, c) => a.String1, (a, b, c) => a.Int2)
+                .SelectAs(pp => pp.Int3, (a, b, c) => b.Int2)
+                .InnerJoin12On((a, b) => a.Int1 == b.Int1)
+                .LeftOuterJoin13On((a, c) => a.Int1 == c.Int1)
+                .Where((a, b, c) => a.Bool1 && b.Bool1 && c.Bool1)
+                .Build();
+
+            var expected = @"SELECT TableName3.Int1,TableName.String1,TableName.Int2,TableName2.Int2 AS Int3 FROM TableName INNER JOIN TableName2 ON (TableName.Int1 = TableName2.Int1) LEFT OUTER JOIN TableName3 ON (TableName.Int1 = TableName3.Int1) WHERE ((TableName.Bool1 = 1 AND TableName2.Bool1 = 1) AND TableName3.Bool1 = 1)";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestJoin3Execute()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest3Record>()
+                .From("TableName", "TableName2", "TableName3")
+                .Select((a, b, c) => c.Int1, (a, b, c) => a.String1, (a, b, c) => a.Int2)
+                .SelectAs(pp => pp.Int3, (a, b, c) => b.Int2)
+                .InnerJoin12On((a, b) => a.Int1 == b.Int1)
+                .LeftOuterJoin13On((a, c) => a.Int1 == c.Int1)
+                .Where((a, b, c) => a.Bool1 && b.Bool1 && c.Bool1)
+                .Execute(this.GetData(), this.GetData2(), this.GetData3())
+                .ToList();
+
+            Assert.AreEqual(1, actual.Count());
+            Assert.AreEqual(1, actual[0].Int1);
+        }
+
+        [TestMethod]
+        public void TestJoin3Execute2()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest3Record>()
+                .From("TableName", "TableName2", "TableName3")
+                .Select((a, b, c) => c.Int1, (a, b, c) => a.String1, (a, b, c) => a.Int2)
+                .SelectAs(pp => pp.Int3, (a, b, c) => b.Int2)
+                .InnerJoin12On((a, b) => a.Int1 == b.Int1)
+                .LeftOuterJoin13On((a, c) => a.Int1 == c.Int1)
+                .Where((a, b, c) => a.Bool1 && b.Bool1)
+                .Execute(this.GetData(), this.GetData2(), this.GetData3())
+                .ToList();
+
+            Assert.AreEqual(2, actual.Count());
+            Assert.AreEqual(1, actual[0].Int1);
+            Assert.AreEqual(null, actual[1].Int1);
+        }
+
+        [TestMethod]
+        public void TestJoin3Execute3()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest3Record>()
+                .From("TableName", "TableName2", "TableName3")
+                .Select((a, b, c) => c.Int1, (a, b, c) => a.String1, (a, b, c) => a.Int2)
+                .SelectAs(pp => pp.Int3, (a, b, c) => b.Int2)
+                .InnerJoin12On((a, b) => a.Int1 == b.Int1)
+                .LeftOuterJoin13On((a, c) => a.Int1 == c.Int1)
+                .Execute(this.GetData(), this.GetData2(), this.GetData3())
+                .ToList();
+
+            Assert.AreEqual(5, actual.Count());
+            Assert.AreEqual(1, actual[0].Int1);
+            Assert.AreEqual(null, actual[2].Int1);
+            Assert.AreEqual(201, actual[3].Int3);
+            Assert.AreEqual(204, actual[4].Int3);
+        }
+
+        [TestMethod]
+        public void TestJoin2Execute1()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record>()
+                .From("TableName", "TableName2")
+                .Select((a, b) => a.Int1, (a, b) => b.Int2, (a, b) => a.String1)
+                .SelectAs(z => z.Int3, (a, b) => b.Int1)
+                .InnerJoinOn((a, b) => a.Int1 == b.Int1)
+                .Execute(this.GetData(), this.GetData2())
+                .ToList();
+
+            Assert.AreEqual(5, actual.Count());
+            Assert.IsTrue(actual.Select(a => (int)a.Int1).SequenceEqual(new int[] { 1, 2, 3, 4, 4 }));
+            Assert.IsTrue(actual.Select(a => (int)a.Int3).SequenceEqual(new int[] { 1, 2, 3, 4, 4 }));
+        }
+
+        [TestMethod]
+        public void TestJoin2Execute1Where2()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record>()
+                .From("TableName", "TableName2")
+                .Select((a, b) => a.Int1, (a, b) => b.Int2, (a, b) => a.String1)
+                .SelectAs(z => z.Int3, (a, b) => b.Int1)
+                .InnerJoinOn((a, b) => a.Int1 == b.Int1)
+                .Where((a, b) => a.Bool1 && b.Bool1)
+                .Execute(this.GetData(), this.GetData2())
+                .ToList();
+
+            Assert.AreEqual(2, actual.Count());
+            Assert.IsTrue(actual.Select(a => (int)a.Int1).SequenceEqual(new int[] { 1, 3 }));
+            Assert.IsTrue(actual.Select(a => (int)a.Int3).SequenceEqual(new int[] { 1, 3 }));
+            Assert.IsFalse(actual[0].Bool1);
+        }
+
+        [TestMethod]
+        public void TestJoin2Execute1Where1()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record>()
+                .From("TableName", "TableName2")
+                .Select((a, b) => a.Int1, (a, b) => b.Int2, (a, b) => a.String1)
+                .SelectAs(z => z.Int3, (a, b) => b.Int1)
+                .RightOuterJoinOn((a, b) => a.Int1 == b.Int1)
+                .Where(z => z.Int3 > 10)
+                .Execute(this.GetData(), this.GetData2())
+                .ToList();
+
+            Assert.AreEqual(1, actual.Count());
+            Assert.AreEqual(15, actual[0].Int3);
+            Assert.AreEqual(null, actual[0].Int1);
+        }
+
+        [TestMethod]
+        public void TestJoin2Execute2()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record>()
+                .From("TableName", "TableName2")
+                .Select((a, b) => a.Int1, (a, b) => b.Int2, (a, b) => a.String1)
+                .SelectAs(z => z.Int3, (a, b) => b.Int1)
+                .LeftOuterJoinOn((a, b) => a.Int1 == b.Int1)
+                .Execute(this.GetData(), this.GetData2())
+                .ToList();
+
+            Assert.AreEqual(6, actual.Count());
+            Assert.AreEqual(null, actual[5].Int3);
+            Assert.IsTrue(actual.Select(a => (int)a.Int1).SequenceEqual(new int[] { 1, 2, 3, 4, 4, 5 }));
+        }
+
+        [TestMethod]
+        public void TestJoin2Execute3()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record>()
+                .From("TableName", "TableName2")
+                .Select((a, b) => a.Int1, (a, b) => b.Int2, (a, b) => a.String1)
+                .SelectAs(z => z.Int3, (a, b) => b.Int1)
+                .RightOuterJoinOn((a, b) => a.Int1 == b.Int1)
+                .Execute(this.GetData(), this.GetData2())
+                .ToList();
+
+            Assert.AreEqual(6, actual.Count());
+            Assert.AreEqual(null, actual[5].Int1);
+            Assert.IsTrue(actual.Select(a => (int)a.Int3).SequenceEqual(new int[] { 1, 2, 3, 4, 4, 15 }));
+        }
+
+        [TestMethod]
+        public void TestMissingMemberException()
+        {
+            var valid = false;
+            try
+            {
+                var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest3Record>()
+                .From("TableName", "TableName3")
+                    .Select((a, b) => b.Int4Extra)
+                    .InnerJoinOn((a, b) => a.Int1 == b.Int1)
+                    .Execute(this.GetData(), this.GetData3());
+            }
+            catch (MissingMemberException ex)
+            {
+                // expected
+                valid = true;
+            }
+            catch (Exception e)
+            {
+                Assert.Fail("Unexpected/incorrect exception received");
+            }
+
+            if (!valid)
+            {
+                Assert.Fail("MissingMemberException not received");
+            }
         }
 
         private List<SqlTestRecord> GetData()
@@ -1450,6 +1632,7 @@ GO;";
             data.Add(new SqlTest2Record { Int1 = 2, Int2 = 202, String1 = "String111b", Bool1 = false, DateTime1 = dt });
             data.Add(new SqlTest2Record { Int1 = 3, Int2 = 202, String1 = "String022b", Bool1 = true, DateTime1 = dt });
             data.Add(new SqlTest2Record { Int1 = 4, Int2 = 201, String1 = "String112b", Bool1 = false, DateTime1 = dt });
+            data.Add(new SqlTest2Record { Int1 = 4, Int2 = 204, String1 = "String444b", Bool1 = false, DateTime1 = dt });
             data.Add(new SqlTest2Record { Int1 = 15, Int2 = 201, String1 = "String132b", Bool1 = true, DateTime1 = dt });
             return data;
         }
@@ -1463,7 +1646,7 @@ GO;";
             data.Add(new SqlTest3Record { Int1 = 10, Int2 = 302, String1 = "String022c", Bool1 = true, DateTime1 = dt });
             data.Add(
                 new SqlTest3Record { Int1 = 11, Int2 = 301, String1 = "String112c", Bool1 = false, DateTime1 = dt });
-            data.Add(new SqlTest3Record { Int1 = 12, Int2 = 301, String1 = "String132c", Bool1 = true, DateTime1 = dt });
+            data.Add(new SqlTest3Record { Int1 = 15, Int2 = 301, String1 = "String132c", Bool1 = true, DateTime1 = dt });
             return data;
         }
     }
@@ -1483,11 +1666,36 @@ GO;";
 
         public DateTime? DateTime2 { get; set; }
 
-        public int Int1 { get; set; }
+        public int? Int1 { get; set; }
 
-        public int Int2 { get; set; }
+        public int? Int2 { get; set; }
 
-        public int Int3 { get; set; }
+        public int? Int3 { get; set; }
+
+        public string String1 { get; set; }
+
+        public string String2 { get; set; }
+
+        public bool? Bool2 { get; set; }
+
+        public int? Int4 { get; set; }
+    }
+
+    public class SqlTest1Record
+    {
+        public const string TableName = "TableName";
+
+        public bool Bool1 { get; set; }
+
+        public DateTime DateTime1 { get; set; }
+
+        public DateTime? DateTime2 { get; set; }
+
+        public int? Int1 { get; set; }
+
+        public int? Int2 { get; set; }
+
+        public int? Int3 { get; set; }
 
         public string String1 { get; set; }
 
@@ -1508,11 +1716,11 @@ GO;";
 
         public DateTime? DateTime2 { get; set; }
 
-        public int Int1 { get; set; }
+        public int? Int1 { get; set; }
 
-        public int Int2 { get; set; }
+        public int? Int2 { get; set; }
 
-        public int Int3 { get; set; }
+        public int? Int3 { get; set; }
 
         public string String1 { get; set; }
 
@@ -1531,16 +1739,18 @@ GO;";
 
         public DateTime? DateTime2 { get; set; }
 
-        public int Int1 { get; set; }
+        public int? Int1 { get; set; }
 
-        public int Int2 { get; set; }
+        public int? Int2 { get; set; }
 
-        public int Int3 { get; set; }
+        public int? Int3 { get; set; }
 
         public string String1 { get; set; }
 
         public string String2 { get; set; }
 
         public bool? Bool2 { get; set; }
+
+        public int? Int4Extra { get; set; }
     }
 }

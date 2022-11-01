@@ -11,6 +11,7 @@ namespace GaleForceCore.Builders
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Text;
+    using GaleForceCore.Helpers;
 
     /// <summary>
     /// Class SimpleSqlBuilder.
@@ -48,6 +49,9 @@ namespace GaleForceCore.Builders
             protected set;
         } = new List<Expression<Func<TRecord1, TRecord2, object>>>();
 
+        /// <summary>
+        /// Gets or sets the order by list.
+        /// </summary>
         public new List<SqlBuilderOrderItem<TRecord1, TRecord2>> OrderByList
         {
             get;
@@ -55,11 +59,21 @@ namespace GaleForceCore.Builders
         } = new List<SqlBuilderOrderItem<TRecord1, TRecord2>>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord,
-        /// TRecord1,&#xD;&#xA;TRecord2}"/> class.
+        /// Initializes a new instance of the <see
+        /// cref="SimpleSqlBuilder{TRecord,&#xD;&#xA;TRecord1,&#xD;&#xA;TRecord2}"/> class.
         /// </summary>
         public SimpleSqlBuilder()
             : base(new Type[] { typeof(TRecord1), typeof(TRecord2) })
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord, TRecord1,
+        /// TRecord2}"/> class.
+        /// </summary>
+        /// <param name="types">The types.</param>
+        public SimpleSqlBuilder(Type[] types)
+            : base(types)
         {
         }
 
@@ -175,6 +189,19 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
+        /// Lefts the outer join on.
+        /// </summary>
+        /// <param name="joinKey">The join key.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> RightOuterJoinOn(
+            Expression<Func<TRecord1, TRecord2, bool>> joinKey)
+        {
+            this.JoinPhrase = "RIGHT OUTER";
+            this.JoinKey = joinKey;
+            return this;
+        }
+
+        /// <summary>
         /// Injects the inner clauses.
         /// </summary>
         /// <param name="sb">The sb.</param>
@@ -249,8 +276,10 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Executes the specified records.
         /// </summary>
-        /// <param name="records">The records.</param>
+        /// <param name="records1">The records1.</param>
+        /// <param name="records2">The records2.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public IEnumerable<TRecord> Execute(IEnumerable<TRecord1> records1, IEnumerable<TRecord2> records2)
         {
             switch (this.Command)
@@ -286,15 +315,14 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Executes the expressions within this builder upon these records, returning the results.
         /// </summary>
-        /// <param name="records">The records.</param>
+        /// <param name="records1">The records1.</param>
+        /// <param name="records2">The records2.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         public IEnumerable<TRecord> ExecuteSelect(IEnumerable<TRecord1> records1, IEnumerable<TRecord2> records2)
         {
             var result = new List<TRecord>();
 
             // todo: reform to execute on string fields, not only expressions
-
-            // todo: handle differently based on join type - currently only innerjoin
 
             IEnumerable<Tuple<TRecord1, TRecord2>> records = new List<Tuple<TRecord1, TRecord2>>();
             var joinKey = this.JoinKey.Compile();
@@ -304,6 +332,22 @@ namespace GaleForceCore.Builders
                     records = records1.SelectMany(
                         r1 => records2.Where(r2 => joinKey(r1, r2))
                             .Select(r2 => new Tuple<TRecord1, TRecord2>(r1, r2)))
+                        .ToList();
+                    break;
+                case "LEFT OUTER":
+                    records = records1.SelectMany(
+                        r1 => (records2.Any(r2 => joinKey(r1, r2))
+                            ? records2.Where(r2 => joinKey(r1, r2))
+                            : new List<TRecord2>() { (TRecord2)Activator.CreateInstance(typeof(TRecord2)) })
+                            .Select(r2 => new Tuple<TRecord1, TRecord2>(r1, r2)))
+                        .ToList();
+                    break;
+                case "RIGHT OUTER":
+                    records = records2.SelectMany(
+                        r2 => (records1.Any(r1 => joinKey(r1, r2))
+                            ? records1.Where(r1 => joinKey(r1, r2))
+                            : new List<TRecord1>() { (TRecord1)Activator.CreateInstance(typeof(TRecord1)) })
+                            .Select(r1 => new Tuple<TRecord1, TRecord2>(r1, r2)))
                         .ToList();
                     break;
             }
@@ -349,7 +393,10 @@ namespace GaleForceCore.Builders
                 var field = this.Fields[i];
                 var fieldName = field.Contains(" AS ") ? this.GrabAs(field) : field;
                 fieldName = fieldName.Contains(".") ? fieldName.Substring(fieldName.IndexOf(".") + 1) : fieldName;
-                propFields.Add(props.FirstOrDefault(p => p.Name == fieldName));
+                propFields.Add(
+                    ExceptionHelpers.ThrowIfNull<PropertyInfo, MissingMemberException>(
+                        props.FirstOrDefault(p => p.Name == fieldName),
+                        $"{fieldName} property missing from {type.Name}"));
             }
 
             foreach (var record in current)
@@ -373,11 +420,23 @@ namespace GaleForceCore.Builders
             return result;
         }
 
-        private string GrabAs(string field)
+        /// <summary>
+        /// Grabs as.
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>System.String.</returns>
+        protected string GrabAs(string field)
         {
             return field.Contains(" AS ") ? field.Substring(field.IndexOf(" AS ") + 4) : field;
         }
 
+        /// <summary>
+        /// Sets up the order by clause.
+        /// </summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="isAscending">if set to <c>true</c> [is ascending].</param>
+        /// <param name="expression">The expression.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
         private SimpleSqlBuilder<TRecord, TRecord1, TRecord2> OrderBy(
             string fieldName,
             bool isAscending,
@@ -387,6 +446,11 @@ namespace GaleForceCore.Builders
             return this.ThenBy(fieldName, isAscending, expression);
         }
 
+        /// <summary>
+        /// Sets up the then by clause.
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> ThenBy(
             Expression<Func<TRecord1, TRecord2, object>> field)
         {
@@ -394,6 +458,13 @@ namespace GaleForceCore.Builders
             return this.ThenBy(name, true, field);
         }
 
+        /// <summary>
+        /// Sets up the then by clause.
+        /// </summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="isAscending">if set to <c>true</c> [is ascending].</param>
+        /// <param name="expression">The expression.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
         private SimpleSqlBuilder<TRecord, TRecord1, TRecord2> ThenBy(
             string fieldName,
             bool isAscending,

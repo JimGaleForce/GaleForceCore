@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.23.2</Version>
-    <AssemblyVersion>1.0.23.2</AssemblyVersion>
-    <FileVersion>1.0.23.2</FileVersion>
-    <PackageReleaseNotes>fixed selectas addrange, where2 clause</PackageReleaseNotes>
+    <Version>1.0.24.1</Version>
+    <AssemblyVersion>1.0.24.1</AssemblyVersion>
+    <FileVersion>1.0.24.1</FileVersion>
+    <PackageReleaseNotes>handles inner/outer-left/right joins for 2x,3x tables, wheres, more tests</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
