@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.24.2</Version>
-    <AssemblyVersion>1.0.24.2</AssemblyVersion>
-    <FileVersion>1.0.24.2</FileVersion>
-    <PackageReleaseNotes>fixed merge without a clause</PackageReleaseNotes>
+    <Version>1.0.25.1</Version>
+    <AssemblyVersion>1.0.25.1</AssemblyVersion>
+    <FileVersion>1.0.25.1</FileVersion>
+    <PackageReleaseNotes>added IgnoreField attribute</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 

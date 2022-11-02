@@ -1612,6 +1612,18 @@ GO;";
             }
         }
 
+        [TestMethod]
+        public void TestIgnoreAttribute()
+        {
+            var data = this.GetData4();
+            var actual = new SimpleSqlBuilder<SqlTest4Record>(SqlTest4Record.TableName)
+                .Select()
+                .Execute(data)
+                .ToList();
+
+            Assert.AreEqual(null, actual[0].StringExtra);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
@@ -1647,6 +1659,63 @@ GO;";
             data.Add(
                 new SqlTest3Record { Int1 = 11, Int2 = 301, String1 = "String112c", Bool1 = false, DateTime1 = dt });
             data.Add(new SqlTest3Record { Int1 = 15, Int2 = 301, String1 = "String132c", Bool1 = true, DateTime1 = dt });
+            return data;
+        }
+
+        private List<SqlTest4Record> GetData4()
+        {
+            var dt = DateTime.MaxValue;
+            var data = new List<SqlTest4Record>();
+            data.Add(
+                new SqlTest4Record
+                {
+                    Int1 = 1,
+                    Int2 = 303,
+                    String1 = "String123c",
+                    Bool1 = true,
+                    DateTime1 = dt,
+                    StringExtra = "not this1"
+                });
+            data.Add(
+                new SqlTest4Record
+                {
+                    Int1 = 2,
+                    Int2 = 302,
+                    String1 = "String111c",
+                    Bool1 = false,
+                    DateTime1 = dt,
+                    StringExtra = "not this2"
+                });
+            data.Add(
+                new SqlTest4Record
+                {
+                    Int1 = 10,
+                    Int2 = 302,
+                    String1 = "String022c",
+                    Bool1 = true,
+                    DateTime1 = dt,
+                    StringExtra = "not this3"
+                });
+            data.Add(
+                new SqlTest4Record
+                {
+                    Int1 = 11,
+                    Int2 = 301,
+                    String1 = "String112c",
+                    Bool1 = false,
+                    DateTime1 = dt,
+                    StringExtra = "not this4"
+                });
+            data.Add(
+                new SqlTest4Record
+                {
+                    Int1 = 15,
+                    Int2 = 301,
+                    String1 = "String132c",
+                    Bool1 = true,
+                    DateTime1 = dt,
+                    StringExtra = "not this5"
+                });
             return data;
         }
     }
@@ -1752,5 +1821,13 @@ GO;";
         public bool? Bool2 { get; set; }
 
         public int? Int4Extra { get; set; }
+    }
+
+    public class SqlTest4Record : SqlTest3Record
+    {
+        public const string TableName = "TableName4";
+
+        [IgnoreField]
+        public string StringExtra { get; set; }
     }
 }

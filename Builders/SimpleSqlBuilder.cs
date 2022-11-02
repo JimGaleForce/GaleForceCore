@@ -1686,6 +1686,13 @@ namespace GaleForceCore.Builders
             return sb.ToString().Trim();
         }
 
+        protected PropertyInfo[] GetNonIgnoreProperties<TRecordType>()
+        {
+            return typeof(TRecordType).GetProperties()
+                .Where(p => !p.GetCustomAttributes(typeof(IgnoreFieldAttribute), true).Any())
+                .ToArray();
+        }
+
         /// <summary>
         /// Builds the sql-server friendly string.
         /// </summary>
@@ -1693,7 +1700,7 @@ namespace GaleForceCore.Builders
         private string BuildUpdate()
         {
             var sb = new StringBuilder();
-            var props = typeof(TRecord).GetProperties();
+            var props = GetNonIgnoreProperties<TRecord>();
 
             List<string> matchFields = new List<string>();
             if (!string.IsNullOrEmpty(this.MatchKeyStr1))
@@ -1772,7 +1779,7 @@ namespace GaleForceCore.Builders
         private string BuildInsert()
         {
             var sb = new StringBuilder();
-            var props = typeof(TRecord).GetProperties();
+            var props = GetNonIgnoreProperties<TRecord>();
 
             var fields = this.Inserts;
             if (fields.Count() == 0)
@@ -1839,7 +1846,7 @@ namespace GaleForceCore.Builders
         private string BuildMerge()
         {
             var sb = new StringBuilder();
-            var props = typeof(TRecord).GetProperties();
+            var props = GetNonIgnoreProperties<TRecord>();
 
             List<string> matchFields = new List<string>();
             if (!string.IsNullOrEmpty(this.MatchKeyStr1))
@@ -2077,7 +2084,7 @@ namespace GaleForceCore.Builders
             }
 
             var type = typeof(TRecord);
-            var props = type.GetProperties();
+            var props = GetNonIgnoreProperties<TRecord>();
             var fields = this.FieldList(this.Fields);
 
             foreach (var record in current)
@@ -2117,7 +2124,7 @@ namespace GaleForceCore.Builders
             }
 
             var type = typeof(TRecord);
-            var props = type.GetProperties();
+            var props = GetNonIgnoreProperties<TRecord>();
 
             var keyProp = props.FirstOrDefault(p => p.Name == this.MatchKeyStr1);
 
@@ -2160,7 +2167,7 @@ namespace GaleForceCore.Builders
         {
             return list != null && list.Count() > 0
                 ? list
-                : typeof(TRecord).GetProperties().Select(p => p.Name).ToList();
+                : GetNonIgnoreProperties<TRecord>().Select(p => p.Name).ToList();
         }
 
         /// <summary>
@@ -2174,7 +2181,7 @@ namespace GaleForceCore.Builders
             // todo: reform to execute on string fields, not only expressions
 
             var type = typeof(TRecord);
-            var props = type.GetProperties();
+            var props = GetNonIgnoreProperties<TRecord>();
 
             var hasValues = this.Valueset.Count() > 0;
             var values = hasValues ? this.ValueExpressions.Select(v => v.Compile()).ToList() : null;
@@ -2289,7 +2296,7 @@ namespace GaleForceCore.Builders
         /// <returns>List&lt;System.String&gt;.</returns>
         private List<string> GetFields()
         {
-            return typeof(TRecord).GetProperties().Select(p => p.Name).ToList();
+            return GetNonIgnoreProperties<TRecord>().Select(p => p.Name).ToList();
         }
 
         /// <summary>
@@ -2310,5 +2317,9 @@ namespace GaleForceCore.Builders
             var value = valueExpression != null ? valueExpression.Invoke(record) : prop.GetValue(record);
             return SqlHelpers.GetAsSQLValue(value.GetType(), value);
         }
+    }
+
+    public class IgnoreFieldAttribute : Attribute
+    {
     }
 }

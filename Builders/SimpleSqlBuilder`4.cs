@@ -469,7 +469,7 @@ namespace GaleForceCore.Builders
             }
 
             var type = typeof(TRecord);
-            var props = type.GetProperties();
+            var props = GetNonIgnoreProperties<TRecord>();
 
             var asFieldComps = this.AsFields.ToDictionary(af => af.Key, af => af.Value.Compile());
             var fieldExpressions = this.FieldExpressions.Select(fe => fe.Compile()).ToList();
