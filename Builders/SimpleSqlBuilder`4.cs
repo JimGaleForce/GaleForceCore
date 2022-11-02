@@ -36,7 +36,7 @@ namespace GaleForceCore.Builders
         /// Gets the where condition expression (lambda).
         /// </summary>
         /// <value>The where expression.</value>
-        public Expression<Func<TRecord1, TRecord2, TRecord3, bool>> WhereExpression3 { get; protected set; } = null;
+        public List<Expression<Func<TRecord1, TRecord2, TRecord3, bool>>> WhereExpression3 { get; protected set; } = new List<Expression<Func<TRecord1, TRecord2, TRecord3, bool>>>();
 
         /// <summary>
         /// Gets the field expressions (lambda expressions for each field).

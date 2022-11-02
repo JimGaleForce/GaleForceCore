@@ -93,7 +93,7 @@ namespace GaleForceCore.Builders
         /// Gets the where condition string.
         /// </summary>
         /// <value>The where string.</value>
-        public string WhereString { get; protected set; } = null;
+        public List<string> WhereString { get; protected set; } = new List<string>();
 
         /// <summary>
         /// Gets or sets the join key.
@@ -248,19 +248,19 @@ namespace GaleForceCore.Builders
         /// Gets the where condition expression (lambda).
         /// </summary>
         /// <value>The where expression.</value>
-        public Expression<Func<TRecord, bool>> WhereExpression { get; protected set; } = null;
+        public List<Expression<Func<TRecord, bool>>> WhereExpression { get; protected set; } = new List<Expression<Func<TRecord, bool>>>();
 
         /// <summary>
         /// Gets the where condition string.
         /// </summary>
         /// <value>The where string.</value>
-        public string WhereString2 { get; protected set; } = null;
+        public List<string> WhereString2 { get; protected set; } = new List<string>();
 
         /// <summary>
         /// Gets the where condition string.
         /// </summary>
         /// <value>The where string.</value>
-        public string WhereString3 { get; protected set; } = null;
+        public List<string> WhereString3 { get; protected set; } = new List<string>();
 
         /// <summary>
         /// Gets or sets the when matched expression.
@@ -904,12 +904,12 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Where(Expression<Func<TRecord, bool>> condition)
         {
-            this.WhereExpression = condition;
-            this.WhereString = this.ParseExpression(
+            this.WhereExpression.Add(condition);
+            this.WhereString.Add(this.ParseExpression(
                 this.Types,
                 condition.Body,
                 true,
-                parameters: condition.Parameters);
+                parameters: condition.Parameters));
             return this;
         }
 
@@ -1590,23 +1590,9 @@ namespace GaleForceCore.Builders
 
             sb.Append($"FROM {tableName} ");
 
-            // this.InjectInnerClauses(sb);
+            this.InjectInnerClauses(sb);
 
-            if (!string.IsNullOrEmpty(this.WhereString))
-            {
-                sb.Append($"WHERE {this.WhereString} ");
-                if (this.DistinctOnStr != null)
-                {
-                    sb.Append("AND Temp > 1 ");
-                }
-            }
-            else
-            {
-                if (this.DistinctOnStr != null)
-                {
-                    sb.Append("WHERE Temp > 1 ");
-                }
-            }
+            sb.Append(JoinedWhereString(this.DistinctOnStr != null ? "Temp > 1" : null));
 
             return sb.ToString().Trim();
         }
@@ -1615,11 +1601,26 @@ namespace GaleForceCore.Builders
         /// Joineds the where string.
         /// </summary>
         /// <returns>System.String.</returns>
-        private string JoinedWhereString()
+        private string JoinedWhereString(string addWhere = null, List<string> prefixWhereSet = null)
         {
-            var wheres = (new List<string>() { this.WhereString, this.WhereString2, this.WhereString3 }).Where(
+            var allwheres = new List<string>();
+            if (prefixWhereSet != null)
+            {
+                allwheres.AddRange(prefixWhereSet);
+            }
+
+            allwheres.AddRange(this.WhereString);
+            allwheres.AddRange(this.WhereString2);
+            allwheres.AddRange(this.WhereString3);
+            if (addWhere != null)
+            {
+                allwheres.Add(addWhere);
+            }
+
+            var wheres = allwheres.Where(
                 w => !string.IsNullOrEmpty(w))
                 .ToList();
+
             if (wheres.Count > 0)
             {
                 return $"WHERE {string.Join(" AND ",wheres)} ";
@@ -1749,16 +1750,7 @@ namespace GaleForceCore.Builders
 
                 var setValues = this.CreateFieldEqualsValues(fields, record, props);
                 sb.Append(string.Join(", ", setValues));
-
-                var matchValues = matchFields.Count() > 0
-                    ? (string.Join(" AND ", this.CreateFieldEqualsValues(matchFields, record, props)) +
-                        (!string.IsNullOrEmpty(this.WhereString) ? " AND " : ""))
-                    : "";
-
-                if (!string.IsNullOrEmpty(this.WhereString) || !string.IsNullOrEmpty(matchValues))
-                {
-                    sb.Append($" WHERE {matchValues}{this.WhereString}");
-                }
+                sb.Append(this.JoinedWhereString(prefixWhereSet: matchFields.Count() > 0 ?  this.CreateFieldEqualsValues(matchFields, record, props) : null));
 
                 count++;
             }
