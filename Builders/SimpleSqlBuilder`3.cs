@@ -31,7 +31,11 @@ namespace GaleForceCore.Builders
         /// Gets the where condition expression (lambda).
         /// </summary>
         /// <value>The where expression.</value>
-        public List<Expression<Func<TRecord1, TRecord2, bool>>> WhereExpression2 { get; protected set; } = new List<Expression<Func<TRecord1, TRecord2, bool>>>();
+        public List<Expression<Func<TRecord1, TRecord2, bool>>> WhereExpression2
+        {
+            get;
+            protected set;
+        } = new List<Expression<Func<TRecord1, TRecord2, bool>>>();
 
         /// <summary>
         /// Gets or sets the join phrase.
@@ -225,12 +229,14 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord1, TRecord2, bool>> condition)
         {
-            this.WhereExpression2 = condition;
-            this.WhereString2 = this.ParseExpression(
-                this.Types,
-                condition.Body,
-                true,
-                parameters: condition.Parameters);
+            this.WhereExpression2.Add(condition);
+            this.WhereString2
+                .Add(
+                    this.ParseExpression(
+                        this.Types,
+                        condition.Body,
+                        true,
+                        parameters: condition.Parameters));
             return this;
         }
 
@@ -241,12 +247,44 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord, bool>> condition)
         {
-            this.WhereExpression = condition;
-            this.WhereString = this.ParseExpression(
-                this.Types,
-                condition.Body,
-                true,
-                parameters: condition.Parameters);
+            this.WhereExpression.Add(condition);
+            this.WhereString
+                .Add(
+                    this.ParseExpression(
+                        this.Types,
+                        condition.Body,
+                        true,
+                        parameters: condition.Parameters));
+            return this;
+        }
+
+        /// <summary>
+        /// Clears the accumulative where clauses.
+        /// </summary>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> ClearWhere()
+        {
+            this.WhereExpression2.Clear();
+            this.WhereString2.Clear();
+            base.ClearWhere();
+            return this;
+        }
+
+        /// <summary>
+        /// Optionally add a clause when a condition is true.
+        /// </summary>
+        /// <param name="condition">if set to <c>true</c> [condition].</param>
+        /// <param name="clause">The clause.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> If(
+            bool condition,
+            Action<SimpleSqlBuilder<TRecord, TRecord1, TRecord2>> clause)
+        {
+            if (condition)
+            {
+                clause(this);
+            }
+
             return this;
         }
 
@@ -353,9 +391,9 @@ namespace GaleForceCore.Builders
             }
 
             var current = records;
-            if (this.WhereExpression2 != null)
+            foreach (var whereExpression in this.WhereExpression2)
             {
-                var we2 = this.WhereExpression2.Compile();
+                var we2 = whereExpression.Compile();
                 current = current.Where(t => we2(t.Item1, t.Item2));
             }
 
@@ -411,10 +449,10 @@ namespace GaleForceCore.Builders
                 result.Add(newRecord);
             }
 
-            if (this.WhereExpression != null)
+            foreach (var whereExpression in this.WhereExpression)
             {
-                var we1 = this.WhereExpression.Compile();
-                result = result.Where(t => we1(t)).ToList();
+                var we1 = whereExpression.Compile();
+                result = result.Where(we1).ToList();
             }
 
             return result;

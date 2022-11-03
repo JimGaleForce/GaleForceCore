@@ -1414,7 +1414,8 @@ GO;";
                 .Where((a, b, c) => b.Bool1)
                 .Build();
 
-            var i = 0;
+            var expected = "SELECT TableName.Int1,TableName2.Int2,TableName3.String1 FROM TableName INNER JOIN TableName2 ON (TableName.Int1 = TableName2.Int1) LEFT OUTER JOIN TableName3 ON (TableName.Int1 = TableName3.Int1) WHERE TableName2.Bool1 = 1";
+            Assert.AreEqual(expected, actual.ToString());
         }
 
         [TestMethod]
@@ -1427,7 +1428,8 @@ GO;";
                 .LeftOuterJoin12On((a, b) => a.Int1 == b.Int1 && a.Int4 == value)
                 .Build();
 
-            var i = 0;
+            var expected = "SELECT * FROM TableName LEFT OUTER JOIN TableName2 ON ((TableName.Int1 = TableName2.Int1) AND (TableName.Int4 = 1))";
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
@@ -1596,12 +1598,12 @@ GO;";
                     .InnerJoinOn((a, b) => a.Int1 == b.Int1)
                     .Execute(this.GetData(), this.GetData3());
             }
-            catch (MissingMemberException ex)
+            catch (MissingMemberException)
             {
                 // expected
                 valid = true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Assert.Fail("Unexpected/incorrect exception received");
             }
@@ -1622,6 +1624,77 @@ GO;";
                 .ToList();
 
             Assert.AreEqual(null, actual[0].StringExtra);
+        }
+
+        [TestMethod]
+        public void TestMultipleWheres()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.Int1)
+                .Where(s => s.Bool1)
+                .Where(s => s.Int2 % 2 == 1)
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE Bool1 = 1 AND ((Int2 % 2) = 1)";
+            Assert.AreEqual(expected, actual.ToString());
+        }
+
+        [TestMethod]
+        public void TestMultipleWheresExecute()
+        {
+            var data = this.GetData();
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.Int1)
+                .Where(s => s.Bool1)
+                .Where(s => s.Int2 % 2 == 1)
+                .Execute(data)
+                .ToList();
+
+            Assert.AreEqual(2, actual.Count());
+            Assert.AreEqual(1, actual[0].Int1);
+            Assert.AreEqual(5, actual[1].Int1);
+        }
+
+        [TestMethod]
+        public void TestClearWhere()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.Int1)
+                .Where(s => s.Bool1)
+                .Where(s => s.Int2 % 2 == 1)
+                .ClearWhere()
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName";
+            Assert.AreEqual(expected, actual.ToString());
+        }
+
+        [TestMethod]
+        public void TestIfClauseTrue()
+        {
+            var condition = true;
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.Int1)
+                .If(condition, ssb => ssb.Where(s => s.Bool1))
+                .Where(s => s.Int2 % 2 == 1)
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE Bool1 = 1 AND ((Int2 % 2) = 1)";
+            Assert.AreEqual(expected, actual.ToString());
+        }
+
+        [TestMethod]
+        public void TestIfClauseFalse()
+        {
+            var condition = false;
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.Int1)
+                .If(condition, ssb => ssb.Where(s => s.Bool1))
+                .Where(s => s.Int2 % 2 == 1)
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE ((Int2 % 2) = 1)";
+            Assert.AreEqual(expected, actual.ToString());
         }
 
         private List<SqlTestRecord> GetData()
@@ -1825,7 +1898,7 @@ GO;";
 
     public class SqlTest4Record : SqlTest3Record
     {
-        public const string TableName = "TableName4";
+        public new const string TableName = "TableName4";
 
         [IgnoreField]
         public string StringExtra { get; set; }

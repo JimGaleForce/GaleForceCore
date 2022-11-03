@@ -248,7 +248,11 @@ namespace GaleForceCore.Builders
         /// Gets the where condition expression (lambda).
         /// </summary>
         /// <value>The where expression.</value>
-        public List<Expression<Func<TRecord, bool>>> WhereExpression { get; protected set; } = new List<Expression<Func<TRecord, bool>>>();
+        public List<Expression<Func<TRecord, bool>>> WhereExpression
+        {
+            get;
+            protected set;
+        } = new List<Expression<Func<TRecord, bool>>>();
 
         /// <summary>
         /// Gets the where condition string.
@@ -905,11 +909,40 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> Where(Expression<Func<TRecord, bool>> condition)
         {
             this.WhereExpression.Add(condition);
-            this.WhereString.Add(this.ParseExpression(
-                this.Types,
-                condition.Body,
-                true,
-                parameters: condition.Parameters));
+            this.WhereString
+                .Add(
+                    this.ParseExpression(
+                        this.Types,
+                        condition.Body,
+                        true,
+                        parameters: condition.Parameters));
+            return this;
+        }
+
+        /// <summary>
+        /// Clears the accumulative where clauses.
+        /// </summary>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> ClearWhere()
+        {
+            this.WhereExpression.Clear();
+            this.WhereString.Clear();
+            return this;
+        }
+
+        /// <summary>
+        /// Optionally add a clause when a condition is true.
+        /// </summary>
+        /// <param name="condition">if set to <c>true</c> [condition].</param>
+        /// <param name="clause">The clause.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> If(bool condition, Action<SimpleSqlBuilder<TRecord>> clause)
+        {
+            if (condition)
+            {
+                clause(this);
+            }
+
             return this;
         }
 
@@ -1085,6 +1118,11 @@ namespace GaleForceCore.Builders
                     case ExpressionType.Equal:
                         addCenter = right == "NULL" ? " IS " : " = ";
                         break;
+                    case ExpressionType.Modulo:
+                        addCenter = " % ";
+                        break;
+                    default:
+                        throw new UnsupportedOperandException(op.ToString() + " is an unknown operand", null);
                 }
 
                 if (bExp.Right.NodeType == ExpressionType.Not && bExp.Right.Type.Name != "Boolean")
@@ -1592,7 +1630,7 @@ namespace GaleForceCore.Builders
 
             this.InjectInnerClauses(sb);
 
-            sb.Append(JoinedWhereString(this.DistinctOnStr != null ? "Temp > 1" : null));
+            sb.Append(this.JoinedWhereString(this.DistinctOnStr != null ? "Temp > 1" : null));
 
             return sb.ToString().Trim();
         }
@@ -1750,7 +1788,11 @@ namespace GaleForceCore.Builders
 
                 var setValues = this.CreateFieldEqualsValues(fields, record, props);
                 sb.Append(string.Join(", ", setValues));
-                sb.Append(this.JoinedWhereString(prefixWhereSet: matchFields.Count() > 0 ?  this.CreateFieldEqualsValues(matchFields, record, props) : null));
+                var joinedWhere = this.JoinedWhereString(
+                    prefixWhereSet: matchFields.Count() > 0
+                        ? this.CreateFieldEqualsValues(matchFields, record, props)
+                        : null);
+                sb.Append(!string.IsNullOrEmpty(joinedWhere) ? $" {joinedWhere.Trim()}" : "");
 
                 count++;
             }
@@ -2049,9 +2091,10 @@ namespace GaleForceCore.Builders
             // todo: reform to execute on string fields, not only expressions
 
             var current = records;
-            if (this.WhereExpression != null)
+            foreach (var whereExpression in this.WhereExpression)
             {
-                current = current.Where(this.WhereExpression.Compile());
+                var we = whereExpression.Compile();
+                current = current.Where(we);
             }
 
             if (this.OrderByList.Count > 0)
@@ -2061,11 +2104,13 @@ namespace GaleForceCore.Builders
                     var orderBy = this.OrderByList[i];
                     if (orderBy.IsAscending)
                     {
-                        current = current.OrderBy(orderBy.Expression.Compile());
+                        var oe = orderBy.Expression.Compile();
+                        current = current.OrderBy(oe);
                     }
                     else
                     {
-                        current = current.OrderByDescending(orderBy.Expression.Compile());
+                        var oe = orderBy.Expression.Compile();
+                        current = current.OrderByDescending(oe);
                     }
                 }
             }
@@ -2110,9 +2155,9 @@ namespace GaleForceCore.Builders
             // todo: reform to execute on string fields, not only expressions
 
             var current = target;
-            if (this.WhereExpression != null)
+            foreach (var whereExpression in this.WhereExpression)
             {
-                current = current.Where(this.WhereExpression.Compile());
+                current = current.Where(whereExpression.Compile());
             }
 
             var type = typeof(TRecord);
@@ -2269,9 +2314,9 @@ namespace GaleForceCore.Builders
                 current = current.GroupBy(r => distExp(r)).SelectMany(r => r.Skip(1)).ToList();
             }
 
-            if (this.WhereExpression != null)
+            foreach (var whereExpression in this.WhereExpression)
             {
-                current = current.Where(this.WhereExpression.Compile()).ToList();
+                current = current.Where(whereExpression.Compile()).ToList();
             }
 
             var count = target.Count();

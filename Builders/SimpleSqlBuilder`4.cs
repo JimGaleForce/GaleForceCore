@@ -36,7 +36,11 @@ namespace GaleForceCore.Builders
         /// Gets the where condition expression (lambda).
         /// </summary>
         /// <value>The where expression.</value>
-        public List<Expression<Func<TRecord1, TRecord2, TRecord3, bool>>> WhereExpression3 { get; protected set; } = new List<Expression<Func<TRecord1, TRecord2, TRecord3, bool>>>();
+        public List<Expression<Func<TRecord1, TRecord2, TRecord3, bool>>> WhereExpression3
+        {
+            get;
+            protected set;
+        } = new List<Expression<Func<TRecord1, TRecord2, TRecord3, bool>>>();
 
         /// <summary>
         /// Gets the field expressions (lambda expressions for each field).
@@ -163,7 +167,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> InnerJoin12On(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> InnerJoin12On(
             Expression<Func<TRecord1, TRecord2, bool>> joinKey) =>
             this.JoinOn(joinKey, JoinType.INNER);
 
@@ -258,7 +262,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> LeftOuterJoin12On(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> LeftOuterJoin12On(
             Expression<Func<TRecord1, TRecord2, bool>> joinKey) =>
             this.JoinOn(joinKey, JoinType.LEFTOUTER);
 
@@ -371,8 +375,21 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Where(
             Expression<Func<TRecord1, TRecord2, TRecord3, bool>> condition)
         {
-            this.WhereExpression3 = condition as Expression<Func<TRecord1, TRecord2, TRecord3, bool>>;
-            this.WhereString3 = this.ParseExpression(this.Types, condition.Body, true, parameters: condition.Parameters);
+            this.WhereExpression3.Add(condition as Expression<Func<TRecord1, TRecord2, TRecord3, bool>>);
+            this.WhereString3
+                .Add(this.ParseExpression(this.Types, condition.Body, true, parameters: condition.Parameters));
+            return this;
+        }
+
+        /// <summary>
+        /// Clears the accumulative where clauses.
+        /// </summary>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> ClearWhere()
+        {
+            this.WhereExpression3.Clear();
+            this.WhereString3.Clear();
+            base.ClearWhere();
             return this;
         }
 
@@ -384,6 +401,24 @@ namespace GaleForceCore.Builders
         public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Take(int count)
         {
             this.Count = count;
+            return this;
+        }
+
+        /// <summary>
+        /// Optionally add a clause when a condition is true.
+        /// </summary>
+        /// <param name="condition">if set to <c>true</c> [condition].</param>
+        /// <param name="clause">The clause.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2, TRecord3&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> If(
+            bool condition,
+            Action<SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3>> clause)
+        {
+            if (condition)
+            {
+                clause(this);
+            }
+
             return this;
         }
 
@@ -431,9 +466,9 @@ namespace GaleForceCore.Builders
                 (TRecord3)Activator.CreateInstance(typeof(TRecord3)));
 
             var current = records;
-            if (this.WhereExpression3 != null)
+            foreach (var whereExpression in this.WhereExpression3)
             {
-                var we3 = this.WhereExpression3.Compile();
+                var we3 = whereExpression.Compile();
                 current = current.Where(
                     t => we3(
                         (TRecord1)(t.Item1 ?? emptyRecs.Item1),
@@ -501,10 +536,10 @@ namespace GaleForceCore.Builders
                 result.Add(newRecord);
             }
 
-            if (this.WhereExpression != null)
+            foreach (var whereExpression in this.WhereExpression)
             {
-                var we1 = this.WhereExpression.Compile();
-                result = result.Where(t => we1(t)).ToList();
+                var we1 = whereExpression.Compile();
+                result = result.Where(we1).ToList();
             }
 
             return result;
