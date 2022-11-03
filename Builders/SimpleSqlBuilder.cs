@@ -934,13 +934,21 @@ namespace GaleForceCore.Builders
         /// Optionally add a clause when a condition is true.
         /// </summary>
         /// <param name="condition">if set to <c>true</c> [condition].</param>
-        /// <param name="clause">The clause.</param>
+        /// <param name="trueClause">The clause to eval if true.</param>
+        /// <param name="falseClause">The clause to eval if false.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord> If(bool condition, Action<SimpleSqlBuilder<TRecord>> clause)
+        public SimpleSqlBuilder<TRecord> If(
+            bool condition,
+            Action<SimpleSqlBuilder<TRecord>> trueClause = null,
+            Action<SimpleSqlBuilder<TRecord>> falseClause = null)
         {
-            if (condition)
+            if (condition && trueClause != null)
             {
-                clause(this);
+                trueClause(this);
+            }
+            else if (!condition && falseClause != null)
+            {
+                falseClause(this);
             }
 
             return this;
@@ -2086,6 +2094,11 @@ namespace GaleForceCore.Builders
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         private IEnumerable<TRecord> ExecuteSelect(IEnumerable<TRecord> records)
         {
+            if (records == null)
+            {
+                throw new MissingDataTableException("SELECT testing requires a record set");
+            }
+
             var result = new List<TRecord>();
 
             // todo: reform to execute on string fields, not only expressions
@@ -2150,6 +2163,11 @@ namespace GaleForceCore.Builders
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         public int ExecuteUpdate(IEnumerable<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
+            if (target == null)
+            {
+                throw new MissingDataTableException("UPDATE testing requires a record set");
+            }
+
             var result = new List<TRecord>();
 
             // todo: reform to execute on string fields, not only expressions
@@ -2215,7 +2233,10 @@ namespace GaleForceCore.Builders
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         public int ExecuteInsert(List<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
-            // todo: reform to execute on string fields, not only expressions
+            if (target == null)
+            {
+                throw new MissingDataTableException("INSERT testing requires a record set");
+            }
 
             var type = typeof(TRecord);
             var props = GetNonIgnoreProperties<TRecord>();
@@ -2254,6 +2275,11 @@ namespace GaleForceCore.Builders
         /// <exception cref="System.Exception">source record matches multiple targets (record #{index})</exception>
         public int ExecuteMerge(List<TRecord> target, IEnumerable<TRecord> source)
         {
+            if (target == null)
+            {
+                throw new MissingDataTableException("MERGE testing requires a List<TRecord> set");
+            }
+
             Func<TRecord, TRecord, bool> match;
             if (this.MatchKeyStr1 != null)
             {
@@ -2306,6 +2332,11 @@ namespace GaleForceCore.Builders
         /// <returns>Count of deleted records.</returns>
         public int ExecuteDelete(List<TRecord> target)
         {
+            if (target == null)
+            {
+                throw new MissingDataTableException("DELETE testing requires a List<TRecord> set");
+            }
+
             var current = target;
 
             if (this.DistinctOnStr != null)

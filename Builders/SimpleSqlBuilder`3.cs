@@ -274,15 +274,21 @@ namespace GaleForceCore.Builders
         /// Optionally add a clause when a condition is true.
         /// </summary>
         /// <param name="condition">if set to <c>true</c> [condition].</param>
-        /// <param name="clause">The clause.</param>
-        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        /// <param name="trueClause">The clause to eval if true.</param>
+        /// <param name="falseClause">The clause to eval if false.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> If(
             bool condition,
-            Action<SimpleSqlBuilder<TRecord, TRecord1, TRecord2>> clause)
+            Action<SimpleSqlBuilder<TRecord, TRecord1, TRecord2>> trueClause = null,
+            Action<SimpleSqlBuilder<TRecord, TRecord1, TRecord2>> falseClause = null)
         {
-            if (condition)
+            if (condition && trueClause != null)
             {
-                clause(this);
+                trueClause(this);
+            }
+            else if (!condition && falseClause != null)
+            {
+                falseClause(this);
             }
 
             return this;
