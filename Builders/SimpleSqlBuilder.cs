@@ -2253,50 +2253,28 @@ namespace GaleForceCore.Builders
                     }
                 }
             }
+            else
+            {
+                var targets = current;
 
-            // if (resultSet != null && resultSet.Count() > 0)
-            // {
-            // foreach (var record in overrideSource ?? this.SourceData)
-            // {
-            // var sourceKey = keyProp?.GetValue(record);
-            // var targets = keyProp == null
-            // ? current
-            // : current.Where(t => object.Equals(keyProp.GetValue(t), sourceKey)).ToList();
+                foreach (var target1 in targets)
+                {
+                    var record = target1;
+                    var fieldIndex = 0;
+                    foreach (var field in this.Updates)
+                    {
+                        var prop = props.FirstOrDefault(p => p.Name == field);
+                        var value = hasValues ? values[fieldIndex].Invoke(record) : prop.GetValue(record);
+                        prop.SetValue(target1, value);
+                        fieldIndex++;
+                    }
 
-            // count += this.SetUpdates(targets, props, hasValues, values);
-            // }
-            // }
-            // else
-            // {
-            // count += this.SetUpdates(current, props, hasValues, values);
-            // }
+                    count++;
+                }
+            }
 
             return count;
         }
-
-        // public int SetUpdates(
-        // IEnumerable<TRecord> targets,
-        // PropertyInfo[] props,
-        // bool hasValues,
-        // List<Func<TRecord, object>> values)
-        // {
-        // var count = 0;
-        // foreach (var target1 in targets)
-        // {
-        // var fieldIndex = 0;
-        // foreach (var field in this.Updates)
-        // {
-        // var prop = props.FirstOrDefault(p => p.Name == field);
-        // var value = hasValues ? values[fieldIndex].Invoke(record) : prop.GetValue(record);
-        // prop.SetValue(target1, value);
-        // fieldIndex++;
-        // }
-
-        // count++;
-        // }
-
-        // return count;
-        // }
 
         /// <summary>
         /// Get a field list, or default to all fields

@@ -1722,6 +1722,22 @@ GO;";
             Assert.AreEqual(expected, actual);
         }
 
+        [TestMethod]
+        public void TestUpdateGeneralExecute()
+        {
+            var data = this.GetData();
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Update(s => s.Int2)
+                .Values(s => 0)
+                .Where(s => !s.String1.Contains("11"))
+                .ExecuteNonQuery(data);
+
+            Assert.AreEqual(3, actual);
+            Assert.AreEqual(0, data[0].Int2);
+            Assert.AreEqual(102, data[1].Int2);
+            Assert.AreEqual(0, data[2].Int2);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
