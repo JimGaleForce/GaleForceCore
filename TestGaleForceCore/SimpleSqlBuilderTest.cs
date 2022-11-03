@@ -1697,6 +1697,18 @@ GO;";
             Assert.AreEqual(expected, actual.ToString());
         }
 
+        [TestMethod]
+        public void TestNotContains()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.Int1)
+                .Where(s => !s.String1.Contains("11"))
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE NOT String1 LIKE '%11%'";
+            Assert.AreEqual(expected, actual);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;

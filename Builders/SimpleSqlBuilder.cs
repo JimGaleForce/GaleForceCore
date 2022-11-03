@@ -1253,6 +1253,11 @@ namespace GaleForceCore.Builders
                         tableNames: tableNames,
                         evalInfo: evalInfo);
 
+                    if (exp.NodeType == ExpressionType.Not)
+                    {
+                        value = "NOT " + value;
+                    }
+
                     evalInfo?.Register(operand, typeof(MemberExpression), value);
                     return value;
                 }
