@@ -348,6 +348,17 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
+        /// Adds the table name for the builder.
+        /// </summary>
+        /// <param name="tableName">Name of the table.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> IsChained(bool isChained = true)
+        {
+            this.Metadata["Chained"] = isChained;
+            return this;
+        }
+
+        /// <summary>
         /// Chooses SELECT as the command, specifying a field as an expressions (can build,
         /// execute).
         /// </summary>
@@ -1767,14 +1778,33 @@ namespace GaleForceCore.Builders
                 fields = this.GetFields();
             }
 
+            bool isChained = this.Metadata.ContainsKey("Chained") && (bool) this.Metadata["Chained"];
+
             var records = this.SourceData;
             if (records == null || records.Count() == 0)
             {
                 // this is an update segment for an outside instruction, do field to field or field to value
                 var setValues = this.CreateFieldEqualsExpressionValues(fields, this.Valueset, this.TableNames);
                 sb.Append(this.Command);
+
+                if (!isChained)
+                {
+                    if (this.TableNames != null && this.TableNames.Length > 0)
+                    {
+                        sb.Append($" {this.TableNames[0]}");
+                    }
+                    else
+                    {
+                        sb.Append($" {this.TableName}");
+                    }
+                }
+
                 sb.Append(" SET ");
                 sb.Append(string.Join(", ", setValues));
+
+                var joinedWhere = this.JoinedWhereString();
+                sb.Append(!string.IsNullOrEmpty(joinedWhere) ? $" {joinedWhere.Trim()}" : "");
+
                 return sb.ToString().Trim();
             }
 
@@ -1840,6 +1870,8 @@ namespace GaleForceCore.Builders
             var records = this.SourceData;
             if (records == null || records.Count() == 0)
             {
+                // todo: standalone, non chained insert values to new record
+
                 var prefix0 = this.Command +
                     $" ({fieldString}) VALUES ";
 
@@ -1927,7 +1959,7 @@ namespace GaleForceCore.Builders
 
             if (this.WhenMatchedExpression != null)
             {
-                var ssWhenMatched = new SimpleSqlBuilder<TRecord>().From("Source", "Target").UseTableNames();
+                var ssWhenMatched = new SimpleSqlBuilder<TRecord>().From("Source", "Target").UseTableNames().IsChained();
                 this.WhenMatchedExpression.Compile().Invoke(ssWhenMatched);
                 var ssWhenMatchedBuild = ssWhenMatched.Build();
                 sb.Append("WHEN MATCHED THEN ");
@@ -1937,7 +1969,9 @@ namespace GaleForceCore.Builders
 
             if (this.WhenNotMatchedExpression != null)
             {
-                var ssNotWhenMatched = new SimpleSqlBuilder<TRecord>().From("Source", "Target").UseTableNames();
+                var ssNotWhenMatched = new SimpleSqlBuilder<TRecord>().From("Source", "Target")
+                    .UseTableNames()
+                    .IsChained();
                 this.WhenNotMatchedExpression.Compile().Invoke(ssNotWhenMatched);
                 var ssWhenNotMatchedBuild = ssNotWhenMatched.Build();
                 sb.Append("WHEN NOT MATCHED THEN ");
@@ -1945,7 +1979,7 @@ namespace GaleForceCore.Builders
                 sb.Append(" ");
             }
 
-            return sb.ToString().Trim();
+            return sb.ToString().Trim() + ";";
         }
 
         /// <summary>
@@ -2014,7 +2048,7 @@ namespace GaleForceCore.Builders
                     value = tableNames[0] + "." + value;
                 }
 
-                list.Add($"{tableNames[1]}.{field} = {value}");
+                list.Add($"{tableNames?[1] ?? this.TableName}.{field} = {value}");
                 fieldIndex++;
             }
 
@@ -2193,30 +2227,76 @@ namespace GaleForceCore.Builders
 
             // assumes 1key
             int count = 0;
-            foreach (var record in overrideSource ?? this.SourceData)
+
+            var resultSet = overrideSource ?? this.SourceData;
+            if (resultSet != null && resultSet.Count() > 0)
             {
-                var sourceKey = keyProp?.GetValue(record);
-                var targets = keyProp == null
-                    ? current
-                    : current.Where(t => object.Equals(keyProp.GetValue(t), sourceKey)).ToList();
-
-                foreach (var target1 in targets)
+                foreach (var record in overrideSource ?? this.SourceData)
                 {
-                    var fieldIndex = 0;
-                    foreach (var field in this.Updates)
-                    {
-                        var prop = props.FirstOrDefault(p => p.Name == field);
-                        var value = hasValues ? values[fieldIndex].Invoke(record) : prop.GetValue(record);
-                        prop.SetValue(target1, value);
-                        fieldIndex++;
-                    }
+                    var sourceKey = keyProp?.GetValue(record);
+                    var targets = keyProp == null
+                        ? current
+                        : current.Where(t => object.Equals(keyProp.GetValue(t), sourceKey)).ToList();
 
-                    count++;
+                    foreach (var target1 in targets)
+                    {
+                        var fieldIndex = 0;
+                        foreach (var field in this.Updates)
+                        {
+                            var prop = props.FirstOrDefault(p => p.Name == field);
+                            var value = hasValues ? values[fieldIndex].Invoke(record) : prop.GetValue(record);
+                            prop.SetValue(target1, value);
+                            fieldIndex++;
+                        }
+
+                        count++;
+                    }
                 }
             }
 
+            // if (resultSet != null && resultSet.Count() > 0)
+            // {
+            // foreach (var record in overrideSource ?? this.SourceData)
+            // {
+            // var sourceKey = keyProp?.GetValue(record);
+            // var targets = keyProp == null
+            // ? current
+            // : current.Where(t => object.Equals(keyProp.GetValue(t), sourceKey)).ToList();
+
+            // count += this.SetUpdates(targets, props, hasValues, values);
+            // }
+            // }
+            // else
+            // {
+            // count += this.SetUpdates(current, props, hasValues, values);
+            // }
+
             return count;
         }
+
+        // public int SetUpdates(
+        // IEnumerable<TRecord> targets,
+        // PropertyInfo[] props,
+        // bool hasValues,
+        // List<Func<TRecord, object>> values)
+        // {
+        // var count = 0;
+        // foreach (var target1 in targets)
+        // {
+        // var fieldIndex = 0;
+        // foreach (var field in this.Updates)
+        // {
+        // var prop = props.FirstOrDefault(p => p.Name == field);
+        // var value = hasValues ? values[fieldIndex].Invoke(record) : prop.GetValue(record);
+        // prop.SetValue(target1, value);
+        // fieldIndex++;
+        // }
+
+        // count++;
+        // }
+
+        // return count;
+        // }
 
         /// <summary>
         /// Get a field list, or default to all fields

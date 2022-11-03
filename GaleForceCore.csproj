@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.26.3</Version>
-    <AssemblyVersion>1.0.26.3</AssemblyVersion>
-    <FileVersion>1.0.26.3</FileVersion>
-    <PackageReleaseNotes>added true/false clauses for If(), throws when no test data</PackageReleaseNotes>
+    <Version>1.0.26.4</Version>
+    <AssemblyVersion>1.0.26.4</AssemblyVersion>
+    <FileVersion>1.0.26.4</FileVersion>
+    <PackageReleaseNotes>fixed semi at merge, update chaining - 1.0.26.4</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 

@@ -982,7 +982,7 @@ GO;";
                 .WhenNotMatched(s => s.Insert(s => s.Int1, s => s.Int2, s => s.String1))
                 .Build();
 
-            var expected = @"MERGE INTO TableName AS Target USING TableName AS Source ON ((Source.Int1 = Target.Int1) AND (Source.String1 = 'String123')) WHEN MATCHED THEN UPDATE SET Target.Int2 = Source.Int2 WHEN NOT MATCHED THEN INSERT (Int1,Int2,String1) VALUES (Source.Int1, Source.Int2, Source.String1)";
+            var expected = @"MERGE INTO TableName AS Target USING TableName AS Source ON ((Source.Int1 = Target.Int1) AND (Source.String1 = 'String123')) WHEN MATCHED THEN UPDATE SET Target.Int2 = Source.Int2 WHEN NOT MATCHED THEN INSERT (Int1,Int2,String1) VALUES (Source.Int1, Source.Int2, Source.String1);";
 
             Assert.AreEqual(expected, actual);
         }
@@ -999,7 +999,7 @@ GO;";
                     s => s.Insert(s => s.Int1, s => s.Int2, s => s.String1).Values(s => s.Int1 + 1, s => 20, s => "X"))
                 .Build();
 
-            var expected = @"MERGE INTO TableName AS Target USING TableName AS Source ON ((Source.Int1 = Target.Int1) AND (Source.String1 = 'String123')) WHEN MATCHED THEN UPDATE SET Target.Int2 = 5 WHEN NOT MATCHED THEN INSERT (Int1,Int2,String1) VALUES ((Source.Int1 + 1), 20, 'X')";
+            var expected = @"MERGE INTO TableName AS Target USING TableName AS Source ON ((Source.Int1 = Target.Int1) AND (Source.String1 = 'String123')) WHEN MATCHED THEN UPDATE SET Target.Int2 = 5 WHEN NOT MATCHED THEN INSERT (Int1,Int2,String1) VALUES ((Source.Int1 + 1), 20, 'X');";
 
             Assert.AreEqual(expected, actual);
         }
@@ -1706,6 +1706,19 @@ GO;";
                 .Build();
 
             var expected = "SELECT Int1 FROM TableName WHERE NOT String1 LIKE '%11%'";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestUpdateGeneral()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Update(s => s.Int2)
+                .Values(s => 0)
+                .Where(s => !s.String1.Contains("11"))
+                .Build();
+
+            var expected = "UPDATE TableName SET TableName.Int2 = 0 WHERE NOT String1 LIKE '%11%'";
             Assert.AreEqual(expected, actual);
         }
 
