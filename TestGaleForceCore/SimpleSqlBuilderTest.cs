@@ -1738,6 +1738,34 @@ GO;";
             Assert.AreEqual(0, data[2].Int2);
         }
 
+        [TestMethod]
+        public void TestAddSTR()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                            .Select(s => s.String1)
+                .Where(s => s.String1 == "Str" + "ing" + (s.Int2 + 20))
+                .Build();
+
+            var expected = "SELECT String1 FROM TableName WHERE (String1 = ('String' + STR((Int2 + 20)) ))";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestParams1()
+        {
+            var options = new SimpleSqlBuilderOptions { UseParameters = true };
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(options, SqlTestRecord.TableName)
+                .Select(s => s.String1)
+                .Where(s => s.String1 == "String111")
+                .Build();
+
+            var expected = @"DECLARE @Param1 VARCHAR(9)
+SET @Param1 = 'String111'
+
+SELECT String1 FROM TableName WHERE (String1 = @Param1)";
+            Assert.AreEqual(expected, actual);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;

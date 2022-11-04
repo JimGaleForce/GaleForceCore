@@ -72,6 +72,39 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see
+        /// cref="SimpleSqlBuilder{TRecord,&#xD;&#xA;TRecord1,&#xD;&#xA;TRecord2, TRecord3}"/>
+        /// class.
+        /// </summary>
+        /// <param name="options">The options.</param>
+        public SimpleSqlBuilder(SimpleSqlBuilderOptions options)
+            : base(options, new Type[] { typeof(TRecord1), typeof(TRecord2), typeof(TRecord3) })
+        {
+        }
+
+        /// <summary>
+        /// Sets the options.
+        /// </summary>
+        /// <param name="options">The options.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2, TRecord3&gt;.</returns>
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> SetOptions(SimpleSqlBuilderOptions options)
+        {
+            base.SetOptions(options);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the syntax type to build with - currently only builds for SQLServer.
+        /// </summary>
+        /// <param name="syntaxType">Type of the syntax.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> For(SimpleSqlBuilderType syntaxType)
+        {
+            base.For(syntaxType);
+            return this;
+        }
+
+        /// <summary>
         /// Chooses SELECT as the command, specifying a field as an expressions (can build,
         /// execute).
         /// </summary>

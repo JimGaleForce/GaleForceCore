@@ -21,6 +21,11 @@ namespace GaleForceCore.Builders
     public class SimpleSqlBuilder<TRecord>
     {
         /// <summary>
+        /// Gets or sets the type of the syntax.
+        /// </summary>
+        public SimpleSqlBuilderType SyntaxType { get; protected set; } = SimpleSqlBuilderType.SQLServer;
+
+        /// <summary>
         /// Gets or sets the types.
         /// </summary>
         /// <value>The types.</value>
@@ -158,10 +163,41 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord}"/> class.
         /// </summary>
+        /// <param name="options">The options.</param>
+        public SimpleSqlBuilder(SimpleSqlBuilderOptions options)
+        {
+            this.SetOptions(options);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord}"/> class.
+        /// </summary>
         /// <param name="tableName">Name of the table.</param>
         public SimpleSqlBuilder(string tableName)
         {
             this.From(tableName);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord}"/> class.
+        /// </summary>
+        /// <param name="options">The options.</param>
+        /// <param name="tableName">Name of the table.</param>
+        public SimpleSqlBuilder(SimpleSqlBuilderOptions options, string tableName)
+        {
+            this.SetOptions(options);
+            this.From(tableName);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord}"/> class.
+        /// </summary>
+        /// <param name="options">The options.</param>
+        /// <param name="types">The types.</param>
+        public SimpleSqlBuilder(SimpleSqlBuilderOptions options, Type[] types)
+        {
+            this.SetOptions(options);
+            this.Types = types;
         }
 
         /// <summary>
@@ -177,13 +213,45 @@ namespace GaleForceCore.Builders
         /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord}"/> class.
         /// </summary>
         /// <param name="tableNames">The table names.</param>
-        public SimpleSqlBuilder(string[] tableNames)
+        public SimpleSqlBuilder(params string[] tableNames)
         {
             this.From(tableNames);
         }
 
         /// <summary>
-        /// Sets the option.
+        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord}"/> class.
+        /// </summary>
+        /// <param name="options">The options.</param>
+        /// <param name="tableNames">The table names.</param>
+        public SimpleSqlBuilder(SimpleSqlBuilderOptions options, params string[] tableNames)
+        {
+            this.SetOptions(options);
+            this.From(tableNames);
+        }
+
+        /// <summary>
+        /// Gets or sets the options.
+        /// </summary>
+        public SimpleSqlBuilderOptions Options { get; protected set; } = new SimpleSqlBuilderOptions();
+
+        /// <summary>
+        /// Sets the options.
+        /// </summary>
+        /// <param name="options">The options.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> SetOptions(SimpleSqlBuilderOptions options)
+        {
+            this.Options = options;
+            if (options.Metadata != null)
+            {
+                this.Metadata = options.Metadata;
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Sets an option's value by name.
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="value">The value.</param>
@@ -191,6 +259,17 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> SetOption(string name, object value)
         {
             this.Metadata[name] = value;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the syntax type to build with - currently only builds for SQLServer.
+        /// </summary>
+        /// <param name="syntaxType">Type of the syntax.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> For(SimpleSqlBuilderType syntaxType)
+        {
+            this.SyntaxType = syntaxType;
             return this;
         }
 
@@ -350,7 +429,7 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Adds the table name for the builder.
         /// </summary>
-        /// <param name="tableName">Name of the table.</param>
+        /// <param name="isChained">if set to <c>true</c> [is chained].</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> IsChained(bool isChained = true)
         {
@@ -1043,6 +1122,7 @@ namespace GaleForceCore.Builders
         /// <param name="tableNames">The table names.</param>
         /// <param name="evalInfo">The eval information.</param>
         /// <returns>System.String.</returns>
+        /// <exception cref="GaleForceCore.Builders.UnsupportedOperandException">null</exception>
         /// <exception cref="GaleForceCore.Builders.DynamicMethodException">Unable to prebuild SQL string with this method: " + meMethodName</exception>
         /// <exception cref="System.NotSupportedException">Unknown expression type for: " + exp.ToString()</exception>
         protected string ParseExpression(
@@ -1123,6 +1203,14 @@ namespace GaleForceCore.Builders
                         else
                         {
                             addCenter = " + ";
+                            if (bExp.Left.Type.Name == "String" && bExp.Right.Type.Name != "String")
+                            {
+                                addRight = $"STR({right.Trim()}) ";
+                            }
+                            else if (bExp.Left.Type.Name != "String" && bExp.Right.Type.Name == "String")
+                            {
+                                addLeft = $"STR({left.Trim()}) ";
+                            }
                         }
                         break;
                     case ExpressionType.Subtract:
@@ -1164,10 +1252,11 @@ namespace GaleForceCore.Builders
                 sb.Append(suffixRight);
 
                 var value = sb.ToString();
-                var parent = evalInfo?.Register(bExp, typeof(BinaryExpression), value);
+                var wvalue2 = this.WrappedValue(value, bExp, typeof(BinaryExpression));
+                var parent = evalInfo?.Register(bExp, typeof(BinaryExpression), wvalue2);
                 evalInfo?.RegisterChildren(parent, bExp.Left, bExp.Right);
 
-                return value;
+                return wvalue2;
             }
             else if (exp is UnaryExpression)
             {
@@ -1205,8 +1294,9 @@ namespace GaleForceCore.Builders
                         }
 
                         var value = prefix + operandMember.Member.Name + suffix;
-                        evalInfo?.Register(operand, typeof(MemberExpression), value);
-                        return value;
+                        var wvalue2 = this.WrappedValue(value, operand, typeof(MemberExpression));
+                        evalInfo?.Register(operand, typeof(MemberExpression), wvalue2);
+                        return wvalue2;
                     }
                     else
                     {
@@ -1224,16 +1314,18 @@ namespace GaleForceCore.Builders
                                 object container = ce.Value;
                                 object value = ((FieldInfo)pe.Member).GetValue(container);
                                 var sqlValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
-                                evalInfo?.Register(operand, typeof(MemberExpression), sqlValue);
-                                return sqlValue;
+                                var wvalue2 = this.WrappedValue(sqlValue, operand, typeof(MemberExpression));
+                                evalInfo?.Register(operand, typeof(MemberExpression), wvalue2);
+                                return wvalue2;
                             }
                             else if (pe.Member is PropertyInfo)
                             {
                                 object container = ce.Value;
                                 object value = ((PropertyInfo)pe.Member).GetValue(container);
                                 var sqlValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
-                                evalInfo?.Register(operand, typeof(MemberExpression), sqlValue);
-                                return sqlValue;
+                                var wvalue2 = this.WrappedValue(sqlValue, operand, typeof(MemberExpression));
+                                evalInfo?.Register(operand, typeof(MemberExpression), wvalue2);
+                                return wvalue2;
                             }
                         }
                         else if (operand.NodeType == ExpressionType.MemberAccess)
@@ -1246,12 +1338,14 @@ namespace GaleForceCore.Builders
                                 tableNames: tableNames,
                                 evalInfo: evalInfo);
 
-                            evalInfo?.Register(operand, typeof(MemberExpression), value);
-                            return value;
+                            var wvalue2 = this.WrappedValue(value, operand, typeof(MemberExpression));
+                            evalInfo?.Register(operand, typeof(MemberExpression), wvalue2);
+                            return wvalue2;
                         }
 
-                        evalInfo?.Register(pe, typeof(MemberExpression), pe.Member.Name);
-                        return pe.Member.Name;
+                        var wvalue = this.WrappedValue(pe.Member.Name, pe, typeof(MemberExpression));
+                        evalInfo?.Register(pe, typeof(MemberExpression), wvalue);
+                        return wvalue;
                     }
                 }
                 else
@@ -1269,8 +1363,9 @@ namespace GaleForceCore.Builders
                         value = "NOT " + value;
                     }
 
-                    evalInfo?.Register(operand, typeof(MemberExpression), value);
-                    return value;
+                    var wvalue = this.WrappedValue(value, operand, typeof(MemberExpression));
+                    evalInfo?.Register(operand, typeof(MemberExpression), wvalue);
+                    return wvalue;
                 }
             }
             else if (exp is MemberExpression)
@@ -1279,8 +1374,9 @@ namespace GaleForceCore.Builders
                 {
                     var value = Expression.Lambda(exp).Compile().DynamicInvoke();
                     var xValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
-                    evalInfo?.Register(exp, typeof(ConstantExpression), xValue);
-                    return xValue;
+                    var wvalue = this.WrappedValue(xValue, exp, typeof(ConstantExpression));
+                    evalInfo?.Register(exp, typeof(ConstantExpression), wvalue);
+                    return wvalue;
                 }
 
                 var pe = exp as MemberExpression;
@@ -1313,16 +1409,18 @@ namespace GaleForceCore.Builders
                         object container = ce.Value;
                         object value = ((FieldInfo)pe.Member).GetValue(container);
                         var sqlValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
-                        evalInfo?.Register(pe, typeof(MemberExpression), sqlValue);
-                        return sqlValue;
+                        var wvalue3 = this.WrappedValue(sqlValue, pe, typeof(MemberExpression));
+                        evalInfo?.Register(pe, typeof(MemberExpression), wvalue3);
+                        return wvalue3;
                     }
                     else if (pe.Member is PropertyInfo)
                     {
                         object container = ce.Value;
                         object value = ((PropertyInfo)pe.Member).GetValue(container);
                         var sqlValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
-                        evalInfo?.Register(pe, typeof(MemberExpression), sqlValue);
-                        return sqlValue;
+                        var wvalue3 = this.WrappedValue(sqlValue, pe, typeof(MemberExpression));
+                        evalInfo?.Register(pe, typeof(MemberExpression), wvalue3);
+                        return wvalue3;
                     }
                 }
                 else if (isCondition)
@@ -1345,8 +1443,9 @@ namespace GaleForceCore.Builders
                 }
 
                 var value2 = prefix + memberName + suffix;
-                evalInfo?.Register(pe, typeof(MemberExpression), value2);
-                return value2;
+                var wvalue2 = this.WrappedValue(value2, pe, typeof(MemberExpression));
+                evalInfo?.Register(pe, typeof(MemberExpression), wvalue2);
+                return wvalue2;
             }
             else if (exp is ConstantExpression)
             {
@@ -1357,9 +1456,10 @@ namespace GaleForceCore.Builders
                     valueStr = "'" + valueStr + "'";
                 }
 
-                evalInfo?.Register(exp, typeof(ConstantExpression), valueStr);
+                var wvalue2 = this.WrappedValue(valueStr, exp, typeof(ConstantExpression));
+                evalInfo?.Register(exp, typeof(ConstantExpression), wvalue2);
 
-                return valueStr;
+                return wvalue2;
             }
             else if (exp is ConditionalExpression)
             {
@@ -1386,8 +1486,9 @@ namespace GaleForceCore.Builders
                             parameters: parameters,
                             isCondition: true);
 
-                        evalInfo?.Register(ce, typeof(ConstantExpression), testExp);
-                        return testExp;
+                        var wvalue2 = this.WrappedValue(testExp, ce, typeof(ConstantExpression));
+                        evalInfo?.Register(ce, typeof(ConstantExpression), wvalue2);
+                        return wvalue2;
                     }
                 }
 
@@ -1410,11 +1511,12 @@ namespace GaleForceCore.Builders
                     isCondition: true);
 
                 var value = $"1 = IIF({testExp},IIF({expTrue},1,0),IIF({expFalse},1,0))";
+                var wvalue = this.WrappedValue(value, ce, typeof(ConstantExpression));
 
-                var parent = evalInfo?.Register(ce, typeof(ConstantExpression), value);
+                var parent = evalInfo?.Register(ce, typeof(ConstantExpression), wvalue);
                 evalInfo?.RegisterChildren(parent, ce.IfTrue, ce.IfFalse);
 
-                return value;
+                return wvalue;
             }
             else if (exp is MethodCallExpression)
             {
@@ -1464,6 +1566,8 @@ namespace GaleForceCore.Builders
                                 break;
                         }
 
+                        var wvalue = this.WrappedValue(value, me, typeof(MethodCallExpression));
+
                         parent = evalInfo?.Register(me, typeof(MethodCallExpression), value);
                         evalInfo?.RegisterChildren(parent, me.Arguments[0], me.Object);
                         return value;
@@ -1496,18 +1600,20 @@ namespace GaleForceCore.Builders
                         value = $"{subValue} IN {obj}";
                     }
 
-                    var parent = evalInfo?.Register(me, typeof(MethodCallExpression), value);
+                    var wvalue = this.WrappedValue(value, me, typeof(MethodCallExpression));
+                    var parent = evalInfo?.Register(me, typeof(MethodCallExpression), wvalue);
                     evalInfo?.RegisterChildren(parent, me.Arguments[0], me.Object ?? me.Arguments[1]);
 
-                    return value;
+                    return wvalue;
                 }
 
                 try
                 {
                     object value = Expression.Lambda(me).Compile().DynamicInvoke();
                     var sqlValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
-                    evalInfo?.Register(me, typeof(MethodCallExpression), sqlValue);
-                    return sqlValue;
+                    var wvalue = this.WrappedValue(sqlValue, me, typeof(MethodCallExpression));
+                    evalInfo?.Register(me, typeof(MethodCallExpression), wvalue);
+                    return wvalue;
                 }
                 catch (InvalidOperationException ioe)
                 {
@@ -1521,6 +1627,39 @@ namespace GaleForceCore.Builders
                 throw new NotSupportedException("Unknown expression type for: " + exp.ToString());
             }
         }
+
+        /// <summary>
+        /// Wrappeds the value.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <param name="exp">The exp.</param>
+        /// <param name="expType">Type of the exp.</param>
+        /// <returns>System.String.</returns>
+        private string WrappedValue(string value, Expression exp, Type expType)
+        {
+            if (this.Options.UseParameters)
+            {
+                if (exp.Type.Name == "String" &&
+                    expType.Name == "ConstantExpression" &&
+                    value.Length > 0)
+                {
+                    this.Parameters["Param" + (++this.ParamIndex)] = value;
+                    return "@Param" + this.ParamIndex;
+                }
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Gets or sets the index of the parameter.
+        /// </summary>
+        protected int ParamIndex { get; set; } = 0;
+
+        /// <summary>
+        /// Gets or sets the parameters.
+        /// </summary>
+        protected Dictionary<string, string> Parameters { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
         /// Removes the outer quotes.
@@ -1617,18 +1756,47 @@ namespace GaleForceCore.Builders
             switch (this.Command)
             {
                 case "SELECT":
-                    return this.BuildSelect();
+                    return this.AddParams(this.BuildSelect());
                 case "UPDATE":
-                    return this.BuildUpdate();
+                    return this.AddParams(this.BuildUpdate());
                 case "INSERT":
-                    return this.BuildInsert();
+                    return this.AddParams(this.BuildInsert());
                 case "DELETE":
-                    return this.BuildDelete();
+                    return this.AddParams(this.BuildDelete());
                 case "MERGE":
-                    return this.BuildMerge();
+                    return this.AddParams(this.BuildMerge());
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Adds the parameters.
+        /// </summary>
+        /// <param name="cmd">The command.</param>
+        /// <returns>System.String.</returns>
+        private string AddParams(string cmd)
+        {
+            if (!this.Options.UseParameters || this.Parameters.Count() == 0)
+            {
+                return cmd;
+            }
+
+            var sb = new StringBuilder();
+            foreach (var kv in this.Parameters)
+            {
+                var len = kv.Value.StartsWith("'") && kv.Value.EndsWith("'") ? (kv.Value.Length - 2).ToString() : "MAX";
+                sb.AppendLine($"DECLARE @{kv.Key} VARCHAR({len})");
+            }
+
+            foreach (var kv in this.Parameters)
+            {
+                sb.AppendLine($"SET @{kv.Key} = {kv.Value}");
+            }
+
+            sb.AppendLine();
+            sb.Append(cmd);
+            return sb.ToString();
         }
 
         /// <summary>
@@ -1662,6 +1830,8 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Joineds the where string.
         /// </summary>
+        /// <param name="addWhere">The add where.</param>
+        /// <param name="prefixWhereSet">The prefix where set.</param>
         /// <returns>System.String.</returns>
         private string JoinedWhereString(string addWhere = null, List<string> prefixWhereSet = null)
         {
@@ -1749,6 +1919,11 @@ namespace GaleForceCore.Builders
             return sb.ToString().Trim();
         }
 
+        /// <summary>
+        /// Gets the non ignore properties.
+        /// </summary>
+        /// <typeparam name="TRecordType">The type of the t record type.</typeparam>
+        /// <returns>PropertyInfo[].</returns>
         protected PropertyInfo[] GetNonIgnoreProperties<TRecordType>()
         {
             return typeof(TRecordType).GetProperties()
@@ -2131,6 +2306,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="records">The records.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        /// <exception cref="GaleForceCore.Builders.MissingDataTableException">SELECT testing requires a record set</exception>
         private IEnumerable<TRecord> ExecuteSelect(IEnumerable<TRecord> records)
         {
             if (records == null)
@@ -2200,6 +2376,7 @@ namespace GaleForceCore.Builders
         /// <param name="target">The target.</param>
         /// <param name="overrideSource">The override source.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        /// <exception cref="GaleForceCore.Builders.MissingDataTableException">UPDATE testing requires a record set</exception>
         public int ExecuteUpdate(IEnumerable<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
             if (target == null)
@@ -2294,6 +2471,7 @@ namespace GaleForceCore.Builders
         /// <param name="target">The target.</param>
         /// <param name="overrideSource">The override source.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        /// <exception cref="GaleForceCore.Builders.MissingDataTableException">INSERT testing requires a record set</exception>
         public int ExecuteInsert(List<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
             if (target == null)
@@ -2335,7 +2513,9 @@ namespace GaleForceCore.Builders
         /// <param name="target">The target.</param>
         /// <param name="source">The source.</param>
         /// <returns>System.Int32.</returns>
+        /// <exception cref="GaleForceCore.Builders.MissingDataTableException">MERGE testing requires a List<TRecord> set</exception>
         /// <exception cref="System.Exception">source record matches multiple targets (record #{index})</exception>
+        /// <font color="red">Badly formed XML comment.</font>
         public int ExecuteMerge(List<TRecord> target, IEnumerable<TRecord> source)
         {
             if (target == null)
@@ -2389,10 +2569,12 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
-        /// Executes the delete command against records.
+        /// Executes the delete.
         /// </summary>
-        /// <param name="target">The target set of records.</param>
-        /// <returns>Count of deleted records.</returns>
+        /// <param name="target">The target.</param>
+        /// <returns>System.Int32.</returns>
+        /// <exception cref="GaleForceCore.Builders.MissingDataTableException">DELETE testing requires a List<TRecord> set</exception>
+        /// <font color="red">Badly formed XML comment.</font>
         public int ExecuteDelete(List<TRecord> target)
         {
             if (target == null)
@@ -2450,7 +2632,27 @@ namespace GaleForceCore.Builders
         }
     }
 
+    /// <summary>
+    /// Class IgnoreFieldAttribute. Implements the <see cref="Attribute"/>
+    /// </summary>
+    /// <seealso cref="Attribute"/>
     public class IgnoreFieldAttribute : Attribute
     {
+    }
+
+    /// <summary>
+    /// Class SimpleSqlBuilderOptions.
+    /// </summary>
+    public class SimpleSqlBuilderOptions
+    {
+        /// <summary>
+        /// Gets or sets the metadata.
+        /// </summary>
+        public Dictionary<string, object> Metadata { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether [use parameters].
+        /// </summary>
+        public bool UseParameters { get; set; } = false;
     }
 }
