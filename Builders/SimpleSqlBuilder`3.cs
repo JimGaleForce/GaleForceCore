@@ -181,7 +181,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> From(string tableName1, string tableName2)
         {
-            this.TableNames = new string[] { tableName1, tableName2 };
+            From(new string[] { tableName1, tableName2 });
             return this;
         }
 
@@ -251,7 +251,11 @@ namespace GaleForceCore.Builders
                     this.JoinKey.Body,
                     true,
                     parameters: this.JoinKey.Parameters);
-                sb.Append($"{this.JoinPhrase} JOIN {this.TableNames[1]} ON {keys} ");
+
+                var refTableName = this.TableNames[1] != this.TableNamesActual[1]
+                    ? this.TableNames[1] + " "
+                    : string.Empty;
+                sb.Append($"{this.JoinPhrase} JOIN {this.TableNamesActual[1]} {refTableName}ON {keys} ");
             }
         }
 

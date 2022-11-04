@@ -609,22 +609,21 @@
             var piece = "DEF";
             var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
                     .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
-                .Select((e, t) => e.Int3, (e, t) => t.String2)
-                .InnerJoinOn((e, t) => e.Int3 == t.Int3)
+                .Select((e, t) => e.Int1, (e, t) => t.String1)
+                .InnerJoinOn((e, t) => e.Int1 == t.Int1)
                 .Where(
                     (e, t) => t.Int1 > from &&
                         t.Int1 < toto &&
-                        (t.String2.Contains(piece + ":Reviewed") || t.String2.Contains(piece + "Non-Actionable")) &&
+                        (t.String1.Contains(piece + ":Reviewed") || t.String1.Contains(piece + "Non-Actionable")) &&
                         emotionSet.Contains(e.String1))
                 .OrderByDescending(ep => ep.Int3)
                 .Build();
 
-            var expected = "SELECT TableName.Int3,TableName.String2 " +
-                "FROM TableName " +
-                "INNER JOIN TableName ON (TableName.Int3 = TableName.Int3) " +
-                "WHERE ((((TableName.Int1 > 0) AND (TableName.Int1 < 10)) " +
-                "AND (TableName.String2 LIKE '%CONCAT('DEF',':Reviewed')%' " +
-                "OR TableName.String2 LIKE '%CONCAT('DEF','Non-Actionable')%')) " +
+            var expected = "SELECT TableName.Int1,TableName__1.String1 FROM TableName " +
+                "INNER JOIN TableName TableName__1 ON (TableName.Int1 = TableName__1.Int1) " +
+                "WHERE ((((TableName__1.Int1 > 0) AND (TableName__1.Int1 < 10)) AND " +
+                "(TableName__1.String1 LIKE '%'+CONCAT('DEF',':Reviewed')+'%' OR " +
+                "TableName__1.String1 LIKE '%'+CONCAT('DEF','Non-Actionable')+'%')) " +
                 "AND TableName.String1 IN ('ABC')) ORDER BY Int3 DESC";
 
             Assert.AreEqual(expected, actual);
@@ -1776,6 +1775,20 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
                 .Build();
 
             var expected = "SELECT String1 FROM TableName WHERE (String1 = @Param1)";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestInnerRefToSelf()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTestRecord>()
+                .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
+                .Select((s1, s2) => s1.String1)
+                .InnerJoinOn((s1, s2) => s1.Int1 == s2.Int1)
+                .Where(s => s.String1 == "String111")
+                .Build();
+
+            var expected = "SELECT TableName.String1 FROM TableName INNER JOIN TableName TableName__1 ON (TableName.Int1 = TableName__1.Int1) WHERE (TableName.String1 = 'String111')";
             Assert.AreEqual(expected, actual);
         }
 

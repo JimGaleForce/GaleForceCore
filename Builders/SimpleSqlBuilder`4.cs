@@ -176,7 +176,7 @@ namespace GaleForceCore.Builders
             string tableName2,
             string tableName3)
         {
-            this.TableNames = new string[] { tableName1, tableName2, tableName3 };
+            this.From(new string[] { tableName1, tableName2, tableName3 });
             return this;
         }
 
@@ -395,7 +395,10 @@ namespace GaleForceCore.Builders
                         }
                     }
 
-                    sb.Append($"{joinPhrase} JOIN {this.TableNames[i + 1]} ON {keys} ");
+                    var refTableName = this.TableNames[i + 1] != this.TableNamesActual[i + 1]
+                        ? this.TableNames[i + 1] + " "
+                        : string.Empty;
+                    sb.Append($"{joinPhrase} JOIN {this.TableNames[i + 1]} {refTableName}ON {keys} ");
                 }
             }
         }

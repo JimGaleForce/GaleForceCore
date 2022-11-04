@@ -32,10 +32,17 @@ namespace GaleForceCore.Builders
         public Type[] Types { get; protected set; }
 
         /// <summary>
-        /// Gets the name of the tables, when multiple.
+        /// Gets the name (potentially generated if matching previous tables) of the tables, when
+        /// multiple.
         /// </summary>
         /// <value>The name of the table.</value>
         public string[] TableNames { get; protected set; }
+
+        /// <summary>
+        /// Gets the actual name of the tables, when multiple.
+        /// </summary>
+        /// <value>The name of the table.</value>
+        public string[] TableNamesActual { get; protected set; }
 
         /// <summary>
         /// As fields
@@ -411,6 +418,26 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> From(string[] tableNames)
         {
             this.TableNames = tableNames;
+            var newTableNames = new List<string>();
+            var actualTableNames = new List<string>();
+            int index = 1;
+            foreach (string tableName in tableNames)
+            {
+                if (actualTableNames.Contains(tableName))
+                {
+                    newTableNames.Add(tableName + "__" + index);
+                }
+                else
+                {
+                    newTableNames.Add(tableName);
+                }
+
+                actualTableNames.Add(tableName);
+            }
+
+            this.TableNames = newTableNames.ToArray();
+            this.TableNamesActual = actualTableNames.ToArray();
+
             return this;
         }
 
@@ -1566,13 +1593,34 @@ namespace GaleForceCore.Builders
                         switch (meMethodName)
                         {
                             case "Contains":
-                                value = $"{obj} LIKE '%{subValue}%'";
+                                if (me.Arguments[0].NodeType != ExpressionType.Add)
+                                {
+                                    value = $"{obj} LIKE '%{subValue}%'";
+                                }
+                                else
+                                {
+                                    value = $"{obj} LIKE '%'+{subValue}+'%'";
+                                }
                                 break;
                             case "StartsWith":
-                                value = $"{obj} LIKE '{subValue}%'";
+                                if (me.Arguments[0].NodeType != ExpressionType.Add)
+                                {
+                                    value = $"{obj} LIKE '{subValue}%'";
+                                }
+                                else
+                                {
+                                    value = $"{obj} LIKE {subValue}+'%'";
+                                }
                                 break;
                             case "EndsWith":
-                                value = $"{obj} LIKE '%{subValue}'";
+                                if (me.Arguments[0].NodeType != ExpressionType.Add)
+                                {
+                                    value = $"{obj} LIKE '%{subValue}";
+                                }
+                                else
+                                {
+                                    value = $"{obj} LIKE '%'+{subValue}";
+                                }
                                 break;
                         }
 
