@@ -1667,7 +1667,23 @@ namespace GaleForceCore.Builders
         /// <returns>Dictionary&lt;System.String, System.Object&gt;.</returns>
         public Dictionary<string, object> GetParameters()
         {
-            return this.Parameters.ToDictionary(x => x.Key, x => x.Value);
+            return this.Parameters.ToDictionary(x => x.Key, x => this.WithoutQuotes(x.Value));
+        }
+
+        /// <summary>
+        /// Removes quotes from quoted string in value.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>System.Object.</returns>
+        private object WithoutQuotes(object value)
+        {
+            var str = value as string;
+            if (!string.IsNullOrEmpty(str) && str.Length > 1 && str.StartsWith("'") && str.EndsWith("'"))
+            {
+                return str.Substring(1, str.Length - 2);
+            }
+
+            return value;
         }
 
         /// <summary>
