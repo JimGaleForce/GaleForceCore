@@ -139,6 +139,16 @@ namespace GaleForceCore.Builders
         public IEnumerable<TRecord> SourceData { get; protected set; } = new List<TRecord>();
 
         /// <summary>
+        /// Gets or sets the index of the parameter.
+        /// </summary>
+        protected int ParamIndex { get; set; } = 0;
+
+        /// <summary>
+        /// Gets or sets the parameters.
+        /// </summary>
+        protected Dictionary<string, object> Parameters { get; set; } = new Dictionary<string, object>();
+
+        /// <summary>
         /// Gets the 'order by' list, including 'then by'.
         /// </summary>
         /// <value>The order by list.</value>
@@ -1652,14 +1662,13 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
-        /// Gets or sets the index of the parameter.
+        /// Gets the parameters.
         /// </summary>
-        protected int ParamIndex { get; set; } = 0;
-
-        /// <summary>
-        /// Gets or sets the parameters.
-        /// </summary>
-        protected Dictionary<string, string> Parameters { get; set; } = new Dictionary<string, string>();
+        /// <returns>Dictionary&lt;System.String, System.Object&gt;.</returns>
+        public Dictionary<string, object> GetParameters()
+        {
+            return this.Parameters.ToDictionary(x => x.Key, x => x.Value);
+        }
 
         /// <summary>
         /// Removes the outer quotes.
@@ -1785,7 +1794,8 @@ namespace GaleForceCore.Builders
             var sb = new StringBuilder();
             foreach (var kv in this.Parameters)
             {
-                var len = kv.Value.StartsWith("'") && kv.Value.EndsWith("'") ? (kv.Value.Length - 2).ToString() : "MAX";
+                var value = kv.Value.ToString();
+                var len = value.StartsWith("'") && value.EndsWith("'") ? (value.Length - 2).ToString() : "MAX";
                 sb.AppendLine($"DECLARE @{kv.Key} VARCHAR({len})");
             }
 
