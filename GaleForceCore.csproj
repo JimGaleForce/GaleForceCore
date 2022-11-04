@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.26.5</Version>
-    <AssemblyVersion>1.0.26.5</AssemblyVersion>
-    <FileVersion>1.0.26.5</FileVersion>
-    <PackageReleaseNotes>fixed update execute no records</PackageReleaseNotes>
+    <Version>1.0.27.1</Version>
+    <AssemblyVersion>1.0.27.1</AssemblyVersion>
+    <FileVersion>1.0.27.1</FileVersion>
+    <PackageReleaseNotes>added optional @param generation</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 

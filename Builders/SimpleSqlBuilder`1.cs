@@ -1858,7 +1858,7 @@ namespace GaleForceCore.Builders
                 return $"WHERE {string.Join(" AND ",wheres)} ";
             }
 
-            return "";
+            return string.Empty;
         }
 
         /// <summary>
@@ -1978,7 +1978,7 @@ namespace GaleForceCore.Builders
                 sb.Append(string.Join(", ", setValues));
 
                 var joinedWhere = this.JoinedWhereString();
-                sb.Append(!string.IsNullOrEmpty(joinedWhere) ? $" {joinedWhere.Trim()}" : "");
+                sb.Append(!string.IsNullOrEmpty(joinedWhere) ? $" {joinedWhere.Trim()}" : string.Empty);
 
                 return sb.ToString().Trim();
             }
@@ -2010,7 +2010,7 @@ namespace GaleForceCore.Builders
                     prefixWhereSet: matchFields.Count() > 0
                         ? this.CreateFieldEqualsValues(matchFields, record, props)
                         : null);
-                sb.Append(!string.IsNullOrEmpty(joinedWhere) ? $" {joinedWhere.Trim()}" : "");
+                sb.Append(!string.IsNullOrEmpty(joinedWhere) ? $" {joinedWhere.Trim()}" : string.Empty);
 
                 count++;
             }
@@ -2630,29 +2630,5 @@ namespace GaleForceCore.Builders
             var value = valueExpression != null ? valueExpression.Invoke(record) : prop.GetValue(record);
             return SqlHelpers.GetAsSQLValue(value.GetType(), value);
         }
-    }
-
-    /// <summary>
-    /// Class IgnoreFieldAttribute. Implements the <see cref="Attribute"/>
-    /// </summary>
-    /// <seealso cref="Attribute"/>
-    public class IgnoreFieldAttribute : Attribute
-    {
-    }
-
-    /// <summary>
-    /// Class SimpleSqlBuilderOptions.
-    /// </summary>
-    public class SimpleSqlBuilderOptions
-    {
-        /// <summary>
-        /// Gets or sets the metadata.
-        /// </summary>
-        public Dictionary<string, object> Metadata { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether [use parameters].
-        /// </summary>
-        public bool UseParameters { get; set; } = false;
     }
 }
