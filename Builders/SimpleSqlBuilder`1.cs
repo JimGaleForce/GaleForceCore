@@ -1760,20 +1760,20 @@ namespace GaleForceCore.Builders
         /// Builds this instance.
         /// </summary>
         /// <returns>System.String.</returns>
-        public string Build()
+        public string Build(bool declareParamsIfExist = false)
         {
             switch (this.Command)
             {
                 case "SELECT":
-                    return this.AddParams(this.BuildSelect());
+                    return this.AddParams(this.BuildSelect(), declareParamsIfExist);
                 case "UPDATE":
-                    return this.AddParams(this.BuildUpdate());
+                    return this.AddParams(this.BuildUpdate(), declareParamsIfExist);
                 case "INSERT":
-                    return this.AddParams(this.BuildInsert());
+                    return this.AddParams(this.BuildInsert(), declareParamsIfExist);
                 case "DELETE":
-                    return this.AddParams(this.BuildDelete());
+                    return this.AddParams(this.BuildDelete(), declareParamsIfExist);
                 case "MERGE":
-                    return this.AddParams(this.BuildMerge());
+                    return this.AddParams(this.BuildMerge(), declareParamsIfExist);
             }
 
             return null;
@@ -1784,9 +1784,9 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="cmd">The command.</param>
         /// <returns>System.String.</returns>
-        private string AddParams(string cmd)
+        private string AddParams(string cmd, bool declareParamsIfExist = false)
         {
-            if (!this.Options.UseParameters || this.Parameters.Count() == 0)
+            if (!declareParamsIfExist || !this.Options.UseParameters || this.Parameters.Count() == 0)
             {
                 return cmd;
             }

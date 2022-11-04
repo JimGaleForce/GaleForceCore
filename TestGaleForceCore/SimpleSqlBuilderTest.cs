@@ -1751,7 +1751,23 @@ GO;";
         }
 
         [TestMethod]
-        public void TestParams1()
+        public void TestParamsDeclared()
+        {
+            var options = new SimpleSqlBuilderOptions { UseParameters = true };
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(options, SqlTestRecord.TableName)
+                .Select(s => s.String1)
+                .Where(s => s.String1 == "String111")
+                .Build(true);
+
+            var expected = @"DECLARE @Param1 VARCHAR(9)
+SET @Param1 = 'String111'
+
+SELECT String1 FROM TableName WHERE (String1 = @Param1)";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestParamsUndeclared()
         {
             var options = new SimpleSqlBuilderOptions { UseParameters = true };
             var actual = new SimpleSqlBuilder<SqlTestRecord>(options, SqlTestRecord.TableName)
@@ -1759,10 +1775,7 @@ GO;";
                 .Where(s => s.String1 == "String111")
                 .Build();
 
-            var expected = @"DECLARE @Param1 VARCHAR(9)
-SET @Param1 = 'String111'
-
-SELECT String1 FROM TableName WHERE (String1 = @Param1)";
+            var expected = "SELECT String1 FROM TableName WHERE (String1 = @Param1)";
             Assert.AreEqual(expected, actual);
         }
 
