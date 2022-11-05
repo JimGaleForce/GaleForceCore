@@ -1585,7 +1585,9 @@ namespace GaleForceCore.Builders
                         "IndexOf",
                         "CharIndexOf",
                         "ToLower",
-                        "ToUpper"
+                        "ToUpper",
+                        "TrimStart",
+                        "TrimEnd"
                     };
 
                     var isStringContainer = stringMethods.Contains(meMethodName);
@@ -1656,6 +1658,12 @@ namespace GaleForceCore.Builders
                                 break;
                             case "Trim":
                                 value = $"TRIM({origValue})";
+                                break;
+                            case "TrimStart":
+                                value = $"LTRIM({origValue})";
+                                break;
+                            case "TrimEnd":
+                                value = $"RTRIM({origValue})";
                                 break;
                             case "Equals":
                                 value = $"{origValue} = {obj}";
