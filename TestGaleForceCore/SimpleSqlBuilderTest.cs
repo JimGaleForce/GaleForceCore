@@ -5,6 +5,7 @@
     using System.Globalization;
     using System.Linq;
     using GaleForceCore.Builders;
+    using GaleForceCore.Helpers;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     /// <summary>
@@ -1792,6 +1793,81 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
             Assert.AreEqual(expected, actual);
         }
 
+        [TestMethod]
+        public void TestAllAsFields()
+        {
+            var data = this.GetData();
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                            .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
+                .SelectAs(tu => tu.String3, (t1, t3) => t3.String1)
+                .SelectAs(tu => tu.Int3, (t1, t3) => t1.Int1)
+                .InnerJoinOn((t1, t3) => t1.Int1 == t3.Int1)
+                .Where((t1, t3) => t1.Int1 % 2 == 1)
+                .Execute(data, data);
+
+            Assert.AreEqual(3, actual.Count());
+        }
+
+        [TestMethod]
+        public void TestStringNullFn()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.String1)
+                .Where(s => !string.IsNullOrEmpty(s.String1) && !string.IsNullOrWhiteSpace(s.String1))
+                .Build();
+
+            var expected = "SELECT String1 FROM TableName WHERE (NOT ISNULL(String1, '') = '' AND NOT TRIM(ISNULL(String1, '')) = '')";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestIndexOf()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.String1)
+                .Where(s => s.String1.IndexOf("Str") == 0)
+                .Build();
+
+            var expected = "SELECT String1 FROM TableName WHERE ((CHARINDEX('Str',String1)-1) = 0)";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestCharIndexOf()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.String1)
+                .Where(s => s.String1.CharIndexOf("Str") == 1)
+                .Build();
+
+            var expected = "SELECT String1 FROM TableName WHERE (CHARINDEX('Str',String1) = 1)";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestStrEquals()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.String1)
+                .Where(s => s.String1.Equals("String123"))
+                .Build();
+
+            var expected = "SELECT String1 FROM TableName WHERE 'String123' = String1";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestStrLower()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.String1)
+                .Where(s => s.String1.ToLower() == "string123")
+                .Build();
+
+            var expected = "SELECT String1 FROM TableName WHERE (LOWER(String1) = 'string123')";
+            Assert.AreEqual(expected, actual);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
@@ -1891,6 +1967,8 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
     public class SqlTestNewRecord
     {
         public int Int3 { get; set; }
+
+        public string String3 { get; set; }
     }
 
     public class SqlTestRecord

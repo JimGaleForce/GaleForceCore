@@ -181,7 +181,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> From(string tableName1, string tableName2)
         {
-            From(new string[] { tableName1, tableName2 });
+            this.From(new string[] { tableName1, tableName2 });
             return this;
         }
 
@@ -483,6 +483,7 @@ namespace GaleForceCore.Builders
             foreach (var record in current)
             {
                 var newRecord = (TRecord)Activator.CreateInstance(type);
+
                 for (var i = 0; i < this.Fields.Count(); i++)
                 {
                     var value = fieldExpressions[i](record.Item1, record.Item2);

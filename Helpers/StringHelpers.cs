@@ -13,7 +13,10 @@ namespace GaleForceCore.Helpers
         /// <param name="text">The text.</param>
         /// <param name="indent">The indent.</param>
         /// <returns>System.String.</returns>
-        public static string Indent(this string text, int indent) { return string.Empty.PadLeft(indent) + text; }
+        public static string Indent(this string text, int indent)
+        {
+            return string.Empty.PadLeft(indent) + text;
+        }
 
         /// <summary>
         /// Appends a string if the content is not empty.
@@ -22,7 +25,9 @@ namespace GaleForceCore.Helpers
         /// <param name="append">The string to append if the value is not empty.</param>
         /// <returns>System.String.</returns>
         public static string AppendIfContent(this string value, string append)
-        { return string.IsNullOrWhiteSpace(value) ? value : value + append; }
+        {
+            return string.IsNullOrWhiteSpace(value) ? value : value + append;
+        }
 
         /// <summary>
         /// Sanitizes the specified querystring. Quick and dirty method.
@@ -54,7 +59,7 @@ namespace GaleForceCore.Helpers
         public static string LeftOf(this string source, string separator, bool inclusive = false)
         {
             var index = source.IndexOf(separator);
-            if(index == -1)
+            if (index == -1)
             {
                 return null;
             }
@@ -72,7 +77,7 @@ namespace GaleForceCore.Helpers
         public static string RightOf(this string source, string separator, bool inclusive = false)
         {
             var index = source.IndexOf(separator);
-            if(index == -1)
+            if (index == -1)
             {
                 return null;
             }
@@ -90,7 +95,7 @@ namespace GaleForceCore.Helpers
         public static string RightOfLast(this string source, string separator)
         {
             var index = source.LastIndexOf(separator);
-            if(index == -1)
+            if (index == -1)
             {
                 return null;
             }
@@ -106,7 +111,7 @@ namespace GaleForceCore.Helpers
         public static string[] RemoveOutsideChars(this string[] source)
         {
             var items = new string[source.Length];
-            for(var i = 0; i < items.Length; i++)
+            for (var i = 0; i < items.Length; i++)
             {
                 items[i] = source[i].Length > 2 ? source[i].Substring(1, source[i].Length - 2) : string.Empty;
             }
@@ -115,7 +120,8 @@ namespace GaleForceCore.Helpers
         }
 
         /// <summary>
-        /// Splits the source to return items between left and right separators. Doesn't work for nested items.
+        /// Splits the source to return items between left and right separators. Doesn't work for
+        /// nested items.
         /// </summary>
         /// <param name="source">The source.</param>
         /// <param name="left">The left.</param>
@@ -125,7 +131,7 @@ namespace GaleForceCore.Helpers
         {
             var sets = (((char)255) + source).Split(new[] { left, right }, StringSplitOptions.None);
             var items = new List<string>();
-            for(var i = 1; i < sets.Length; i += 2)
+            for (var i = 1; i < sets.Length; i += 2)
             {
                 items.Add(sets[i]);
             }
@@ -155,7 +161,9 @@ namespace GaleForceCore.Helpers
         /// <c>true</c> if string are non-null and match, invariantly, <c>false</c> otherwise.
         /// </returns>
         public static bool EqualsInvariant(this string left, string right)
-        { return left != null && right != null && left.ToLowerInvariant().Equals(right.ToLowerInvariant()); }
+        {
+            return left != null && right != null && left.ToLowerInvariant().Equals(right.ToLowerInvariant());
+        }
 
         /// <summary>
         /// Extracts text between two chars.
@@ -169,18 +177,18 @@ namespace GaleForceCore.Helpers
             var inBetween = false;
             var sb = new StringBuilder(text.Length - 2);
             var result = new List<string>();
-            foreach(var c in text)
+            foreach (var c in text)
             {
-                if(inBetween && c.Equals(endChar))
+                if (inBetween && c.Equals(endChar))
                 {
                     inBetween = false;
                     result.Add(sb.ToString());
                 }
-                else if(inBetween)
+                else if (inBetween)
                 {
                     sb.Append(c);
                 }
-                else if(c.Equals(startChar))
+                else if (c.Equals(startChar))
                 {
                     inBetween = true;
                 }
@@ -202,35 +210,35 @@ namespace GaleForceCore.Helpers
             var inBetween = false;
             char lastChar = (char)0;
             var sb = new StringBuilder();
-            foreach(var c in text)
+            foreach (var c in text)
             {
-                if(inBetween && lastChar == c && c.Equals(startChar))
+                if (inBetween && lastChar == c && c.Equals(startChar))
                 {
                     inBetween = false;
                     sb.Append(c);
                     continue;
                 }
-                else if(!inBetween && lastChar == c && c.Equals(endChar))
+                else if (!inBetween && lastChar == c && c.Equals(endChar))
                 {
                     inBetween = true;
                     sb.Append(c);
                     continue;
                 }
 
-                if(inBetween && c.Equals(endChar))
+                if (inBetween && c.Equals(endChar))
                 {
                     inBetween = false;
-                    if(!removeChars)
+                    if (!removeChars)
                     {
                         sb.Append(c);
                     }
                 }
-                else if(!inBetween)
+                else if (!inBetween)
                 {
-                    if(c.Equals(startChar))
+                    if (c.Equals(startChar))
                     {
                         inBetween = true;
-                        if(!removeChars)
+                        if (!removeChars)
                         {
                             sb.Append(c);
                         }
@@ -253,7 +261,9 @@ namespace GaleForceCore.Helpers
         /// <param name="text">The text.</param>
         /// <returns>System.String.</returns>
         public static string ToTitleInvariant(this string text)
-        { return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text); }
+        {
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text);
+        }
 
         /// <summary>
         /// Counts the number of characters in a string, quickly.
@@ -264,9 +274,9 @@ namespace GaleForceCore.Helpers
         public static int CharCount(this string text, char c)
         {
             var count = 0;
-            foreach(var cc in text)
+            foreach (var cc in text)
             {
-                if(cc.Equals(c))
+                if (cc.Equals(c))
                 {
                     count++;
                 }
@@ -278,43 +288,73 @@ namespace GaleForceCore.Helpers
         public static string Soundex(this string text, int length = 4)
         {
             StringBuilder result = new StringBuilder();
-            if(text != null && text.Length > 0)
+            if (text != null && text.Length > 0)
             {
                 string previousCode = string.Empty, currentCode = string.Empty, currentLetter = string.Empty;
                 result.Append(text.Substring(0, 1));
-                for(int i = 1; i < text.Length; i++)
+                for (int i = 1; i < text.Length; i++)
                 {
                     currentLetter = text.Substring(i, 1).ToLower();
                     currentCode = string.Empty;
 
-                    if("bfpv".IndexOf(currentLetter) > -1)
+                    if ("bfpv".IndexOf(currentLetter) > -1)
+                    {
                         currentCode = "1";
-                    else if("cgjkqsxz".IndexOf(currentLetter) > -1)
+                    }
+                    else if ("cgjkqsxz".IndexOf(currentLetter) > -1)
+                    {
                         currentCode = "2";
-                    else if("dt".IndexOf(currentLetter) > -1)
+                    }
+                    else if ("dt".IndexOf(currentLetter) > -1)
+                    {
                         currentCode = "3";
-                    else if(currentLetter == "l")
+                    }
+                    else if (currentLetter == "l")
+                    {
                         currentCode = "4";
-                    else if("mn".IndexOf(currentLetter) > -1)
+                    }
+                    else if ("mn".IndexOf(currentLetter) > -1)
+                    {
                         currentCode = "5";
-                    else if(currentLetter == "r")
+                    }
+                    else if (currentLetter == "r")
+                    {
                         currentCode = "6";
+                    }
 
-                    if(currentCode != previousCode)
+                    if (currentCode != previousCode)
+                    {
                         result.Append(currentCode);
+                    }
 
-                    if(result.Length == length)
+                    if (result.Length == length)
+                    {
                         break;
+                    }
 
-                    if(currentCode != string.Empty)
+                    if (currentCode != string.Empty)
+                    {
                         previousCode = currentCode;
+                    }
                 }
             }
 
-            if(result.Length < length)
+            if (result.Length < length)
+            {
                 result.Append(new String('0', length - result.Length));
+            }
 
             return result.ToString().ToUpper();
+        }
+
+        public static int CharIndexOf(this string text, string substring)
+        {
+            return text.IndexOf(substring) + 1;
+        }
+
+        public static int CharIndexOf(this string text, string substring, int start)
+        {
+            return text.IndexOf(substring, start - 1) + 1;
         }
     }
 }

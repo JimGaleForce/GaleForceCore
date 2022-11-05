@@ -1195,10 +1195,11 @@ namespace GaleForceCore.Builders
                     evalInfo: evalInfo);
 
                 var prefixLeft = "(";
-                if (bExp.Left.NodeType == ExpressionType.Not)
-                {
-                    prefixLeft += "NOT ";
-                }
+
+                // if (bExp.Left.NodeType == ExpressionType.Not)
+                // {
+                // prefixLeft += "NOT ";
+                // }
 
                 var addLeft = left;
                 var addCenter = string.Empty;
@@ -1561,66 +1562,115 @@ namespace GaleForceCore.Builders
 
                 var meMethodName = me.Method.Name;
                 var meContainingType = me.Method.DeclaringType.Name;
+                var meFullTypeName = me.Method.DeclaringType.FullName;
 
                 // special case methods
                 // todo: make sure this only acts on fields from the type, not others
-                if (meContainingType == "String")
+                if (meContainingType == "String" || meFullTypeName == "GaleForceCore.Helpers.StringHelper")
                 {
+                    string origValue;
                     string subValue;
                     string obj;
                     EvalNode parent = null;
 
-                    string[] stringMethods = new string[] { "Contains", "StartsWith", "EndWidth" };
+                    string[] stringMethods = new string[]
+                    {
+                        "Contains",
+                        "StartsWith",
+                        "EndWidth",
+                        "IsNullOrEmpty",
+                        "IsNullOrWhiteSpace",
+                        "Trim",
+                        "Equals",
+                        "IndexOf",
+                        "CharIndexOf",
+                        "ToLower",
+                        "ToUpper"
+                    };
+
                     var isStringContainer = stringMethods.Contains(meMethodName);
 
                     if (isStringContainer)
                     {
-                        subValue = this.RemoveOuterQuotes(
+                        var argsAreShifted = meFullTypeName == "GaleForceCore.Helpers.StringHelper";
+
+                        origValue = me.Arguments.Count() > (argsAreShifted ? 1 : 0)
+                            ?
                             this.ParseExpression(
                                 types,
-                                me.Arguments[0],
+                                argsAreShifted ? me.Arguments[1] : me.Arguments[0],
                                 parameters: parameters,
                                 tableNames: tableNames,
-                                evalInfo: evalInfo));
+                                evalInfo: evalInfo)
+                            : null;
 
-                        obj = this.ParseExpression(
-                            types,
-                            me.Object,
-                            parameters: parameters,
-                            tableNames: tableNames);
+                        subValue = origValue == null ? null : this.RemoveOuterQuotes(origValue);
+                        var isQuoted = subValue != origValue;
+
+                        obj = me.Object == null && !argsAreShifted
+                            ? null
+                            : this.ParseExpression(
+                                types,
+                                argsAreShifted ? me.Arguments[0] : me.Object,
+                                parameters: parameters,
+                                tableNames: tableNames);
 
                         string value = null;
                         switch (meMethodName)
                         {
                             case "Contains":
-                                if (me.Arguments[0].NodeType != ExpressionType.Add)
+                                if (isQuoted)
                                 {
                                     value = $"{obj} LIKE '%{subValue}%'";
                                 }
                                 else
                                 {
-                                    value = $"{obj} LIKE '%'+{subValue}+'%'";
+                                    value = $"{obj} LIKE '%'+{origValue}+'%'";
                                 }
                                 break;
                             case "StartsWith":
-                                if (me.Arguments[0].NodeType != ExpressionType.Add)
+                                if (isQuoted)
                                 {
                                     value = $"{obj} LIKE '{subValue}%'";
                                 }
                                 else
                                 {
-                                    value = $"{obj} LIKE {subValue}+'%'";
+                                    value = $"{obj} LIKE {origValue}+'%'";
                                 }
                                 break;
                             case "EndsWith":
-                                if (me.Arguments[0].NodeType != ExpressionType.Add)
+                                if (isQuoted)
                                 {
                                     value = $"{obj} LIKE '%{subValue}";
                                 }
                                 else
                                 {
-                                    value = $"{obj} LIKE '%'+{subValue}";
+                                    value = $"{obj} LIKE '%'+{origValue}";
                                 }
+                                break;
+                            case "IsNullOrEmpty":
+                                value = $"ISNULL({origValue}, '') = ''";
+                                break;
+                            case "IsNullOrWhiteSpace":
+                                value = $"TRIM(ISNULL({origValue}, '')) = ''";
+                                break;
+                            case "Trim":
+                                value = $"TRIM({origValue})";
+                                break;
+                            case "Equals":
+                                value = $"{origValue} = {obj}";
+                                break;
+                            case "IndexOf":
+                                value = $"(CHARINDEX({origValue},{obj})-1)";
+                                break;
+                            case "CharIndexOf":
+                                value = $"CHARINDEX({origValue},{obj})";
+                                break;
+                            case "ToLower":
+                                value = $"LOWER({obj})";
+                                break;
+                            case "ToUpper":
+                                value = $"UPPER({obj})";
                                 break;
                         }
 
