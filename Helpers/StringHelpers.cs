@@ -1,10 +1,18 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="StringHelpers.cs" company="Gale-Force, LLC">
+// Copyright (C) Gale-Force, LLC. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
 namespace GaleForceCore.Helpers
 {
+    /// <summary>
+    /// Class StringHelper.
+    /// </summary>
     public static class StringHelper
     {
         /// <summary>
@@ -90,7 +98,6 @@ namespace GaleForceCore.Helpers
         /// </summary>
         /// <param name="source">The source.</param>
         /// <param name="separator">The separator.</param>
-        /// <param name="inclusive">if set to <c>true</c>, includes the separator text.</param>
         /// <returns>System.String.</returns>
         public static string RightOfLast(this string source, string separator)
         {
@@ -157,9 +164,7 @@ namespace GaleForceCore.Helpers
         /// </summary>
         /// <param name="left">The left.</param>
         /// <param name="right">The right.</param>
-        /// <returns>
-        /// <c>true</c> if string are non-null and match, invariantly, <c>false</c> otherwise.
-        /// </returns>
+        /// <returns><c>true</c> if string are non-null and match, invariantly, <c>false</c> otherwise.</returns>
         public static bool EqualsInvariant(this string left, string right)
         {
             return left != null && right != null && left.ToLowerInvariant().Equals(right.ToLowerInvariant());
@@ -285,6 +290,12 @@ namespace GaleForceCore.Helpers
             return count;
         }
 
+        /// <summary>
+        /// Returns a Soundex version of the text, up to the specified length.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="length">The length.</param>
+        /// <returns>System.String.</returns>
         public static string Soundex(this string text, int length = 4)
         {
             StringBuilder result = new StringBuilder();
@@ -347,14 +358,50 @@ namespace GaleForceCore.Helpers
             return result.ToString().ToUpper();
         }
 
-        public static int CharIndexOf(this string text, string substring)
+        /// <summary>
+        /// Charindexes the specified substring, using SQL indexing (starting at 1).
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="substring">The substring.</param>
+        /// <returns>System.Int32.</returns>
+        public static int CHARINDEX(this string text, string substring)
         {
             return text.IndexOf(substring) + 1;
         }
 
-        public static int CharIndexOf(this string text, string substring, int start)
+        /// <summary>
+        /// Charindexes the specified substring, using SQL indexing (starting at 1).
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="substring">The substring.</param>
+        /// <param name="start">The start.</param>
+        /// <returns>System.Int32.</returns>
+        public static int CHARINDEX(this string text, string substring, int start)
         {
             return text.IndexOf(substring, start - 1) + 1;
+        }
+
+        /// <summary>
+        /// Substrings the specified start, using SQL indexing (starting at 1).
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="start">The start.</param>
+        /// <returns>System.String.</returns>
+        public static string SUBSTRING(this string text, int start)
+        {
+            return text.Substring(start - 1);
+        }
+
+        /// <summary>
+        /// Substrings the specified start, using SQL indexing (starting at 1).
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="start">The start.</param>
+        /// <param name="length">The length.</param>
+        /// <returns>System.String.</returns>
+        public static string SUBSTRING(this string text, int start, int length)
+        {
+            return text.Substring(start - 1, length);
         }
     }
 }

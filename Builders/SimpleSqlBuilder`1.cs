@@ -1574,8 +1574,9 @@ namespace GaleForceCore.Builders
                 // todo: make sure this only acts on fields from the type, not others
                 if (meContainingType == "String" || meFullTypeName == "GaleForceCore.Helpers.StringHelper")
                 {
-                    string origValue;
-                    string subValue;
+                    string origValue = null;
+                    int? origValueInt = null;
+                    string subValue = null;
                     string obj;
                     EvalNode parent = null;
 
@@ -1589,31 +1590,42 @@ namespace GaleForceCore.Builders
                         "Trim",
                         "Equals",
                         "IndexOf",
-                        "CharIndexOf",
+                        "CHARINDEX",
                         "ToLower",
                         "ToUpper",
                         "TrimStart",
-                        "TrimEnd"
+                        "TrimEnd",
+                        "Substring",
+                        "SUBSTRING"
                     };
 
                     var isStringContainer = stringMethods.Contains(meMethodName);
+                    var isQuoted = false;
 
                     if (isStringContainer)
                     {
                         var argsAreShifted = meFullTypeName == "GaleForceCore.Helpers.StringHelper";
 
-                        origValue = me.Arguments.Count() > (argsAreShifted ? 1 : 0)
-                            ?
-                            this.ParseExpression(
+                        if (me.Arguments.Count() > (argsAreShifted ? 1 : 0))
+                        {
+                            var argExp = argsAreShifted ? me.Arguments[1] : me.Arguments[0];
+                            origValue = 
+                                this.ParseExpression(
                                 types,
-                                argsAreShifted ? me.Arguments[1] : me.Arguments[0],
+                                argExp,
                                 parameters: parameters,
                                 tableNames: tableNames,
-                                evalInfo: evalInfo)
-                            : null;
+                                evalInfo: evalInfo);
 
-                        subValue = origValue == null ? null : this.RemoveOuterQuotes(origValue);
-                        var isQuoted = subValue != origValue;
+                            subValue = this.RemoveOuterQuotes(origValue);
+
+                            if (argExp.Type.Name == "Int32" && argExp.NodeType == ExpressionType.Constant)
+                            {
+                                origValueInt = int.Parse(origValue);
+                            }
+
+                            isQuoted = subValue != origValue;
+                        }
 
                         obj = me.Object == null && !argsAreShifted
                             ? null
@@ -1677,7 +1689,7 @@ namespace GaleForceCore.Builders
                             case "IndexOf":
                                 value = $"(CHARINDEX({origValue},{obj})-1)";
                                 break;
-                            case "CharIndexOf":
+                            case "CHARINDEX":
                                 value = $"CHARINDEX({origValue},{obj})";
                                 break;
                             case "ToLower":
@@ -1685,6 +1697,26 @@ namespace GaleForceCore.Builders
                                 break;
                             case "ToUpper":
                                 value = $"UPPER({obj})";
+                                break;
+                            case "Substring":
+                            case "SUBSTRING":
+                                var offset = meMethodName == "Substring" ? 1 : 0;
+                                var arg2 = me.Arguments.Count() > (argsAreShifted ? 2 : 1)
+                                    ?
+                                    "," +
+                                        this.ParseExpression(
+                                            types,
+                                            argsAreShifted ? me.Arguments[2] : me.Arguments[1],
+                                            parameters: parameters,
+                                            tableNames: tableNames,
+                                            evalInfo: evalInfo)
+                                    : null;
+
+                                var parm2 = origValueInt.HasValue
+                                    ? (origValueInt + offset).ToString()
+                                    : (origValue + (offset == 1 ? "+1" : ""));
+                                value = $"SUBSTRING({obj},{parm2}{arg2})";
+
                                 break;
                         }
 

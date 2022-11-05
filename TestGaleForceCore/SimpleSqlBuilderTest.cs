@@ -1873,7 +1873,7 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
         {
             var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .Select(s => s.String1)
-                .Where(s => s.String1.CharIndexOf("Str") == 1)
+                .Where(s => s.String1.CHARINDEX("Str") == 1)
                 .Build();
 
             var expected = "SELECT String1 FROM TableName WHERE (CHARINDEX('Str',String1) = 1)";
@@ -1901,6 +1901,30 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
                 .Build();
 
             var expected = "SELECT String1 FROM TableName WHERE (LOWER(String1) = 'string123')";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestSubstring()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.String1)
+                .Where(s => s.String1.Substring(0, 1) == "S")
+                .Build();
+
+            var expected = "SELECT String1 FROM TableName WHERE (SUBSTRING(String1,1,1) = 'S')";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestSUBSTRING()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.String1)
+                .Where(s => s.String1.SUBSTRING(1, 1) == "S")
+                .Build();
+
+            var expected = "SELECT String1 FROM TableName WHERE (SUBSTRING(String1,1,1) = 'S')";
             Assert.AreEqual(expected, actual);
         }
 

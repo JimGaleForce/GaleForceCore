@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.28.1</Version>
-    <AssemblyVersion>1.0.28.1</AssemblyVersion>
-    <FileVersion>1.0.28.1</FileVersion>
-    <PackageReleaseNotes>adds 4 record joined table capability</PackageReleaseNotes>
+    <Version>1.0.29.1</Version>
+    <AssemblyVersion>1.0.29.1</AssemblyVersion>
+    <FileVersion>1.0.29.1</FileVersion>
+    <PackageReleaseNotes>added Substring, SUBSTRING</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
