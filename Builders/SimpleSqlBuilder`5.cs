@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="SimpleSqlBuilder`4.cs" company="Gale-Force">
+// <copyright file="SimpleSqlBuilder`5.cs" company="Gale-Force">
 // Copyright (C) Gale-Force. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -20,46 +20,47 @@ namespace GaleForceCore.Builders
     /// <typeparam name="TRecord1">The type of the t record1.</typeparam>
     /// <typeparam name="TRecord2">The type of the t record2.</typeparam>
     /// <typeparam name="TRecord3">The type of the t record3.</typeparam>
-    public class SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> : SimpleSqlBuilder<TRecord, TRecord1, TRecord2>
+    /// <typeparam name="TRecord4">The type of the t record4.</typeparam>
+    public class SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> : SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3>
     {
         /// <summary>
         /// Gets or sets the join key.
         /// </summary>
         /// <value>The join key.</value>
-        public List<JoinKeyItem<TRecord1, TRecord2, TRecord3>> JoinKeys
+        public List<JoinKeyItem<TRecord1, TRecord2, TRecord3, TRecord4>> JoinKeys
         {
             get;
             protected set;
-        } = new List<JoinKeyItem<TRecord1, TRecord2, TRecord3>>();
+        } = new List<JoinKeyItem<TRecord1, TRecord2, TRecord3, TRecord4>>();
 
         /// <summary>
         /// Gets the where condition expression (lambda).
         /// </summary>
         /// <value>The where expression.</value>
-        public List<Expression<Func<TRecord1, TRecord2, TRecord3, bool>>> WhereExpression3
+        public List<Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, bool>>> WhereExpression4
         {
             get;
             protected set;
-        } = new List<Expression<Func<TRecord1, TRecord2, TRecord3, bool>>>();
+        } = new List<Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, bool>>>();
 
         /// <summary>
         /// Gets the field expressions (lambda expressions for each field).
         /// </summary>
         /// <value>The field expressions.</value>
-        public new List<Expression<Func<TRecord1, TRecord2, TRecord3, object>>> FieldExpressions
+        public new List<Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, object>>> FieldExpressions
         {
             get;
             protected set;
-        } = new List<Expression<Func<TRecord1, TRecord2, TRecord3, object>>>();
+        } = new List<Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, object>>>();
 
         /// <summary>
         /// Gets or sets the order by list.
         /// </summary>
-        public new List<SqlBuilderOrderItem<TRecord1, TRecord2, TRecord3>> OrderByList
+        public new List<SqlBuilderOrderItem<TRecord1, TRecord2, TRecord3, TRecord4>> OrderByList
         {
             get;
             protected set;
-        } = new List<SqlBuilderOrderItem<TRecord1, TRecord2, TRecord3>>();
+        } = new List<SqlBuilderOrderItem<TRecord1, TRecord2, TRecord3, TRecord4>>();
 
         /// <summary>
         /// Initializes a new instance of the <see
@@ -67,7 +68,7 @@ namespace GaleForceCore.Builders
         /// class.
         /// </summary>
         public SimpleSqlBuilder()
-            : base(new Type[] { typeof(TRecord1), typeof(TRecord2), typeof(TRecord3) })
+            : base(new Type[] { typeof(TRecord1), typeof(TRecord2), typeof(TRecord3), typeof(TRecord4) })
         {
         }
 
@@ -78,28 +79,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="options">The options.</param>
         public SimpleSqlBuilder(SimpleSqlBuilderOptions options)
-            : base(options, new Type[] { typeof(TRecord1), typeof(TRecord2), typeof(TRecord3) })
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord, TRecord1,
-        /// TRecord2, TRecord3}"/> class.
-        /// </summary>
-        /// <param name="options">The options.</param>
-        /// <param name="types">The types.</param>
-        public SimpleSqlBuilder(SimpleSqlBuilderOptions options, Type[] types)
-            : base(options, types)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord, TRecord1,
-        /// TRecord2, TRecord3}"/> class.
-        /// </summary>
-        /// <param name="types">The types.</param>
-        public SimpleSqlBuilder(Type[] types)
-            : base(types)
+            : base(options, new Type[] { typeof(TRecord1), typeof(TRecord2), typeof(TRecord3), typeof(TRecord4) })
         {
         }
 
@@ -108,7 +88,8 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="options">The options.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2, TRecord3&gt;.</returns>
-        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> SetOptions(SimpleSqlBuilderOptions options)
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> SetOptions(
+            SimpleSqlBuilderOptions options)
         {
             base.SetOptions(options);
             return this;
@@ -119,7 +100,8 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="syntaxType">Type of the syntax.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> For(SimpleSqlBuilderType syntaxType)
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> For(
+            SimpleSqlBuilderType syntaxType)
         {
             base.For(syntaxType);
             return this;
@@ -131,10 +113,10 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="field">The field.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Select(
-            Expression<Func<TRecord1, TRecord2, TRecord3, object>> field)
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> Select(
+            Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, object>> field)
         {
-            return this.Select(new Expression<Func<TRecord1, TRecord2, TRecord3, object>>[] { field });
+            return this.Select(new Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, object>>[] { field });
         }
 
         /// <summary>
@@ -142,8 +124,8 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="fields">The fields.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Select(
-            params Expression<Func<TRecord1, TRecord2, TRecord3, object>>[] fields)
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> Select(
+            params Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, object>>[] fields)
         {
             this.FieldExpressions.AddRange(fields);
             return this.Select(fields.ToList());
@@ -155,8 +137,8 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="fields">The fields.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Select(
-            IEnumerable<Expression<Func<TRecord1, TRecord2, TRecord3, object>>> fields)
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> Select(
+            IEnumerable<Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, object>>> fields)
         {
             this.Command = "SELECT";
             var names = fields.Select(field => this.IncludeAs(field)).ToList();
@@ -169,7 +151,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="field">The field.</param>
         /// <returns>System.String.</returns>
-        private string IncludeAs(Expression<Func<TRecord1, TRecord2, TRecord3, object>> field)
+        private string IncludeAs(Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, object>> field)
         {
             var expString = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
             if (this.AsFields != null && this.AsFields.ContainsKey(field))
@@ -191,13 +173,15 @@ namespace GaleForceCore.Builders
         /// <param name="tableName1">The table name1.</param>
         /// <param name="tableName2">The table name2.</param>
         /// <param name="tableName3">The table name3.</param>
+        /// <param name="tableName4">The table name4.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> From(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> From(
             string tableName1,
             string tableName2,
-            string tableName3)
+            string tableName3,
+            string tableName4)
         {
-            this.From(new string[] { tableName1, tableName2, tableName3 });
+            this.From(new string[] { tableName1, tableName2, tableName3, tableName4 });
             return this;
         }
 
@@ -207,12 +191,12 @@ namespace GaleForceCore.Builders
         /// <param name="asField">As field.</param>
         /// <param name="field">The field.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> SelectAs(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> SelectAs(
             Expression<Func<TRecord, object>> asField,
-            Expression<Func<TRecord1, TRecord2, TRecord3, object>> field)
+            Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, object>> field)
         {
             this.AsFields[field] = asField;
-            this.Select(new Expression<Func<TRecord1, TRecord2, TRecord3, object>>[] { field });
+            this.Select(new Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, object>>[] { field });
             return this;
         }
 
@@ -221,7 +205,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> InnerJoin12On(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> InnerJoin12On(
             Expression<Func<TRecord1, TRecord2, bool>> joinKey) =>
             this.JoinOn(joinKey, JoinType.INNER);
 
@@ -230,7 +214,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> InnerJoin13On(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> InnerJoin13On(
             Expression<Func<TRecord1, TRecord3, bool>> joinKey) =>
             this.JoinOn(joinKey, JoinType.INNER);
 
@@ -239,8 +223,26 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> InnerJoin23On(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> InnerJoin14On(
+            Expression<Func<TRecord1, TRecord4, bool>> joinKey) =>
+            this.JoinOn(joinKey, JoinType.INNER);
+
+        /// <summary>
+        /// Sets up an INNER JOIN.
+        /// </summary>
+        /// <param name="joinKey">The join key.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> InnerJoin23On(
             Expression<Func<TRecord2, TRecord3, bool>> joinKey) =>
+            this.JoinOn(joinKey, JoinType.INNER);
+
+        /// <summary>
+        /// Sets up an INNER JOIN.
+        /// </summary>
+        /// <param name="joinKey">The join key.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> InnerJoin24On(
+            Expression<Func<TRecord2, TRecord4, bool>> joinKey) =>
             this.JoinOn(joinKey, JoinType.INNER);
 
         /// <summary>
@@ -249,11 +251,11 @@ namespace GaleForceCore.Builders
         /// <param name="joinKey">The join key.</param>
         /// <param name="type">The type.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2, TRecord3&gt;.</returns>
-        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> JoinOn(
+        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> JoinOn(
             Expression<Func<TRecord1, TRecord2, bool>> joinKey,
             JoinType type)
         {
-            var jkey = new JoinKeyItem<TRecord1, TRecord2, TRecord3>()
+            var jkey = new JoinKeyItem<TRecord1, TRecord2, TRecord3, TRecord4>()
             {
                 JoinKey = joinKey,
                 JoinLeftIndex = 0,
@@ -271,11 +273,11 @@ namespace GaleForceCore.Builders
         /// <param name="joinKey">The join key.</param>
         /// <param name="type">The type.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2, TRecord3&gt;.</returns>
-        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> JoinOn(
+        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> JoinOn(
             Expression<Func<TRecord1, TRecord3, bool>> joinKey,
             JoinType type)
         {
-            var jkey = new JoinKeyItem<TRecord1, TRecord2, TRecord3>()
+            var jkey = new JoinKeyItem<TRecord1, TRecord2, TRecord3, TRecord4>()
             {
                 JoinKey = joinKey,
                 JoinLeftIndex = 0,
@@ -293,11 +295,33 @@ namespace GaleForceCore.Builders
         /// <param name="joinKey">The join key.</param>
         /// <param name="type">The type.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2, TRecord3&gt;.</returns>
-        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> JoinOn(
+        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> JoinOn(
+            Expression<Func<TRecord1, TRecord4, bool>> joinKey,
+            JoinType type)
+        {
+            var jkey = new JoinKeyItem<TRecord1, TRecord2, TRecord3, TRecord4>()
+            {
+                JoinKey = joinKey,
+                JoinLeftIndex = 0,
+                JoinRightIndex = 3,
+                Type = type
+            };
+
+            this.JoinKeys.Add(jkey);
+            return this;
+        }
+
+        /// <summary>
+        /// Handles all joins.
+        /// </summary>
+        /// <param name="joinKey">The join key.</param>
+        /// <param name="type">The type.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2, TRecord3&gt;.</returns>
+        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> JoinOn(
             Expression<Func<TRecord2, TRecord3, bool>> joinKey,
             JoinType type)
         {
-            var jkey = new JoinKeyItem<TRecord1, TRecord2, TRecord3>()
+            var jkey = new JoinKeyItem<TRecord1, TRecord2, TRecord3, TRecord4>()
             {
                 JoinKey = joinKey,
                 JoinLeftIndex = 1,
@@ -309,14 +333,34 @@ namespace GaleForceCore.Builders
             return this;
         }
 
-        // here!
+        /// <summary>
+        /// Handles all joins.
+        /// </summary>
+        /// <param name="joinKey">The join key.</param>
+        /// <param name="type">The type.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2, TRecord3&gt;.</returns>
+        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> JoinOn(
+            Expression<Func<TRecord2, TRecord4, bool>> joinKey,
+            JoinType type)
+        {
+            var jkey = new JoinKeyItem<TRecord1, TRecord2, TRecord3, TRecord4>()
+            {
+                JoinKey = joinKey,
+                JoinLeftIndex = 1,
+                JoinRightIndex = 3,
+                Type = type
+            };
+
+            this.JoinKeys.Add(jkey);
+            return this;
+        }
 
         /// <summary>
         /// Sets up a left outer join.
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> LeftOuterJoin12On(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> LeftOuterJoin12On(
             Expression<Func<TRecord1, TRecord2, bool>> joinKey) =>
             this.JoinOn(joinKey, JoinType.LEFTOUTER);
 
@@ -325,7 +369,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> LeftOuterJoin13On(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> LeftOuterJoin13On(
             Expression<Func<TRecord1, TRecord3, bool>> joinKey) =>
             this.JoinOn(joinKey, JoinType.LEFTOUTER);
 
@@ -334,8 +378,26 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> LeftOuterJoin23On(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> LeftOuterJoin14On(
+            Expression<Func<TRecord1, TRecord4, bool>> joinKey) =>
+            this.JoinOn(joinKey, JoinType.LEFTOUTER);
+
+        /// <summary>
+        /// Sets up a left outer join.
+        /// </summary>
+        /// <param name="joinKey">The join key.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> LeftOuterJoin23On(
             Expression<Func<TRecord2, TRecord3, bool>> joinKey) =>
+            this.JoinOn(joinKey, JoinType.LEFTOUTER);
+
+        /// <summary>
+        /// Sets up a left outer join.
+        /// </summary>
+        /// <param name="joinKey">The join key.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> LeftOuterJoin24On(
+            Expression<Func<TRecord2, TRecord4, bool>> joinKey) =>
             this.JoinOn(joinKey, JoinType.LEFTOUTER);
 
         /// <summary>
@@ -343,7 +405,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> RightOuterJoin12On(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> RightOuterJoin12On(
             Expression<Func<TRecord1, TRecord2, bool>> joinKey) =>
             this.JoinOn(joinKey, JoinType.RIGHTOUTER);
 
@@ -352,7 +414,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> RightOuterJoin13On(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> RightOuterJoin13On(
             Expression<Func<TRecord1, TRecord3, bool>> joinKey) =>
             this.JoinOn(joinKey, JoinType.RIGHTOUTER);
 
@@ -361,8 +423,26 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> RightOuterJoin23On(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> RightOuterJoin14On(
+            Expression<Func<TRecord1, TRecord4, bool>> joinKey) =>
+            this.JoinOn(joinKey, JoinType.RIGHTOUTER);
+
+        /// <summary>
+        /// Sets up a right outer join.
+        /// </summary>
+        /// <param name="joinKey">The join key.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> RightOuterJoin23On(
             Expression<Func<TRecord2, TRecord3, bool>> joinKey) =>
+            this.JoinOn(joinKey, JoinType.RIGHTOUTER);
+
+        /// <summary>
+        /// Sets up a right outer join.
+        /// </summary>
+        /// <param name="joinKey">The join key.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> RightOuterJoin24On(
+            Expression<Func<TRecord2, TRecord4, bool>> joinKey) =>
             this.JoinOn(joinKey, JoinType.RIGHTOUTER);
 
         /// <summary>
@@ -401,6 +481,16 @@ namespace GaleForceCore.Builders
                                 parameters: joinKey.Parameters,
                                 tableNames: new string[] { this.TableNames[0], this.TableNames[2] });
                         }
+                        else if (joinKeySet.JoinRightIndex == 3)
+                        {
+                            var joinKey = joinKeySet.JoinKey as Expression<Func<TRecord1, TRecord4, bool>>;
+                            keys = this.ParseExpression(
+                                new Type[] { this.Types[0], this.Types[3] },
+                                joinKey.Body,
+                                true,
+                                parameters: joinKey.Parameters,
+                                tableNames: new string[] { this.TableNames[0], this.TableNames[3] });
+                        }
                     }
                     else if (joinKeySet.JoinLeftIndex == 1)
                     {
@@ -413,6 +503,16 @@ namespace GaleForceCore.Builders
                                 true,
                                 parameters: joinKey.Parameters,
                                 tableNames: new string[] { this.TableNames[1], this.TableNames[2] });
+                        }
+                        else  if (joinKeySet.JoinRightIndex == 3)
+                        {
+                            var joinKey = joinKeySet.JoinKey as Expression<Func<TRecord2, TRecord4, bool>>;
+                            keys = this.ParseExpression(
+                                new Type[] { this.Types[1], this.Types[3] },
+                                joinKey.Body,
+                                true,
+                                parameters: joinKey.Parameters,
+                                tableNames: new string[] { this.TableNames[1], this.TableNames[3] });
                         }
                     }
 
@@ -430,11 +530,11 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="condition">The condition.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Where(
-            Expression<Func<TRecord1, TRecord2, TRecord3, bool>> condition)
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> Where(
+            Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, bool>> condition)
         {
-            this.WhereExpression3.Add(condition as Expression<Func<TRecord1, TRecord2, TRecord3, bool>>);
-            this.WhereString3
+            this.WhereExpression4.Add(condition as Expression<Func<TRecord1, TRecord2, TRecord3, TRecord4, bool>>);
+            this.WhereString4
                 .Add(this.ParseExpression(this.Types, condition.Body, true, parameters: condition.Parameters));
             return this;
         }
@@ -443,10 +543,10 @@ namespace GaleForceCore.Builders
         /// Clears the accumulative where clauses.
         /// </summary>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> ClearWhere()
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> ClearWhere()
         {
-            this.WhereExpression3.Clear();
-            this.WhereString3.Clear();
+            this.WhereExpression4.Clear();
+            this.WhereString4.Clear();
             base.ClearWhere();
             return this;
         }
@@ -456,7 +556,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="count">The count.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Take(int count)
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> Take(int count)
         {
             this.Count = count;
             return this;
@@ -469,10 +569,10 @@ namespace GaleForceCore.Builders
         /// <param name="trueClause">The clause to eval if true.</param>
         /// <param name="falseClause">The clause to eval if false.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> If(
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> If(
             bool condition,
-            Action<SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3>> trueClause = null,
-            Action<SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3>> falseClause = null)
+            Action<SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4>> trueClause = null,
+            Action<SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4>> falseClause = null)
         {
             if (condition && trueClause != null)
             {
@@ -492,17 +592,19 @@ namespace GaleForceCore.Builders
         /// <param name="records1">The records1.</param>
         /// <param name="records2">The records2.</param>
         /// <param name="records3">The records3.</param>
+        /// <param name="records4">The records4.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
         public IEnumerable<TRecord> Execute(
             IEnumerable<TRecord1> records1,
             IEnumerable<TRecord2> records2,
-            IEnumerable<TRecord3> records3)
+            IEnumerable<TRecord3> records3,
+            IEnumerable<TRecord4> records4)
         {
             switch (this.Command)
             {
                 case "SELECT":
-                    return this.ExecuteSelect(records1, records2, records3);
+                    return this.ExecuteSelect(records1, records2, records3, records4);
                 default:
                     throw new NotImplementedException($"{this.Command} is not supported as a query.");
             }
@@ -514,30 +616,34 @@ namespace GaleForceCore.Builders
         /// <param name="records1">The records1.</param>
         /// <param name="records2">The records2.</param>
         /// <param name="records3">The records3.</param>
+        /// <param name="records4">The records4.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         public IEnumerable<TRecord> ExecuteSelect(
             IEnumerable<TRecord1> records1,
             IEnumerable<TRecord2> records2,
-            IEnumerable<TRecord3> records3)
+            IEnumerable<TRecord3> records3,
+            IEnumerable<TRecord4> records4)
         {
             var result = new List<TRecord>();
 
-            var records = this.ExecuteJoins(records1, records2, records3);
+            var records = this.ExecuteJoins(records1, records2, records3, records4);
 
-            var emptyRecs = new Tuple<TRecord1, TRecord2, TRecord3>(
+            var emptyRecs = new Tuple<TRecord1, TRecord2, TRecord3, TRecord4>(
                 (TRecord1)Activator.CreateInstance(typeof(TRecord1)),
                 (TRecord2)Activator.CreateInstance(typeof(TRecord2)),
-                (TRecord3)Activator.CreateInstance(typeof(TRecord3)));
+                (TRecord3)Activator.CreateInstance(typeof(TRecord3)),
+                (TRecord4)Activator.CreateInstance(typeof(TRecord4)));
 
             var current = records;
-            foreach (var whereExpression in this.WhereExpression3)
+            foreach (var whereExpression in this.WhereExpression4)
             {
-                var we3 = whereExpression.Compile();
+                var we4 = whereExpression.Compile();
                 current = current.Where(
-                    t => we3(
+                    t => we4(
                         (TRecord1)(t.Item1 ?? emptyRecs.Item1),
                         (TRecord2)(t.Item2 ?? emptyRecs.Item2),
-                        (TRecord3)(t.Item3 ?? emptyRecs.Item3)))
+                        (TRecord3)(t.Item3 ?? emptyRecs.Item3),
+                        (TRecord4)(t.Item4 ?? emptyRecs.Item4)))
                     .ToList();
             }
 
@@ -550,13 +656,13 @@ namespace GaleForceCore.Builders
                     if (orderBy.IsAscending)
                     {
                         current = current.OrderBy(
-                            t => orderByX((TRecord1)t.Item1, (TRecord2)t.Item2, (TRecord3)t.Item3))
+                            t => orderByX((TRecord1)t.Item1, (TRecord2)t.Item2, (TRecord3)t.Item3, (TRecord4)t.Item4))
                             .ToList();
                     }
                     else
                     {
                         current = current.OrderByDescending(
-                            t => orderByX((TRecord1)t.Item1, (TRecord2)t.Item2, (TRecord3)t.Item3))
+                            t => orderByX((TRecord1)t.Item1, (TRecord2)t.Item2, (TRecord3)t.Item3, (TRecord4)t.Item4))
                             .ToList();
                     }
                 }
@@ -593,7 +699,8 @@ namespace GaleForceCore.Builders
                     var value = fieldExpressions[i](
                         (TRecord1)(record.Item1 ?? emptyRecs.Item1),
                         (TRecord2)(record.Item2 ?? emptyRecs.Item2),
-                        (TRecord3)(record.Item3 ?? emptyRecs.Item3));
+                        (TRecord3)(record.Item3 ?? emptyRecs.Item3),
+                        (TRecord4)(record.Item4 ?? emptyRecs.Item4));
                     propFields[i].SetValue(newRecord, value);
                 }
 
@@ -643,7 +750,8 @@ namespace GaleForceCore.Builders
                             {
                                 Item1 = (TRecord1)r.Item1,
                                 Item2 = (TRecord2)r.Item2,
-                                Item3 = (TRecord3)r.Item3
+                                Item3 = (TRecord3)r.Item3,
+                                Item4 = (TRecord4)r.Item4
                             };
 
                             itemSet[index2] = moreRec;
@@ -681,7 +789,7 @@ namespace GaleForceCore.Builders
 
             foreach (var r in records.ToList())
             {
-                if (type == JoinType.LEFTOUTER)
+                if (type == JoinType.LEFTOUTER && r[index1] != null)
                 {
                     var recs2 = records2.Where(r2 => joinKey((T1)r[index1], r2));
                     if (recs2.Any())
@@ -701,7 +809,8 @@ namespace GaleForceCore.Builders
                                 {
                                     Item1 = (TRecord1)r.Item1,
                                     Item2 = (TRecord2)r.Item2,
-                                    Item3 = (TRecord3)r.Item3
+                                    Item3 = (TRecord3)r.Item3,
+                                    Item4 = (TRecord4)r.Item4
                                 };
 
                                 itemSet[index2] = moreRec;
@@ -711,7 +820,7 @@ namespace GaleForceCore.Builders
                         }
                     }
                 }
-                else if (type == JoinType.RIGHTOUTER)
+                else if (type == JoinType.RIGHTOUTER && r[index2] != null)
                 {
                     var recs1 = records1.Where(r1 => joinKey(r1, (T2)r[index2]));
                     if (recs1.Any())
@@ -731,7 +840,8 @@ namespace GaleForceCore.Builders
                                 {
                                     Item1 = (TRecord1)r.Item1,
                                     Item2 = (TRecord2)r.Item2,
-                                    Item3 = (TRecord3)r.Item3
+                                    Item3 = (TRecord3)r.Item3,
+                                    Item4 = (TRecord4)r.Item4
                                 };
 
                                 itemSet[index1] = moreRec;
@@ -750,11 +860,13 @@ namespace GaleForceCore.Builders
         /// <param name="records1">The records1.</param>
         /// <param name="records2">The records2.</param>
         /// <param name="records3">The records3.</param>
+        /// <param name="records4">The records4.</param>
         /// <returns>List&lt;ItemSet&gt;.</returns>
         private List<ItemSet> ExecuteJoins(
             IEnumerable<TRecord1> records1,
             IEnumerable<TRecord2> records2,
-            IEnumerable<TRecord3> records3)
+            IEnumerable<TRecord3> records3,
+            IEnumerable<TRecord4> records4)
         {
             List<ItemSet> records =
                 records1.Select(r1 => new ItemSet { Item1 = r1 }).ToList();
@@ -785,6 +897,15 @@ namespace GaleForceCore.Builders
                             1,
                             3);
                     }
+                    else if (inner.JoinRightIndex == 3)
+                    {
+                        this.ExecuteInnerSubJoin(
+                            records,
+                            records4,
+                            inner.JoinKey as Expression<Func<TRecord1, TRecord4, bool>>,
+                            1,
+                            4);
+                    }
                 }
                 else if (inner.JoinLeftIndex == 1)
                 {
@@ -796,6 +917,15 @@ namespace GaleForceCore.Builders
                             inner.JoinKey as Expression<Func<TRecord2, TRecord3, bool>>,
                             2,
                             3);
+                    }
+                    else if (inner.JoinRightIndex == 3)
+                    {
+                        this.ExecuteInnerSubJoin(
+                            records,
+                            records4,
+                            inner.JoinKey as Expression<Func<TRecord2, TRecord4, bool>>,
+                            2,
+                            4);
                     }
                 }
             }
@@ -832,6 +962,17 @@ namespace GaleForceCore.Builders
                             3,
                             outer.Type);
                     }
+                    else if (outer.JoinRightIndex == 3)
+                    {
+                        this.ExecuteOuterSubJoin(
+                            records,
+                            records1,
+                            records4,
+                            outer.JoinKey as Expression<Func<TRecord1, TRecord4, bool>>,
+                            1,
+                            4,
+                            outer.Type);
+                    }
                 }
                 else if (outer.JoinLeftIndex == 1)
                 {
@@ -844,6 +985,17 @@ namespace GaleForceCore.Builders
                             outer.JoinKey as Expression<Func<TRecord2, TRecord3, bool>>,
                             2,
                             3,
+                            outer.Type);
+                    }
+                    else if (outer.JoinRightIndex == 3)
+                    {
+                        this.ExecuteOuterSubJoin(
+                            records,
+                            records2,
+                            records4,
+                            outer.JoinKey as Expression<Func<TRecord2, TRecord4, bool>>,
+                            2,
+                            4,
                             outer.Type);
                     }
                 }

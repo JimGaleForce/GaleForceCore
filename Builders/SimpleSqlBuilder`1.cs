@@ -363,6 +363,12 @@ namespace GaleForceCore.Builders
         public List<string> WhereString3 { get; protected set; } = new List<string>();
 
         /// <summary>
+        /// Gets the where condition string.
+        /// </summary>
+        /// <value>The where string.</value>
+        public List<string> WhereString4 { get; protected set; } = new List<string>();
+
+        /// <summary>
         /// Gets or sets the when matched expression.
         /// </summary>
         public Expression<Action<SimpleSqlBuilder<TRecord>>> WhenMatchedExpression { get; protected set; } = null;
@@ -1881,6 +1887,7 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Builds this instance.
         /// </summary>
+        /// <param name="declareParamsIfExist">if set to <c>true</c> [declare parameters if exist].</param>
         /// <returns>System.String.</returns>
         public string Build(bool declareParamsIfExist = false)
         {
@@ -1905,6 +1912,7 @@ namespace GaleForceCore.Builders
         /// Adds the parameters.
         /// </summary>
         /// <param name="cmd">The command.</param>
+        /// <param name="declareParamsIfExist">if set to <c>true</c> [declare parameters if exist].</param>
         /// <returns>System.String.</returns>
         private string AddParams(string cmd, bool declareParamsIfExist = false)
         {
@@ -1976,6 +1984,7 @@ namespace GaleForceCore.Builders
             allwheres.AddRange(this.WhereString);
             allwheres.AddRange(this.WhereString2);
             allwheres.AddRange(this.WhereString3);
+            allwheres.AddRange(this.WhereString4);
             if (addWhere != null)
             {
                 allwheres.Add(addWhere);

@@ -1450,6 +1450,24 @@ GO;";
         }
 
         [TestMethod]
+        public void TestJoin4Build()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest3Record, SqlTest3Record>()
+                .From("TableName", "TableName2", "TableName3", "TableName4")
+                .Select((a, b, c, d) => c.Int1, (a, b, c, d) => a.String1, (a, b, c, d) => a.Int2)
+                .SelectAs(pp => pp.Int3, (a, b, c, d) => b.Int2)
+                .InnerJoin12On((a, b) => a.Int1 == b.Int1)
+                .InnerJoin14On((a, b) => a.Int2 == b.Int2)
+                .LeftOuterJoin13On((a, c) => a.Int1 == c.Int1)
+                .Where((a, b, c, d) => a.Bool1 && b.Bool1 && c.Bool1 && d.Bool1)
+                .Build();
+
+            var expected = @"SELECT TableName3.Int1,TableName.String1,TableName.Int2,TableName2.Int2 AS Int3 FROM TableName INNER JOIN TableName2 ON (TableName.Int1 = TableName2.Int1) INNER JOIN TableName4 ON (TableName.Int2 = TableName4.Int2) LEFT OUTER JOIN TableName3 ON (TableName.Int1 = TableName3.Int1) WHERE (((TableName.Bool1 = 1 AND TableName2.Bool1 = 1) AND TableName3.Bool1 = 1) AND TableName4.Bool1 = 1)";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
         public void TestJoin3Execute()
         {
             var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest3Record>()
@@ -1460,6 +1478,24 @@ GO;";
                 .LeftOuterJoin13On((a, c) => a.Int1 == c.Int1)
                 .Where((a, b, c) => a.Bool1 && b.Bool1 && c.Bool1)
                 .Execute(this.GetData(), this.GetData2(), this.GetData3())
+                .ToList();
+
+            Assert.AreEqual(1, actual.Count());
+            Assert.AreEqual(1, actual[0].Int1);
+        }
+
+        [TestMethod]
+        public void TestJoin4Execute()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest3Record, SqlTest3Record>()
+                .From("TableName", "TableName2", "TableName3", "TableName4")
+                .Select((a, b, c, d) => c.Int1, (a, b, c, d) => a.String1, (a, b, c, d) => a.Int2)
+                .SelectAs(pp => pp.Int3, (a, b, c, d) => b.Int2)
+                .InnerJoin12On((a, b) => a.Int1 == b.Int1)
+                .InnerJoin14On((a, b) => a.Int1 == b.Int1)
+                .LeftOuterJoin13On((a, c) => a.Int1 == c.Int1)
+                .Where((a, b, c, d) => a.Bool1 && b.Bool1 && c.Bool1 && d.Bool1)
+                .Execute(this.GetData(), this.GetData2(), this.GetData3(), this.GetData4())
                 .ToList();
 
             Assert.AreEqual(1, actual.Count());
