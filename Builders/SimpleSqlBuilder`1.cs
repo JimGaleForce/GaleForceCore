@@ -2485,7 +2485,8 @@ namespace GaleForceCore.Builders
                 case "SELECT":
                     return this.ExecuteSelect(source);
                 default:
-                    throw new NotImplementedException($"{this.Command} is not supported as a query.");
+                    throw new NotImplementedException(
+                        $"{this.Command} is not supported as a query. Consider ExecuteNonQuery().");
             }
         }
 
@@ -2510,7 +2511,8 @@ namespace GaleForceCore.Builders
                 case "DELETE":
                     return this.ExecuteDelete(target);
                 default:
-                    throw new NotImplementedException($"{this.Command} is not supported as a non-query.");
+                    throw new NotImplementedException(
+                        $"{this.Command} is not supported as a non-query. Consider Execute().");
             }
         }
 
@@ -2528,8 +2530,6 @@ namespace GaleForceCore.Builders
             }
 
             var result = new List<TRecord>();
-
-            // todo: reform to execute on string fields, not only expressions
 
             var current = records;
             foreach (var whereExpression in this.WhereExpression)
