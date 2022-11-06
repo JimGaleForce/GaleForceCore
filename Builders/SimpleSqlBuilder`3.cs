@@ -72,8 +72,8 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord,
-        /// TRecord1,&#xD;&#xA;TRecord2}"/> class.
+        /// Initializes a new instance of the <see
+        /// cref="SimpleSqlBuilder{TRecord,&#xD;&#xA;TRecord1,&#xD;&#xA;TRecord2}"/> class.
         /// </summary>
         /// <param name="types">The types.</param>
         public SimpleSqlBuilder(Type[] types)
@@ -82,8 +82,8 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord,
-        /// TRecord1,&#xD;&#xA;TRecord2}"/> class.
+        /// Initializes a new instance of the <see
+        /// cref="SimpleSqlBuilder{TRecord,&#xD;&#xA;TRecord1,&#xD;&#xA;TRecord2}"/> class.
         /// </summary>
         /// <param name="options">The options.</param>
         /// <param name="types">The types.</param>
@@ -148,7 +148,7 @@ namespace GaleForceCore.Builders
         {
             this.Command = "SELECT";
             var names = fields.Select(field => this.IncludeAs(field)).ToList();
-            this.Select(names);
+            base.Select(names);
             return this;
         }
 
@@ -343,18 +343,6 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
-        /// Adds an order-by expression ascending (can build, execute).
-        /// </summary>
-        /// <param name="field">The field.</param>
-        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> OrderBy(
-            Expression<Func<TRecord1, TRecord2, object>> field)
-        {
-            var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
-            return this.OrderBy(name, true, field);
-        }
-
-        /// <summary>
         /// Executes the specified records.
         /// </summary>
         /// <param name="records1">The records1.</param>
@@ -399,11 +387,19 @@ namespace GaleForceCore.Builders
         /// <param name="records1">The records1.</param>
         /// <param name="records2">The records2.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        /// <exception cref="GaleForceCore.Builders.UnjoinedTablesException"></exception>
         public IEnumerable<TRecord> ExecuteSelect(IEnumerable<TRecord1> records1, IEnumerable<TRecord2> records2)
         {
             var result = new List<TRecord>();
 
-            // todo: reform to execute on string fields, not only expressions
+            if (this.JoinKey == null)
+            {
+                throw new UnjoinedTablesException(
+                    typeof(TRecord1).Name +
+                        " and " +
+                        typeof(TRecord2).Name +
+                        " are unjoined. Add a join clause to complete.");
+            }
 
             IEnumerable<Tuple<TRecord1, TRecord2>> records = new List<Tuple<TRecord1, TRecord2>>();
             var joinKey = this.JoinKey.Compile();
@@ -513,6 +509,18 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
+        /// Adds an order-by expression ascending (can build, execute).
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> OrderBy(
+            Expression<Func<TRecord1, TRecord2, object>> field)
+        {
+            var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
+            return this.OrderBy(name, true, field);
+        }
+
+        /// <summary>
         /// Sets up the order by clause.
         /// </summary>
         /// <param name="fieldName">Name of the field.</param>
@@ -561,6 +569,55 @@ namespace GaleForceCore.Builders
                         Expression = expression
                     });
             return this;
+        }
+
+        /// <summary>
+        /// Adds an order-by expression descending (can build, execute).
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> OrderByDescending(
+            Expression<Func<TRecord1, TRecord2, object>> field)
+        {
+            var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
+            return this.OrderBy(name, false, field);
+        }
+
+        /// <summary>
+        /// Adds an then-by expression descending (can build, execute).
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> ThenByDescending(
+            Expression<Func<TRecord1, TRecord2, object>> field)
+        {
+            var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
+            return this.ThenBy(name, false, field);
+        }
+
+        /// <summary>
+        /// Injects the order by clauses.
+        /// </summary>
+        /// <param name="sb">The sb.</param>
+        public override void InjectOrderByClauses(StringBuilder sb)
+        {
+            if (this.OrderByList.Count > 0)
+            {
+                sb.Append("ORDER BY ");
+                var comma = false;
+                foreach (var item in this.OrderByList)
+                {
+                    if (comma)
+                    {
+                        sb.Append(", ");
+                    }
+
+                    sb.Append(item.Name);
+                    sb.Append(" ");
+                    sb.Append(item.IsAscending ? "ASC" : "DESC");
+                    comma = true;
+                }
+            }
         }
     }
 }

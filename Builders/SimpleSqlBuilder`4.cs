@@ -83,8 +83,8 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord, TRecord1,
-        /// TRecord2, TRecord3}"/> class.
+        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord,
+        /// TRecord1,&#xD;&#xA;TRecord2, TRecord3}"/> class.
         /// </summary>
         /// <param name="options">The options.</param>
         /// <param name="types">The types.</param>
@@ -94,8 +94,8 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord, TRecord1,
-        /// TRecord2, TRecord3}"/> class.
+        /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord,
+        /// TRecord1,&#xD;&#xA;TRecord2, TRecord3}"/> class.
         /// </summary>
         /// <param name="types">The types.</param>
         public SimpleSqlBuilder(Type[] types)
@@ -487,6 +487,93 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
+        /// Adds an order-by expression ascending (can build, execute).
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> OrderBy(
+            Expression<Func<TRecord1, TRecord2, TRecord3, object>> field)
+        {
+            var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
+            return this.OrderBy(name, true, field);
+        }
+
+        /// <summary>
+        /// Sets up the order by clause.
+        /// </summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="isAscending">if set to <c>true</c> [is ascending].</param>
+        /// <param name="expression">The expression.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> OrderBy(
+            string fieldName,
+            bool isAscending,
+            Expression<Func<TRecord1, TRecord2, TRecord3, object>> expression = null)
+        {
+            this.OrderByList.Clear();
+            return this.ThenBy(fieldName, isAscending, expression);
+        }
+
+        /// <summary>
+        /// Sets up the then by clause.
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> ThenBy(
+            Expression<Func<TRecord1, TRecord2, TRecord3, object>> field)
+        {
+            var name = this.ParseExpression(this.Types, field.Body);
+            return this.ThenBy(name, true, field);
+        }
+
+        /// <summary>
+        /// Sets up the then by clause.
+        /// </summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="isAscending">if set to <c>true</c> [is ascending].</param>
+        /// <param name="expression">The expression.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
+        private SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> ThenBy(
+            string fieldName,
+            bool isAscending,
+            Expression<Func<TRecord1, TRecord2, TRecord3, object>> expression = null)
+        {
+            this.OrderByList
+                .Add(
+                    new SqlBuilderOrderItem<TRecord1, TRecord2, TRecord3>
+                    {
+                        Name = fieldName,
+                        IsAscending = isAscending,
+                        Expression = expression
+                    });
+            return this;
+        }
+
+        /// <summary>
+        /// Adds an order-by expression descending (can build, execute).
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> OrderByDescending(
+            Expression<Func<TRecord1, TRecord2, TRecord3, object>> field)
+        {
+            var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
+            return this.OrderBy(name, false, field);
+        }
+
+        /// <summary>
+        /// Adds an then-by expression descending (can build, execute).
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> ThenByDescending(
+            Expression<Func<TRecord1, TRecord2, TRecord3, object>> field)
+        {
+            var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
+            return this.ThenBy(name, false, field);
+        }
+
+        /// <summary>
         /// Executes the specified records.
         /// </summary>
         /// <param name="records1">The records1.</param>
@@ -850,6 +937,31 @@ namespace GaleForceCore.Builders
             }
 
             return records;
+        }
+
+        /// <summary>
+        /// Injects the order by clauses.
+        /// </summary>
+        /// <param name="sb">The sb.</param>
+        public override void InjectOrderByClauses(StringBuilder sb)
+        {
+            if (this.OrderByList.Count > 0)
+            {
+                sb.Append("ORDER BY ");
+                var comma = false;
+                foreach (var item in this.OrderByList)
+                {
+                    if (comma)
+                    {
+                        sb.Append(", ");
+                    }
+
+                    sb.Append(item.Name);
+                    sb.Append(" ");
+                    sb.Append(item.IsAscending ? "ASC" : "DESC");
+                    comma = true;
+                }
+            }
         }
     }
 }

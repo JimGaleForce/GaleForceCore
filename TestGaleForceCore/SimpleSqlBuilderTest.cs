@@ -617,7 +617,7 @@
                         t.Int1 < toto &&
                         (t.String1.Contains(piece + ":Reviewed") || t.String1.Contains(piece + "Non-Actionable")) &&
                         emotionSet.Contains(e.String1))
-                .OrderByDescending(ep => ep.Int3)
+                .OrderByDescending((e, t) => e.Int1)
                 .Build();
 
             var expected = "SELECT TableName.Int1,TableName__1.String1 FROM TableName " +
@@ -625,7 +625,7 @@
                 "WHERE ((((TableName__1.Int1 > 0) AND (TableName__1.Int1 < 10)) AND " +
                 "(TableName__1.String1 LIKE '%'+CONCAT('DEF',':Reviewed')+'%' OR " +
                 "TableName__1.String1 LIKE '%'+CONCAT('DEF','Non-Actionable')+'%')) " +
-                "AND TableName.String1 IN ('ABC')) ORDER BY Int3 DESC";
+                "AND TableName.String1 IN ('ABC')) ORDER BY TableName.Int1 DESC";
 
             Assert.AreEqual(expected, actual);
         }
@@ -1926,6 +1926,35 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
 
             var expected = "SELECT String1 FROM TableName WHERE (SUBSTRING(String1,1,1) = 'S')";
             Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestInadvertentDowncast()
+        {
+            var valid = false;
+            try
+            {
+                var sql = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTestRecord>()
+                .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
+                    .Select((l1, l2) => l1.String1)
+                    .InnerJoinOn((l1, l2) => l1.Int1 == l2.Int2)
+                    .OrderByDescending(z => z.String1)
+                    .Execute(this.GetData());
+            }
+            catch (InadvertentDowncastException)
+            {
+                // correct
+                valid = true;
+            }
+            catch (Exception)
+            {
+                Assert.Fail("Incorrect exception");
+            }
+
+            if (!valid)
+            {
+                Assert.Fail("Exception not thrown");
+            }
         }
 
         private List<SqlTestRecord> GetData()

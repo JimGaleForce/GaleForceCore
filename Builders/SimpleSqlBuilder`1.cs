@@ -488,6 +488,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Select(Expression<Func<TRecord, object>> field)
         {
+            this.CheckDowncast("Select");
             return this.Select(new Expression<Func<TRecord, object>>[] { field });
         }
 
@@ -498,6 +499,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Select(params Expression<Func<TRecord, object>>[] fields)
         {
+            this.CheckDowncast("Select");
             this.FieldExpressions.AddRange(fields);
             return this.Select(this.FieldExpressions);
         }
@@ -510,6 +512,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Select(IEnumerable<Expression<Func<TRecord, object>>> fields)
         {
+            this.CheckDowncast("Select");
             var names = fields.Select(
                 field => this.ParseExpression(this.Types, field.Body, parameters: field.Parameters))
                 .ToList();
@@ -553,6 +556,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Delete()
         {
+            this.CheckDowncast("Delete");
             this.Command = "DELETE";
             return this;
         }
@@ -564,6 +568,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> ExceptDistinctBy(Expression<Func<TRecord, object>> field)
         {
+            this.CheckDowncast("ExceptDistinctBy");
             this.DistinctOnExpression = field;
             this.DistinctOnStr = this.ParseExpression(
                 this.Types,
@@ -715,6 +720,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Update()
         {
+            this.CheckDowncast("Update");
             this.Command = "UPDATE";
             return this;
         }
@@ -846,6 +852,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Insert()
         {
+            this.CheckDowncast("Insert");
             this.Command = "INSERT";
             return this;
         }
@@ -907,6 +914,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Values(IEnumerable<string> fieldNames)
         {
+            this.CheckDowncast("Values");
             this.Valueset.AddRange(fieldNames);
             return this;
         }
@@ -944,6 +952,7 @@ namespace GaleForceCore.Builders
             bool isAscending,
             Expression<Func<TRecord, object>> expression = null)
         {
+            this.CheckDowncast("OrderBy");
             this.OrderByList.Clear();
             return this.ThenBy(fieldName, isAscending, expression);
         }
@@ -981,6 +990,7 @@ namespace GaleForceCore.Builders
             bool isAscending,
             Expression<Func<TRecord, object>> expression = null)
         {
+            this.CheckDowncast("ThenBy");
             this.OrderByList
                 .Add(
                     new SqlBuilderOrderItem<TRecord>
@@ -999,6 +1009,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> OrderByDescending(Expression<Func<TRecord, object>> field)
         {
+            this.CheckDowncast("OrderByDescending");
             var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
             return this.OrderBy(name, false, field);
         }
@@ -1020,6 +1031,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> ThenByDescending(Expression<Func<TRecord, object>> field)
         {
+            this.CheckDowncast("ThenByDescending");
             var name = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
             return this.ThenBy(name, false, field);
         }
@@ -2071,6 +2083,17 @@ namespace GaleForceCore.Builders
 
             sb.Append(this.JoinedWhereString());
 
+            this.InjectOrderByClauses(sb);
+
+            return sb.ToString().Trim();
+        }
+
+        /// <summary>
+        /// Injects the order by clauses.
+        /// </summary>
+        /// <param name="sb">The sb.</param>
+        public virtual void InjectOrderByClauses(StringBuilder sb)
+        {
             if (this.OrderByList.Count > 0)
             {
                 sb.Append("ORDER BY ");
@@ -2088,8 +2111,6 @@ namespace GaleForceCore.Builders
                     comma = true;
                 }
             }
-
-            return sb.ToString().Trim();
         }
 
         /// <summary>
@@ -2434,6 +2455,23 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
+        /// Checks the downcast.
+        /// </summary>
+        /// <param name="clauseName">Name of the clause.</param>
+        /// <exception cref="GaleForceCore.Builders.InadvertentDowncastException">
+        /// The {clauseName} clause recasts SimpleSqlBuilder as a single table/type, use more
+        /// parameters to preserve it.
+        /// </exception>
+        private void CheckDowncast(string clauseName)
+        {
+            if (this.Types?.Count() > 1)
+            {
+                throw new InadvertentDowncastException(
+                    $"The {clauseName} clause recasts SimpleSqlBuilder as a single table/type, use more parameters to preserve it.");
+            }
+        }
+
+        /// <summary>
         /// Executes the specified records.
         /// </summary>
         /// <param name="source">The records.</param>
@@ -2441,6 +2479,7 @@ namespace GaleForceCore.Builders
         /// <exception cref="System.NotImplementedException"></exception>
         public IEnumerable<TRecord> Execute(IEnumerable<TRecord> source)
         {
+            this.CheckDowncast("Execute");
             switch (this.Command)
             {
                 case "SELECT":
@@ -2459,6 +2498,7 @@ namespace GaleForceCore.Builders
         /// <exception cref="System.NotImplementedException"></exception>
         public int ExecuteNonQuery(List<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
+            this.CheckDowncast("ExecuteNonQuery");
             switch (this.Command)
             {
                 case "UPDATE":
