@@ -60,8 +60,9 @@ namespace GaleForceCore.Logger
         /// <param name="id">The identifier.</param>
         /// <param name="type">The type.</param>
         /// <param name="position">The position.</param>
+        /// <param name="tags">The tags.</param>
         /// <returns>System.Int32.</returns>
-        public int ContinueStage(string id, StageType type, StagePosition position, string tags = null)
+        public StageChangeItem ContinueStage(string id, StageType type, StagePosition position, string tags = null)
         {
             var changeItem = new StageChangeItem
             {
@@ -106,17 +107,22 @@ namespace GaleForceCore.Logger
                 }
             }
 
-            if (this.LogCallback == null)
+            if (this.StageChangeCallback == null)
             {
-                return (int) StageResults.NoCallback;
+                changeItem.Result = (int) StageResults.NoCallback;
+            }
+            else
+            {
+                changeItem.Result = this.StageChangeCallback.Invoke(changeItem);
             }
 
-            return this.StageChangeCallback.Invoke(changeItem);
+            return changeItem;
         }
 
         /// <summary>
         /// Begins the logging.
         /// </summary>
+        /// <param name="tags">The tags.</param>
         public void BeginLogging(string tags = null)
         {
             this.ContinueStage(
@@ -129,6 +135,7 @@ namespace GaleForceCore.Logger
         /// <summary>
         /// Ends the logging.
         /// </summary>
+        /// <param name="tags">The tags.</param>
         public void EndLogging(string tags = null)
         {
             this.ContinueStage(
@@ -142,7 +149,9 @@ namespace GaleForceCore.Logger
         /// Begins the stage.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginStage(string id, string tags = null) => this.ContinueStage(
+        /// <param name="tags">The tags.</param>
+        /// <returns>StageChangeItem.</returns>
+        public StageChangeItem BeginStage(string id, string tags = null) => this.ContinueStage(
             id,
             StageType.Stage,
             StagePosition.Begin,
@@ -152,7 +161,9 @@ namespace GaleForceCore.Logger
         /// Ends the stage.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void EndStage(string id, string tags = null) => this.ContinueStage(
+        /// <param name="tags">The tags.</param>
+        /// <returns>StageChangeItem.</returns>
+        public StageChangeItem EndStage(string id, string tags = null) => this.ContinueStage(
             id,
             StageType.Stage,
             StagePosition.End,
@@ -162,7 +173,9 @@ namespace GaleForceCore.Logger
         /// Begins the step.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginStep(string id, string tags = null) => this.ContinueStage(
+        /// <param name="tags">The tags.</param>
+        /// <returns>StageChangeItem.</returns>
+        public StageChangeItem BeginStep(string id, string tags = null) => this.ContinueStage(
             id,
             StageType.Step,
             StagePosition.Begin,
@@ -172,7 +185,9 @@ namespace GaleForceCore.Logger
         /// Ends the step.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void EndStep(string id, string tags = null) => this.ContinueStage(
+        /// <param name="tags">The tags.</param>
+        /// <returns>StageChangeItem.</returns>
+        public StageChangeItem EndStep(string id, string tags = null) => this.ContinueStage(
             id,
             StageType.Step,
             StagePosition.End,
@@ -182,7 +197,9 @@ namespace GaleForceCore.Logger
         /// Begins the item.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginItem(string id, string tags = null) => this.ContinueStage(
+        /// <param name="tags">The tags.</param>
+        /// <returns>StageChangeItem.</returns>
+        public StageChangeItem BeginItem(string id, string tags = null) => this.ContinueStage(
             id,
             StageType.Item,
             StagePosition.Begin,
@@ -192,7 +209,9 @@ namespace GaleForceCore.Logger
         /// Ends the item.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void EndItem(string id, string tags = null) => this.ContinueStage(
+        /// <param name="tags">The tags.</param>
+        /// <returns>StageChangeItem.</returns>
+        public StageChangeItem EndItem(string id, string tags = null) => this.ContinueStage(
             id,
             StageType.Item,
             StagePosition.End,
@@ -202,7 +221,9 @@ namespace GaleForceCore.Logger
         /// Begins the end stage.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginEndStage(string id, string tags = null) => this.ContinueStage(
+        /// <param name="tags">The tags.</param>
+        /// <returns>StageChangeItem.</returns>
+        public StageChangeItem BeginEndStage(string id, string tags = null) => this.ContinueStage(
             id,
             StageType.Stage,
             StagePosition.BeginEnd,
@@ -212,7 +233,9 @@ namespace GaleForceCore.Logger
         /// Begins the end step.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginEndStep(string id, string tags = null) => this.ContinueStage(
+        /// <param name="tags">The tags.</param>
+        /// <returns>StageChangeItem.</returns>
+        public StageChangeItem BeginEndStep(string id, string tags = null) => this.ContinueStage(
             id,
             StageType.Step,
             StagePosition.BeginEnd,
@@ -222,7 +245,9 @@ namespace GaleForceCore.Logger
         /// Begins the end item.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginEndItem(string id, string tags = null) => this.ContinueStage(
+        /// <param name="tags">The tags.</param>
+        /// <returns>StageChangeItem.</returns>
+        public StageChangeItem BeginEndItem(string id, string tags = null) => this.ContinueStage(
             id,
             StageType.Item,
             StagePosition.BeginEnd,
@@ -232,6 +257,7 @@ namespace GaleForceCore.Logger
         /// Stages the specified identifier.
         /// </summary>
         /// <param name="id">The identifier.</param>
+        /// <param name="tags">The tags.</param>
         /// <returns>StageLogIteration.</returns>
         public StageLogIteration Stage(string id, string tags = null) => new StageLogIteration(
             this,
@@ -243,6 +269,7 @@ namespace GaleForceCore.Logger
         /// Items the specified identifier.
         /// </summary>
         /// <param name="id">The identifier.</param>
+        /// <param name="tags">The tags.</param>
         /// <returns>StageLogIteration.</returns>
         public StageLogIteration Item(string id, string tags = null) => new StageLogIteration(
             this,
@@ -254,6 +281,7 @@ namespace GaleForceCore.Logger
         /// Steps the specified identifier.
         /// </summary>
         /// <param name="id">The identifier.</param>
+        /// <param name="tags">The tags.</param>
         /// <returns>StageLogIteration.</returns>
         public StageLogIteration Step(string id, string tags = null) => new StageLogIteration(
             this,
@@ -286,15 +314,18 @@ namespace GaleForceCore.Logger
 
             if (this.LogCallback == null)
             {
-                return (int) StageResults.NoCallback;
+                item.Result = (int) StageResults.NoCallback;
+                return item.Result;
             }
 
             if (item.Level < this.LevelMinimum)
             {
-                return (int) StageResults.MinimumLevelExceeded;
+                item.Result = (int) StageResults.MinimumLevelExceeded;
+                return item.Result;
             }
 
-            return this.LogCallback.Invoke(item);
+            item.Result = this.LogCallback.Invoke(item);
+            return item.Result;
         }
 
         /// <summary>
@@ -400,20 +431,21 @@ namespace GaleForceCore.Logger
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="type">The type.</param>
-        public void Begin(string id, StageType type, string tags = null)
+        /// <param name="tags">The tags.</param>
+        /// <returns>StageChangeItem.</returns>
+        public StageChangeItem Begin(string id, StageType type, string tags = null)
         {
             switch (type)
             {
                 case StageType.Stage:
-                    this.BeginStage(id, tags);
-                    break;
+                    return this.BeginStage(id, tags);
                 case StageType.Step:
-                    this.BeginStep(id, tags);
-                    break;
+                    return this.BeginStep(id, tags);
                 case StageType.Item:
-                    this.BeginItem(id, tags);
-                    break;
+                    return this.BeginItem(id, tags);
             }
+
+            return null;
         }
 
         /// <summary>
@@ -421,20 +453,21 @@ namespace GaleForceCore.Logger
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="type">The type.</param>
-        public void End(string id, StageType type, string tags = null)
+        /// <param name="tags">The tags.</param>
+        /// <returns>StageChangeItem.</returns>
+        public StageChangeItem End(string id, StageType type, string tags = null)
         {
             switch (type)
             {
                 case StageType.Stage:
-                    this.EndStage(id, tags);
-                    break;
+                    return this.EndStage(id, tags);
                 case StageType.Step:
-                    this.EndStep(id, tags);
-                    break;
+                    return this.EndStep(id, tags);
                 case StageType.Item:
-                    this.EndItem(id, tags);
-                    break;
+                    return this.EndItem(id, tags);
             }
+
+            return null;
         }
     }
 
@@ -459,7 +492,15 @@ namespace GaleForceCore.Logger
         /// </summary>
         public StageType Type { get; set; }
 
+        /// <summary>
+        /// Gets or sets the tags.
+        /// </summary>
         public string Tags { get; set; }
+
+        /// <summary>
+        /// Gets or sets the change item.
+        /// </summary>
+        public StageChangeItem ChangeItem { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StageLogIteration"/> class.
@@ -467,13 +508,48 @@ namespace GaleForceCore.Logger
         /// <param name="logger">The logger.</param>
         /// <param name="id">The identifier.</param>
         /// <param name="type">The type.</param>
+        /// <param name="tags">The tags.</param>
         public StageLogIteration(StageLogger logger, string id, StageType type, string tags = null)
         {
             this.Logger = logger;
             this.Id = id;
             this.Type = type;
             this.Tags = tags;
-            logger.Begin(id, type, tags);
+            this.ChangeItem = logger.Begin(id, type, tags);
+        }
+
+        /// <summary>
+        /// Adds the event.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>StageLogIteration.</returns>
+        public StageLogIteration AddEvent(string name, string value)
+        {
+            if (this.ChangeItem.Events == null)
+            {
+                this.ChangeItem.Events = new Dictionary<string, string>();
+            }
+
+            this.ChangeItem.Events.Add(name, value);
+            return this;
+        }
+
+        /// <summary>
+        /// Adds the metric.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>StageLogIteration.</returns>
+        public StageLogIteration AddMetric(string name, double value)
+        {
+            if (this.ChangeItem.Metrics == null)
+            {
+                this.ChangeItem.Metrics = new Dictionary<string, double>();
+            }
+
+            this.ChangeItem.Metrics.Add(name, value);
+            return this;
         }
 
         /// <summary>
@@ -551,6 +627,11 @@ namespace GaleForceCore.Logger
             }
         }
 
+        /// <summary>
+        /// Gets the duration.
+        /// </summary>
+        /// <param name="id">The identifier.</param>
+        /// <returns>System.Int32.</returns>
         public int GetDuration(string id)
         {
             return this.Items.Where(i => i.ChangeItem?.Id == id).Sum(i => i.ChangeItem.Duration);
@@ -586,22 +667,12 @@ namespace GaleForceCore.Logger
     /// <summary>
     /// Class StageChangeItem.
     /// </summary>
-    public class StageChangeItem
+    public class StageChangeItem : StageItem
     {
-        /// <summary>
-        /// Gets or sets the type.
-        /// </summary>
-        public StageType Type { get; set; }
-
         /// <summary>
         /// Gets or sets the type of the previous.
         /// </summary>
         public StageType PreviousType { get; set; }
-
-        /// <summary>
-        /// Gets or sets the position.
-        /// </summary>
-        public StagePosition Position { get; set; }
 
         /// <summary>
         /// Gets or sets the previous position.
@@ -609,19 +680,13 @@ namespace GaleForceCore.Logger
         public StagePosition PreviousPosition { get; set; }
 
         /// <summary>
-        /// Gets or sets the identifier.
-        /// </summary>
-        public string Id { get; set; }
-
-        /// <summary>
         /// Gets or sets the previous identifier.
         /// </summary>
         public string PreviousId { get; set; }
 
-        public string Tags { get; set; }
-
-        public DateTime DateTime { get; set; }
-
+        /// <summary>
+        /// Gets or sets the duration.
+        /// </summary>
         public int Duration { get; set; }
     }
 
@@ -674,6 +739,16 @@ namespace GaleForceCore.Logger
         /// Gets or sets the tags.
         /// </summary>
         public string Tags { get; set; }
+
+        /// <summary>
+        /// Gets or sets the date time.
+        /// </summary>
+        public DateTime DateTime { get; set; }
+
+        /// <summary>
+        /// Gets or sets the result.
+        /// </summary>
+        public int Result { get; set; }
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using GaleForceCore.Logger;
 using GaleForceCore.Writers;
@@ -32,13 +33,14 @@ namespace TestGaleForceCore
         public void TestLogger()
         {
             var logger = new StageLogger().AddCollector();
-            using (logger.Stage("id1", "outer"))
+            using (var stagelog = logger.Stage("id1", "outer"))
             {
                 logger.Log("test-in-stage");
-                using (logger.Step("id2", "inner"))
+                using (var steplog = logger.Step("id2", "inner"))
                 {
                     logger.Log("test-in-step");
                     Thread.Sleep(20);
+                    stagelog.AddMetric("key", 1);
                 }
                 logger.Log("test-out-step");
                 Thread.Sleep(5);
@@ -51,6 +53,9 @@ namespace TestGaleForceCore
             Assert.IsTrue(timing1 > timing2);
             Assert.IsTrue(timing2 >= 20);
             Assert.IsTrue(timing1 >= 25);
+            var item = logger.Collector.Items.First(l => l.ChangeItem != null && l.ChangeItem.Id == "id1").ChangeItem;
+            Assert.AreEqual(1, item.Metrics.Count);
+            Assert.AreEqual(1, item.Metrics["key"]);
         }
 
         [TestMethod]
@@ -58,11 +63,12 @@ namespace TestGaleForceCore
         {
             StageLogger logger = null;
             var valid = false;
-            using (logger?.Stage("id1"))
+            using (var stagelog = logger?.Stage("id1"))
             {
                 logger?.Log("test-in-stage");
-                using (logger?.Step("id2"))
+                using (var itemlog = logger?.Step("id2"))
                 {
+                    itemlog?.AddMetric("key", 1);
                     logger?.Log("test-in-step");
                     valid = true;
                 }
