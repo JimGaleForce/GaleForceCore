@@ -2845,7 +2845,7 @@ namespace GaleForceCore.Builders
         {
             var prop = props.First(p => p.Name == fieldName);
             var value = valueExpression != null ? valueExpression.Invoke(record) : prop.GetValue(record);
-            return SqlHelpers.GetAsSQLValue(value.GetType(), value);
+            return SqlHelpers.GetAsSQLValue(value?.GetType(), value);
         }
     }
 }

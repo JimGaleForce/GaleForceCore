@@ -82,6 +82,11 @@ namespace GaleForceCore.Helpers
         /// <exception cref="System.ArgumentException">Unsupported object type '{type}', cannot convert to SQL value.</exception>
         public static string GetAsSQLValue(Type type, object value)
         {
+            if (type == null)
+            {
+                return "null";
+            }
+
             var name = GetBetterPropTypeName(type);
 
             switch (name)
