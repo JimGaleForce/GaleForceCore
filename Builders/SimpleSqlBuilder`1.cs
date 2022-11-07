@@ -1505,11 +1505,16 @@ namespace GaleForceCore.Builders
             }
             else if (exp is ConstantExpression)
             {
-                var value = (exp as ConstantExpression).Value;
+                var cexp = (exp as ConstantExpression);
+                var value = cexp.Value;
                 var valueStr = value == null ? "NULL" : value.ToString();
                 if (value is string || value is DateTime)
                 {
                     valueStr = "'" + valueStr + "'";
+                }
+                else if (value is bool)
+                {
+                    valueStr = ((bool) value) ? "1" : "0";
                 }
 
                 var wvalue2 = this.WrappedValue(valueStr, exp, typeof(ConstantExpression));

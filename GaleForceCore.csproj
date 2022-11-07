@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.30.8</Version>
-    <AssemblyVersion>1.0.30.8</AssemblyVersion>
-    <FileVersion>1.0.30.8</FileVersion>
-    <PackageReleaseNotes>fixed sqlvalue when type is null</PackageReleaseNotes>
+    <Version>1.0.30.9</Version>
+    <AssemblyVersion>1.0.30.9</AssemblyVersion>
+    <FileVersion>1.0.30.9</FileVersion>
+    <PackageReleaseNotes>fixed bool compare build to 1 or 0</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 

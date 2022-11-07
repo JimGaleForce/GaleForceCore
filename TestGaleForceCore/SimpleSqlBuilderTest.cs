@@ -1124,7 +1124,7 @@ GO;";
                 .Build();
 
             var expected = 
-                @"with ctr AS (SELECT Int2, row_number() over (partition by Int2 order by Int2) as Temp from TableName) DELETE FROM TableName WHERE Temp > 1";
+                @"with TableNameCTE AS (SELECT Int2, row_number() over (partition by Int2 order by Int2) as Temp from TableName) DELETE FROM TableNameCTE WHERE Temp > 1";
 
             Assert.AreEqual(expected, actual);
         }
@@ -1139,7 +1139,7 @@ GO;";
                 .Build();
 
             var expected = 
-                @"with ctr AS (SELECT Int2, row_number() over (partition by Int2 order by Int2) as Temp from TableName) DELETE FROM TableName WHERE (Int1 = 5) AND Temp > 1";
+                @"with TableNameCTE AS (SELECT Int2, row_number() over (partition by Int2 order by Int2) as Temp from TableName) DELETE FROM TableNameCTE WHERE (Int1 = 5) AND Temp > 1";
 
             Assert.AreEqual(expected, actual);
         }
@@ -1955,6 +1955,17 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
             {
                 Assert.Fail("Exception not thrown");
             }
+        }
+
+        [TestMethod]
+        public void TestEqualsTrue()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Select(s => s.String1)
+                .Where(s => s.Bool2 == true)
+                .Build();
+
+            Assert.AreEqual("SELECT String1 FROM TableName WHERE (Bool2 = 1)", actual);
         }
 
         private List<SqlTestRecord> GetData()
