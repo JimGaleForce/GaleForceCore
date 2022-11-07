@@ -1993,16 +1993,20 @@ namespace GaleForceCore.Builders
 
             var tableName = this.TableNames != null && this.TableNames.Length > 0 ? this.TableNames[0] : this.TableName;
 
+            var updatedTableName = tableName;
             if (this.DistinctOnStr != null)
             {
                 sb.Append(
-                    $"with ctr AS (SELECT {this.DistinctOnStr}, row_number() over (partition by {this.DistinctOnStr} order by {this.DistinctOnStr}) as Temp from {tableName}) ");
+
+                    // with TokensCTE AS (SELECT ocvId, row_number() over (partition by ocvId order by ocvId) as Temp from Tokens) select * FROM TokensCTE WHERE Temp > 1
+                    $"with {tableName}CTE AS (SELECT {this.DistinctOnStr}, row_number() over (partition by {this.DistinctOnStr} order by {this.DistinctOnStr}) as Temp from {tableName}) ");
+                updatedTableName = $"{tableName}CTE";
             }
 
             sb.Append(this.Command);
             sb.Append(" ");
 
-            sb.Append($"FROM {tableName} ");
+            sb.Append($"FROM {updatedTableName} ");
 
             this.InjectInnerClauses(sb);
 
