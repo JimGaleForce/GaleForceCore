@@ -54,6 +54,15 @@ namespace GaleForceCore.Logger
         /// </summary>
         public Stack<StageChangeItem> Changes { get; set; } = new Stack<StageChangeItem>();
 
+        public void ChangeItemUpdated(StageChangeItem changeItem, string areaChange, string name, string value)
+        {
+            changeItem.CurrentChangeArea = areaChange;
+            changeItem.CurrentChangeName = name;
+            changeItem.CurrentChangeValue = value;
+
+            this.StageChangeCallback(changeItem);
+        }
+
         /// <summary>
         /// Continues the stage.
         /// </summary>
@@ -532,6 +541,7 @@ namespace GaleForceCore.Logger
             }
 
             this.ChangeItem.Events.Add(name, value);
+            this.Logger.ChangeItemUpdated(this.ChangeItem, "Event", name, value);
             return this;
         }
 
@@ -549,6 +559,8 @@ namespace GaleForceCore.Logger
             }
 
             this.ChangeItem.Metrics.Add(name, value);
+            this.Logger.ChangeItemUpdated(this.ChangeItem, "Metric", name, value.ToString());
+
             return this;
         }
 
@@ -688,6 +700,12 @@ namespace GaleForceCore.Logger
         /// Gets or sets the duration.
         /// </summary>
         public int Duration { get; set; }
+
+        public string CurrentChangeArea { get; set; }
+
+        public string CurrentChangeName { get; set; }
+
+        public string CurrentChangeValue { get; set; }
     }
 
     /// <summary>
