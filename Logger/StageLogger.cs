@@ -7,6 +7,7 @@ namespace GaleForceCore.Logger
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
     /// Class StageLogger.
@@ -60,7 +61,7 @@ namespace GaleForceCore.Logger
         /// <param name="type">The type.</param>
         /// <param name="position">The position.</param>
         /// <returns>System.Int32.</returns>
-        public int ContinueStage(string id, StageType type, StagePosition position)
+        public int ContinueStage(string id, StageType type, StagePosition position, string tags = null)
         {
             var changeItem = new StageChangeItem
             {
@@ -69,7 +70,9 @@ namespace GaleForceCore.Logger
                 Type = type,
                 PreviousId = this.CurrentId,
                 PreviousPosition = this.CurrentPosition,
-                PreviousType = this.CurrentType
+                PreviousType = this.CurrentType,
+                Tags = tags,
+                DateTime = DateTime.UtcNow
             };
 
             this.CurrentId = id;
@@ -90,12 +93,16 @@ namespace GaleForceCore.Logger
                     item = this.Changes.Pop();
                 }
 
-                if (item.Id == id && item.Type == type && this.Changes.Count > 0)
+                if (item.Id == id && item.Type == type)
                 {
-                    var peek = this.Changes.Peek();
-                    this.CurrentId = peek.Id;
-                    this.CurrentPosition = peek.Position;
-                    this.CurrentType = peek.Type;
+                    item.Duration = changeItem.DateTime.Subtract(item.DateTime).Milliseconds;
+                    if (this.Changes.Count > 0)
+                    {
+                        var peek = this.Changes.Peek();
+                        this.CurrentId = peek.Id;
+                        this.CurrentPosition = peek.Position;
+                        this.CurrentType = peek.Type;
+                    }
                 }
             }
 
@@ -110,93 +117,149 @@ namespace GaleForceCore.Logger
         /// <summary>
         /// Begins the logging.
         /// </summary>
-        public void BeginLogging()
+        public void BeginLogging(string tags = null)
         {
-            this.ContinueStage("All", StageType.All, StagePosition.Begin);
+            this.ContinueStage(
+                "All",
+                StageType.All,
+                StagePosition.Begin,
+                tags);
         }
 
         /// <summary>
         /// Ends the logging.
         /// </summary>
-        public void EndLogging()
+        public void EndLogging(string tags = null)
         {
-            this.ContinueStage("All", StageType.All, StagePosition.End);
+            this.ContinueStage(
+                "All",
+                StageType.All,
+                StagePosition.End,
+                tags);
         }
 
         /// <summary>
         /// Begins the stage.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginStage(string id) => this.ContinueStage(id, StageType.Stage, StagePosition.Begin);
+        public void BeginStage(string id, string tags = null) => this.ContinueStage(
+            id,
+            StageType.Stage,
+            StagePosition.Begin,
+            tags);
 
         /// <summary>
         /// Ends the stage.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void EndStage(string id) => this.ContinueStage(id, StageType.Stage, StagePosition.End);
+        public void EndStage(string id, string tags = null) => this.ContinueStage(
+            id,
+            StageType.Stage,
+            StagePosition.End,
+            tags);
 
         /// <summary>
         /// Begins the step.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginStep(string id) => this.ContinueStage(id, StageType.Step, StagePosition.Begin);
+        public void BeginStep(string id, string tags = null) => this.ContinueStage(
+            id,
+            StageType.Step,
+            StagePosition.Begin,
+            tags);
 
         /// <summary>
         /// Ends the step.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void EndStep(string id) => this.ContinueStage(id, StageType.Step, StagePosition.End);
+        public void EndStep(string id, string tags = null) => this.ContinueStage(
+            id,
+            StageType.Step,
+            StagePosition.End,
+            tags);
 
         /// <summary>
         /// Begins the item.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginItem(string id) => this.ContinueStage(id, StageType.Item, StagePosition.Begin);
+        public void BeginItem(string id, string tags = null) => this.ContinueStage(
+            id,
+            StageType.Item,
+            StagePosition.Begin,
+            tags);
 
         /// <summary>
         /// Ends the item.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void EndItem(string id) => this.ContinueStage(id, StageType.Item, StagePosition.End);
+        public void EndItem(string id, string tags = null) => this.ContinueStage(
+            id,
+            StageType.Item,
+            StagePosition.End,
+            tags);
 
         /// <summary>
         /// Begins the end stage.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginEndStage(string id) => this.ContinueStage(id, StageType.Stage, StagePosition.BeginEnd);
+        public void BeginEndStage(string id, string tags = null) => this.ContinueStage(
+            id,
+            StageType.Stage,
+            StagePosition.BeginEnd,
+            tags);
 
         /// <summary>
         /// Begins the end step.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginEndStep(string id) => this.ContinueStage(id, StageType.Step, StagePosition.BeginEnd);
+        public void BeginEndStep(string id, string tags = null) => this.ContinueStage(
+            id,
+            StageType.Step,
+            StagePosition.BeginEnd,
+            tags);
 
         /// <summary>
         /// Begins the end item.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        public void BeginEndItem(string id) => this.ContinueStage(id, StageType.Item, StagePosition.BeginEnd);
+        public void BeginEndItem(string id, string tags = null) => this.ContinueStage(
+            id,
+            StageType.Item,
+            StagePosition.BeginEnd,
+            tags);
 
         /// <summary>
         /// Stages the specified identifier.
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <returns>StageLogIteration.</returns>
-        public StageLogIteration Stage(string id) => new StageLogIteration(this, id, StageType.Stage);
+        public StageLogIteration Stage(string id, string tags = null) => new StageLogIteration(
+            this,
+            id,
+            StageType.Stage,
+            tags);
 
         /// <summary>
         /// Items the specified identifier.
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <returns>StageLogIteration.</returns>
-        public StageLogIteration Item(string id) => new StageLogIteration(this, id, StageType.Item);
+        public StageLogIteration Item(string id, string tags = null) => new StageLogIteration(
+            this,
+            id,
+            StageType.Item,
+            tags);
 
         /// <summary>
         /// Steps the specified identifier.
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <returns>StageLogIteration.</returns>
-        public StageLogIteration Step(string id) => new StageLogIteration(this, id, StageType.Step);
+        public StageLogIteration Step(string id, string tags = null) => new StageLogIteration(
+            this,
+            id,
+            StageType.Step,
+            tags);
 
         /// <summary>
         /// Adds the collector.
@@ -337,18 +400,18 @@ namespace GaleForceCore.Logger
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="type">The type.</param>
-        public void Begin(string id, StageType type)
+        public void Begin(string id, StageType type, string tags = null)
         {
             switch (type)
             {
                 case StageType.Stage:
-                    this.BeginStage(id);
+                    this.BeginStage(id, tags);
                     break;
                 case StageType.Step:
-                    this.BeginStep(id);
+                    this.BeginStep(id, tags);
                     break;
                 case StageType.Item:
-                    this.BeginItem(id);
+                    this.BeginItem(id, tags);
                     break;
             }
         }
@@ -358,18 +421,18 @@ namespace GaleForceCore.Logger
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="type">The type.</param>
-        public void End(string id, StageType type)
+        public void End(string id, StageType type, string tags = null)
         {
             switch (type)
             {
                 case StageType.Stage:
-                    this.EndStage(id);
+                    this.EndStage(id, tags);
                     break;
                 case StageType.Step:
-                    this.EndStep(id);
+                    this.EndStep(id, tags);
                     break;
                 case StageType.Item:
-                    this.EndItem(id);
+                    this.EndItem(id, tags);
                     break;
             }
         }
@@ -396,18 +459,21 @@ namespace GaleForceCore.Logger
         /// </summary>
         public StageType Type { get; set; }
 
+        public string Tags { get; set; }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="StageLogIteration"/> class.
         /// </summary>
         /// <param name="logger">The logger.</param>
         /// <param name="id">The identifier.</param>
         /// <param name="type">The type.</param>
-        public StageLogIteration(StageLogger logger, string id, StageType type)
+        public StageLogIteration(StageLogger logger, string id, StageType type, string tags = null)
         {
             this.Logger = logger;
             this.Id = id;
             this.Type = type;
-            logger.Begin(id, type);
+            this.Tags = tags;
+            logger.Begin(id, type, tags);
         }
 
         /// <summary>
@@ -484,6 +550,11 @@ namespace GaleForceCore.Logger
                         });
             }
         }
+
+        public int GetDuration(string id)
+        {
+            return this.Items.Where(i => i.ChangeItem?.Id == id).Sum(i => i.ChangeItem.Duration);
+        }
     }
 
     /// <summary>
@@ -546,6 +617,12 @@ namespace GaleForceCore.Logger
         /// Gets or sets the previous identifier.
         /// </summary>
         public string PreviousId { get; set; }
+
+        public string Tags { get; set; }
+
+        public DateTime DateTime { get; set; }
+
+        public int Duration { get; set; }
     }
 
     /// <summary>
