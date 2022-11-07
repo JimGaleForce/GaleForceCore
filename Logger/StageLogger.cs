@@ -60,7 +60,7 @@ namespace GaleForceCore.Logger
             {
                 StageSection = changeItem,
                 UpdateArea = areaChange,
-                updateName = name,
+                UpdateName = name,
                 UpdateValue = value
             };
 
@@ -89,11 +89,20 @@ namespace GaleForceCore.Logger
                 DateTime = DateTime.UtcNow
             };
 
+            this.Collector?.Record(changeItem);
+            return this.ContinueStage(changeItem, id, type, position, tags);
+        }
+
+        public StageSection ContinueStage(
+            StageSection changeItem,
+            string id,
+            StageType type,
+            StagePosition position,
+            string tags = null)
+        {
             this.CurrentId = id;
             this.CurrentPosition = position;
             this.CurrentType = type;
-
-            this.Collector?.Record(changeItem);
 
             if (position == StagePosition.Begin)
             {
@@ -109,7 +118,9 @@ namespace GaleForceCore.Logger
 
                 if (item.Id == id && item.Type == type)
                 {
-                    item.Duration = changeItem.DateTime.Subtract(item.DateTime).Milliseconds;
+                    var now = DateTime.UtcNow;
+                    item.EndDateTime = now;
+                    item.Duration = now.Subtract(item.DateTime).Milliseconds;
                     if (this.Changes.Count > 0)
                     {
                         var peek = this.Changes.Peek();
@@ -126,12 +137,23 @@ namespace GaleForceCore.Logger
             }
             else
             {
+                var pos = "Inside";
+                switch (position)
+                {
+                    case StagePosition.Begin:
+                        pos = "Begin";
+                        break;
+                    case StagePosition.End:
+                        pos = "End";
+                        break;
+                }
+
                 var update = new StageSectionUpdate
                 {
                     StageSection = changeItem,
-                    UpdateArea = "Inside",
-                    updateName = id,
-                    UpdateValue = position.ToString()
+                    UpdateArea = "Section",
+                    UpdateName = id,
+                    UpdateValue = pos
                 };
 
                 changeItem.Result = this.StageChangeCallback.Invoke(update);
@@ -582,7 +604,8 @@ namespace GaleForceCore.Logger
         /// </summary>
         public void Dispose()
         {
-            this.Logger.End(this.Id, this.Type);
+            this.Logger
+                .ContinueStage(this.ChangeItem, this.ChangeItem.Id, this.ChangeItem.Type, StagePosition.End, null);
         }
     }
 
@@ -692,7 +715,7 @@ namespace GaleForceCore.Logger
     {
         public string UpdateArea { get; set; }
 
-        public string updateName { get; set; }
+        public string UpdateName { get; set; }
 
         public string UpdateValue { get; set; }
 
@@ -723,6 +746,8 @@ namespace GaleForceCore.Logger
         /// Gets or sets the duration.
         /// </summary>
         public int Duration { get; set; }
+
+        public DateTime EndDateTime { get; set; }
     }
 
     /// <summary>

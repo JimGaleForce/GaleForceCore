@@ -77,6 +77,7 @@ namespace TestGaleForceCore
                 using (var steplog = logger.Step("id2", "inner"))
                 {
                     logger.Log("test-in-step");
+                    Thread.Sleep(20);
                     stagelog.AddMetric("key", 1);
                 }
                 logger.Log("test-out-step");
