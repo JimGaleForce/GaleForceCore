@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using GaleForceCore.Logger;
@@ -56,6 +57,32 @@ namespace TestGaleForceCore
             var item = logger.Collector.Items.First(l => l.ChangeItem != null && l.ChangeItem.Id == "id1").ChangeItem;
             Assert.AreEqual(1, item.Metrics.Count);
             Assert.AreEqual(1, item.Metrics["key"]);
+        }
+
+        [TestMethod]
+        public void TestLoggerOrdering()
+        {
+            var logger = new StageLogger().AddCollector();
+            var items = new List<StageSectionUpdate>();
+            logger.StageChangeCallback = c =>
+            {
+                items.Add(c);
+                return 1;
+            };
+
+            using (var stagelog = logger.Stage("id1", "outer"))
+            {
+                stagelog.AddEvent("event1", "value1");
+                logger.Log("test-in-stage");
+                using (var steplog = logger.Step("id2", "inner"))
+                {
+                    logger.Log("test-in-step");
+                    stagelog.AddMetric("key", 1);
+                }
+                logger.Log("test-out-step");
+            }
+
+            var item = logger.Collector.Items.First(l => l.ChangeItem != null && l.ChangeItem.Id == "id1").ChangeItem;
         }
 
         [TestMethod]
