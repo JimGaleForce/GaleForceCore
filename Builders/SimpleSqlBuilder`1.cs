@@ -393,6 +393,8 @@ namespace GaleForceCore.Builders
         /// </summary>
         public string DistinctOnStr { get; set; }
 
+        public Expression<Action<SimpleSqlBuilder<TRecord>>> SourceBuilder { get; set; }
+
         /// <summary>
         /// Adds the table name for the builder.
         /// </summary>
@@ -740,6 +742,20 @@ namespace GaleForceCore.Builders
         }
 
         /// <summary>
+        /// Inserts the specified records.
+        /// </summary>
+        /// <param name="records">The records.</param>
+        /// <param name="fields">The fields.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Insert(
+            Expression<Action<SimpleSqlBuilder<TRecord>>> selectSource,
+            IEnumerable<Expression<Func<TRecord, object>>> fields)
+        {
+            this.Insert(selectSource);
+            return this.Insert(fields);
+        }
+
+        /// <summary>
         /// Inserts the specified record.
         /// </summary>
         /// <param name="record">The record.</param>
@@ -771,6 +787,20 @@ namespace GaleForceCore.Builders
         /// <param name="fields">The fields.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Insert(
+            Expression<Action<SimpleSqlBuilder<TRecord>>> selectSource,
+            params Expression<Func<TRecord, object>>[] fields)
+        {
+            this.Insert(selectSource);
+            return this.Insert(fields);
+        }
+
+        /// <summary>
+        /// Inserts the specified records.
+        /// </summary>
+        /// <param name="records">The records.</param>
+        /// <param name="fields">The fields.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Insert(
             IEnumerable<TRecord> records,
             params Expression<Func<TRecord, object>>[] fields)
         {
@@ -786,6 +816,17 @@ namespace GaleForceCore.Builders
         public SimpleSqlBuilder<TRecord> Insert(IEnumerable<TRecord> records)
         {
             this.SourceData = records;
+            return this.Insert();
+        }
+
+        /// <summary>
+        /// Inserts the specified records.
+        /// </summary>
+        /// <param name="records">The records.</param>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
+        public SimpleSqlBuilder<TRecord> Insert(Expression<Action<SimpleSqlBuilder<TRecord>>> selectSource)
+        {
+            this.SourceBuilder = selectSource;
             return this.Insert();
         }
 
@@ -2291,14 +2332,44 @@ namespace GaleForceCore.Builders
                     }
                 }
 
-                sb.Append($" ({fieldString}) VALUES ");
+                if (this.SourceBuilder != null)
+                {
+                    var ssSource = new SimpleSqlBuilder<TRecord>().IsChained();
+                    this.SourceBuilder.Compile().Invoke(ssSource);
+                    var ssSourceBuild = ssSource.Build();
 
-                // this is an update segment for an outside instruction, do field to field or field to value
-                var setValues = this.CreateFieldExpressionValues(fields, this.Valueset, this.TableNames);
-                sb.Append("(");
-                sb.Append(string.Join(", ", setValues));
-                sb.Append(")");
-                return sb.ToString().Trim();
+                    var ssSourceFieldList = ssSource.FieldList(ssSource.Fields);
+                    if (ssSourceFieldList.Count() > fields.Count())
+                    {
+                        throw new Exception(
+                            "The select list for the INSERT statement contains more items than the insert list. The number of SELECT values must match the number of INSERT columns.");
+                    }
+
+                    if (ssSource.Fields.Any())
+                    {
+                        fieldString = string.Join(",", ssSource.Fields);
+                        sb.Append($" ({fieldString}) ");
+                    }
+                    else
+                    {
+                        sb.Append(" ");
+                    }
+
+                    sb.Append(ssSourceBuild);
+
+                    return sb.ToString().Trim();
+                }
+                else
+                {
+                    sb.Append($" ({fieldString}) VALUES ");
+
+                    // this is an update segment for an outside instruction, do field to field or field to value
+                    var setValues = this.CreateFieldExpressionValues(fields, this.Valueset, this.TableNames);
+                    sb.Append("(");
+                    sb.Append(string.Join(", ", setValues));
+                    sb.Append(")");
+                    return sb.ToString().Trim();
+                }
             }
 
             var prefix = this.Command +
@@ -2570,7 +2641,7 @@ namespace GaleForceCore.Builders
         /// <param name="records">The records.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         /// <exception cref="GaleForceCore.Builders.MissingDataTableException">SELECT testing requires a record set</exception>
-        private IEnumerable<TRecord> ExecuteSelect(IEnumerable<TRecord> records)
+        public IEnumerable<TRecord> ExecuteSelect(IEnumerable<TRecord> records)
         {
             if (records == null)
             {
@@ -2719,11 +2790,24 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="list">The list.</param>
         /// <returns>List&lt;System.String&gt;.</returns>
-        public List<string> FieldList(List<string> list)
+        public List<string> FieldList(List<string> list, bool useAs = false)
         {
-            return list != null && list.Count() > 0
+            var original = list != null && list.Count() > 0
                 ? list
                 : GetNonIgnoreProperties<TRecord>().Select(p => p.Name).ToList();
+
+            if (useAs)
+            {
+                for (var i = 0; i < original.Count(); i++)
+                {
+                    if (original[i].Contains(" AS "))
+                    {
+                        original[i] = original[i].Substring(original[i].IndexOf(" AS ") + 4);
+                    }
+                }
+            }
+
+            return original;
         }
 
         /// <summary>
@@ -2870,6 +2954,16 @@ namespace GaleForceCore.Builders
         /// <returns>List&lt;System.String&gt;.</returns>
         private List<string> GetFields()
         {
+            return GetNonIgnoreProperties<TRecord>().Select(p => p.Name).ToList();
+        }
+
+        /// <summary>
+        /// Gets the fields.
+        /// </summary>
+        /// <returns>List&lt;System.String&gt;.</returns>
+        private List<string> GetFieldOrAsFieldList()
+        {
+            var fields = this.Fields;
             return GetNonIgnoreProperties<TRecord>().Select(p => p.Name).ToList();
         }
 
