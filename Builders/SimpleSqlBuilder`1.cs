@@ -2181,7 +2181,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <typeparam name="TRecordType">The type of the t record type.</typeparam>
         /// <returns>PropertyInfo[].</returns>
-        protected PropertyInfo[] GetNonIgnoreProperties<TRecordType>()
+        public PropertyInfo[] GetNonIgnoreProperties<TRecordType>()
         {
             return typeof(TRecordType).GetProperties()
                 .Where(p => !p.GetCustomAttributes(typeof(IgnoreFieldAttribute), true).Any())
