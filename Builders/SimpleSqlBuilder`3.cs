@@ -266,6 +266,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord1, TRecord2, bool>> condition)
         {
+            this.WhereCheck();
             this.WhereExpression2.Add(condition);
             this.WhereString2
                 .Add(
@@ -282,22 +283,23 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="condition">The condition.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord, bool>> condition)
-        {
-            this.WhereExpression.Add(condition);
-            this.WhereString
-                .Add(
-                    this.ParseExpression(
-                        this.Types,
-                        condition.Body,
-                        true,
-                        parameters: condition.Parameters));
-            return this;
-        }
+        //public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord, bool>> condition)
+        // {
+        // this.WhereCheck();
+        // this.WhereExpression.Add(condition);
+        // this.WhereString
+        // .Add(
+        // this.ParseExpression(
+        // this.Types,
+        // condition.Body,
+        // true,
+        // parameters: condition.Parameters));
+        // return this;
+        // }
 
         /// <summary>
-        /// Clears the accumulative where clauses.
-        /// </summary>
+/// Clears the accumulative where clauses.
+/// </summary>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> ClearWhere()
         {

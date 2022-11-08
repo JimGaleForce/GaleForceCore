@@ -1968,6 +1968,57 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
             Assert.AreEqual("SELECT String1 FROM TableName WHERE (Bool2 = 1)", actual);
         }
 
+        [TestMethod]
+        public void TestNullRecordsTemplate()
+        {
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Insert(s => s.Int3)
+                .Values(s => 2)
+                .Build();
+
+            Assert.AreEqual("INSERT INTO TableName (Int3) VALUES (2)", actual);
+        }
+
+        [TestMethod]
+        public void TestWhereOnInsertThrow()
+        {
+            var valid = false;
+            try
+            {
+                var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Insert(s => s.Int3)
+                    .Values(s => 2)
+                    .Where(s => s.Bool2.Value)
+                    .Build();
+            }
+            catch (IncompatibleClauseException)
+            {
+                // correct
+                valid = true;
+            }
+            catch (Exception)
+            {
+                Assert.Fail("Incorrect exception");
+            }
+
+            if (!valid)
+            {
+                Assert.Fail("Exception not thrown");
+            }
+        }
+
+        [TestMethod]
+        public void TestZeroRecordsEmpty()
+        {
+            var data = new List<SqlTestRecord>() { };
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Insert(data, s => s.Int3)
+                .Values(s => 2)
+                .Build();
+
+            Assert.IsTrue(string.IsNullOrEmpty(actual));
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;

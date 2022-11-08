@@ -143,7 +143,7 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Gets or sets the source data.
         /// </summary>
-        public IEnumerable<TRecord> SourceData { get; protected set; } = new List<TRecord>();
+        public IEnumerable<TRecord> SourceData { get; protected set; } = null;
 
         /// <summary>
         /// Gets or sets the index of the parameter.
@@ -1053,6 +1053,7 @@ namespace GaleForceCore.Builders
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Where(Expression<Func<TRecord, bool>> condition)
         {
+            this.WhereCheck();
             this.WhereExpression.Add(condition);
             this.WhereString
                 .Add(
@@ -1062,6 +1063,18 @@ namespace GaleForceCore.Builders
                         true,
                         parameters: condition.Parameters));
             return this;
+        }
+
+        /// <summary>
+        /// Checks if the Where clause is on an INSERT command, and throws.
+        /// </summary>
+        /// <exception cref="T:GaleForceCore.Builders.IncompatibleClauseException">Where clause is not available on an INSERT command</exception>
+        protected void WhereCheck()
+        {
+            if (this.Command == "INSERT")
+            {
+                throw new IncompatibleClauseException("Where clause is not available on an INSERT command");
+            }
         }
 
         /// <summary>
@@ -2140,6 +2153,13 @@ namespace GaleForceCore.Builders
         /// <returns>System.String.</returns>
         private string BuildUpdate()
         {
+            var records = this.SourceData;
+            if (records != null && records.Count() == 0)
+            {
+                // no data to insert
+                return "";
+            }
+
             var sb = new StringBuilder();
             var props = GetNonIgnoreProperties<TRecord>();
 
@@ -2158,8 +2178,7 @@ namespace GaleForceCore.Builders
 
             bool isChained = this.Metadata.ContainsKey("Chained") && (bool) this.Metadata["Chained"];
 
-            var records = this.SourceData;
-            if (records == null || records.Count() == 0)
+            if (records == null)
             {
                 // this is an update segment for an outside instruction, do field to field or field to value
                 var setValues = this.CreateFieldEqualsExpressionValues(fields, this.Valueset, this.TableNames);
@@ -2233,6 +2252,13 @@ namespace GaleForceCore.Builders
         /// <returns>System.String.</returns>
         private string BuildInsert()
         {
+            var records = this.SourceData;
+            if (records != null && records.Count() == 0)
+            {
+                // no data to insert
+                return "";
+            }
+
             var sb = new StringBuilder();
             var props = GetNonIgnoreProperties<TRecord>();
 
@@ -2245,17 +2271,30 @@ namespace GaleForceCore.Builders
 
             var fieldString = string.Join(",", fields);
 
-            var records = this.SourceData;
-            if (records == null || records.Count() == 0)
+            bool isChained = this.Metadata.ContainsKey("Chained") && (bool) this.Metadata["Chained"];
+
+            if (records == null)
             {
                 // todo: standalone, non chained insert values to new record
 
-                var prefix0 = this.Command +
-                    $" ({fieldString}) VALUES ";
+                sb.Append(this.Command);
+
+                if (!isChained)
+                {
+                    if (this.TableNames != null && this.TableNames.Length > 0)
+                    {
+                        sb.Append($" INTO {this.TableNames[0]}");
+                    }
+                    else
+                    {
+                        sb.Append($" INTO {this.TableName}");
+                    }
+                }
+
+                sb.Append($" ({fieldString}) VALUES ");
 
                 // this is an update segment for an outside instruction, do field to field or field to value
                 var setValues = this.CreateFieldExpressionValues(fields, this.Valueset, this.TableNames);
-                sb.Append(prefix0);
                 sb.Append("(");
                 sb.Append(string.Join(", ", setValues));
                 sb.Append(")");

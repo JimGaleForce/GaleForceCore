@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.30.10</Version>
-    <AssemblyVersion>1.0.30.10</AssemblyVersion>
-    <FileVersion>1.0.30.10</FileVersion>
-    <PackageReleaseNotes>fixed totalmilliseconds for log, moved files</PackageReleaseNotes>
+    <Version>1.0.30.11</Version>
+    <AssemblyVersion>1.0.30.11</AssemblyVersion>
+    <FileVersion>1.0.30.11</FileVersion>
+    <PackageReleaseNotes>checks where on INSERT, handles zero records to no op</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
@@ -20,6 +20,7 @@
     <Compile Remove="TestGaleForceCore\**" />
     <EmbeddedResource Remove="TestGaleForceCore\**" />
     <None Remove="TestGaleForceCore\**" />
+    <None Remove="Builders\m3uvran2.k4u~" />
     <None Include="LICENSE">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
