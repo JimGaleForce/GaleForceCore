@@ -2072,6 +2072,23 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
                 mergeInsert);
         }
 
+        [TestMethod]
+        public void InsertFromSelectAllExecute()
+        {
+            var source = this.GetData();
+            var target = new List<SqlTestRecord>();
+            var sources = new Dictionary<string, SourceData>();
+            sources["TempTableName"] = SourceData.Create("TempTableName", source);
+
+            var mergeInsert = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Insert(s => s.From("Temp" + SqlTestRecord.TableName).Select())
+                .ExecuteNonQuery(target, sources);
+
+            Assert.AreEqual(5, mergeInsert);
+            Assert.AreEqual(5, target.Count());
+            Assert.AreEqual("String123", target[0].String1);
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;

@@ -2618,15 +2618,41 @@ namespace GaleForceCore.Builders
         /// <exception cref="System.NotImplementedException"></exception>
         public int ExecuteNonQuery(List<TRecord> target, IEnumerable<TRecord> overrideSource = null)
         {
+            Dictionary<string, SourceData> sources = null;
+            if (overrideSource != null)
+            {
+                sources = new Dictionary<string, SourceData>();
+                sources.Add(
+                    "__source",
+                    new SourceData
+                    {
+                        Data = (IEnumerable<object>) overrideSource,
+                        Name = "__source",
+                        SourceType = typeof(TRecord)
+                    });
+            }
+
+            return this.ExecuteNonQuery(target, sources);
+        }
+
+        /// <summary>
+        /// Executes the specified source.
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <param name="overrideSource">The override source.</param>
+        /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
+        public int ExecuteNonQuery(List<TRecord> target, Dictionary<string, SourceData> sources)
+        {
             this.CheckDowncast("ExecuteNonQuery");
             switch (this.Command)
             {
                 case "UPDATE":
-                    return this.ExecuteUpdate(target, overrideSource);
+                    return this.ExecuteUpdate(target, sources);
                 case "INSERT":
-                    return this.ExecuteInsert(target, overrideSource);
+                    return this.ExecuteInsert(target, sources);
                 case "MERGE":
-                    return this.ExecuteMerge(target, overrideSource);
+                    return this.ExecuteMerge(target, sources);
                 case "DELETE":
                     return this.ExecuteDelete(target);
                 default:
@@ -2709,16 +2735,14 @@ namespace GaleForceCore.Builders
         /// <param name="overrideSource">The override source.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         /// <exception cref="GaleForceCore.Builders.MissingDataTableException">UPDATE testing requires a record set</exception>
-        public int ExecuteUpdate(IEnumerable<TRecord> target, IEnumerable<TRecord> overrideSource = null)
+        public int ExecuteUpdate(IEnumerable<TRecord> target, Dictionary<string, SourceData> sources = null)
         {
             if (target == null)
             {
-                throw new MissingDataTableException("UPDATE testing requires a record set");
+                throw new MissingDataTableException("UPDATE testing requires a target record set to populate");
             }
 
             var result = new List<TRecord>();
-
-            // todo: reform to execute on string fields, not only expressions
 
             var current = target;
             foreach (var whereExpression in this.WhereExpression)
@@ -2737,10 +2761,10 @@ namespace GaleForceCore.Builders
             // assumes 1key
             int count = 0;
 
-            var resultSet = overrideSource ?? this.SourceData;
+            var resultSet = this.GetSourceData(sources, "__source");
             if (resultSet != null && resultSet.Count() > 0)
             {
-                foreach (var record in overrideSource ?? this.SourceData)
+                foreach (var record in resultSet)
                 {
                     var sourceKey = keyProp?.GetValue(record);
                     var targets = keyProp == null
@@ -2810,6 +2834,16 @@ namespace GaleForceCore.Builders
             return original;
         }
 
+        public IEnumerable<TRecord> GetSourceData(Dictionary<string, SourceData> sources, string name)
+        {
+            if (sources == null || !sources.ContainsKey(name))
+            {
+                return this.SourceData;
+            }
+
+            return sources[name].Data as IEnumerable<TRecord>;
+        }
+
         /// <summary>
         /// Executes the expressions within this builder upon these records, returning the results.
         /// </summary>
@@ -2817,7 +2851,7 @@ namespace GaleForceCore.Builders
         /// <param name="overrideSource">The override source.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         /// <exception cref="GaleForceCore.Builders.MissingDataTableException">INSERT testing requires a record set</exception>
-        public int ExecuteInsert(List<TRecord> target, IEnumerable<TRecord> overrideSource = null)
+        public int ExecuteInsert(List<TRecord> target, Dictionary<string, SourceData> sources = null)
         {
             if (target == null)
             {
@@ -2833,7 +2867,25 @@ namespace GaleForceCore.Builders
             var fields = this.FieldList(this.Inserts);
 
             var count = 0;
-            foreach (var record in overrideSource ?? this.SourceData)
+
+            var resultSet = this.GetSourceData(sources, "__source");
+            if (this.SourceBuilder != null)
+            {
+                var ssSource = new SimpleSqlBuilder<TRecord>().IsChained();
+                this.SourceBuilder.Compile().Invoke(ssSource);
+                var subSources = sources.ToDictionary(kv => kv.Key, kv => kv.Value);
+                var subFrom = ssSource.TableName;
+                if (!subSources.ContainsKey(subFrom))
+                {
+                    throw new MissingDataTableException(
+                        $"Named table {subFrom} inside SELECT inside requires a data source in sources");
+                }
+
+                subSources["__source"] = subSources[subFrom];
+                resultSet = ssSource.Execute(subSources[subFrom].Data as IEnumerable<TRecord>);
+            }
+
+            foreach (var record in resultSet)
             {
                 var newRecord = (TRecord)Activator.CreateInstance(type);
                 var fieldIndex = 0;
@@ -2852,6 +2904,15 @@ namespace GaleForceCore.Builders
             return count;
         }
 
+        public int ExecuteMerge(List<TRecord> target, IEnumerable<TRecord> source)
+        {
+            var sources = new Dictionary<string, SourceData>();
+            sources.Add(
+                "__source",
+                new SourceData { Data = (IEnumerable<object>) source, Name = "__source", SourceType = typeof(TRecord) });
+            return this.ExecuteMerge(target, sources);
+        }
+
         /// <summary>
         /// Executes the merge.
         /// </summary>
@@ -2861,7 +2922,7 @@ namespace GaleForceCore.Builders
         /// <exception cref="GaleForceCore.Builders.MissingDataTableException">MERGE testing requires a List<TRecord> set</exception>
         /// <exception cref="System.Exception">source record matches multiple targets (record #{index})</exception>
         /// <font color="red">Badly formed XML comment.</font>
-        public int ExecuteMerge(List<TRecord> target, IEnumerable<TRecord> source)
+        public int ExecuteMerge(List<TRecord> target, Dictionary<string, SourceData> sources)
         {
             if (target == null)
             {
@@ -2887,6 +2948,8 @@ namespace GaleForceCore.Builders
 
             var index = 0;
             var count = 0;
+            var source = this.GetSourceData(sources, "__source");
+
             foreach (var s in source)
             {
                 index++;
@@ -2984,6 +3047,24 @@ namespace GaleForceCore.Builders
             var prop = props.First(p => p.Name == fieldName);
             var value = valueExpression != null ? valueExpression.Invoke(record) : prop.GetValue(record);
             return SqlHelpers.GetAsSQLValue(value?.GetType(), value);
+        }
+    }
+
+    public class SourceData
+    {
+        public string Name { get; set; }
+
+        public Type SourceType { get; set; }
+
+        public IEnumerable<object> Data { get; set; }
+
+        public SourceData()
+        {
+        }
+
+        public static SourceData Create<T>(string name, IEnumerable<T> data)
+        {
+            return new SourceData { Data = (IEnumerable<object>) data, Name = name, SourceType = typeof(T) };
         }
     }
 }
