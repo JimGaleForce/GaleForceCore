@@ -1732,7 +1732,7 @@ namespace GaleForceCore.Builders
                             case "EndsWith":
                                 if (isQuoted)
                                 {
-                                    value = $"{obj} LIKE '%{subValue}";
+                                    value = $"{obj} LIKE '%{subValue}'";
                                 }
                                 else
                                 {
