@@ -520,7 +520,7 @@ namespace GaleForceCore.Builders
                     var refTableName = this.TableNames[index] != this.TableNamesActual[index]
                         ? this.TableNames[index] + " "
                         : string.Empty;
-                    sb.Append($"{joinPhrase} JOIN {this.TableNames[index]} {refTableName}ON {keys} ");
+                    sb.Append($"{joinPhrase} JOIN {this.TableNamesActual[index]} {refTableName}ON {keys} ");
                 }
             }
         }

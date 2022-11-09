@@ -2114,7 +2114,7 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
         [TestMethod]
         public void ComplexBuilder1()
         {
-            var recordsAll = new SimpleSqlBuilder<TargetRecord, SourceRecord1, SourceRecord2, SourceRecord2, SourceRecord3>()
+            var actual = new SimpleSqlBuilder<TargetRecord, SourceRecord1, SourceRecord2, SourceRecord2, SourceRecord3>()
                 .From(
                     SourceRecord1.TableName,
                     SourceRecord2.TableName,
@@ -2126,12 +2126,16 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
                     z => z.Int2,
                     (s1, s2a, s2b, s3) => s2a.String2.Substring(s2a.String2.IndexOf(":") + 1, 100))
                 .SelectAs(z => z.String3, (s1, s2a, s2b, s3) => s3.String3)
-                .InnerJoin12On((p, ti) => ti.x == p.x.Substring(p.x.IndexOf(":") + 1, 100) && ti.x)
-                .InnerJoin13On((p, tf) => tf.Id == p.Id && tf.x)
-                .InnerJoin14On((p, a) => a.Id == p.Id)
-                .Where((p, ti, tf, a) => p.x == "text" && !p.x.EndsWith(":none"))
-                .Execute(sqlContext)
-                .ToList();
+                .InnerJoin12On(
+                    (s1, s2a) => s1.SameString == s2a.SameString.Substring(s2a.SameString.IndexOf(":") + 1, 100) &&
+                        s2a.Bool2.Value)
+                .InnerJoin13On((s1, s2b) => s1.Int1 == s2b.Int2)
+                .InnerJoin14On((s1, s3) => s1.Int1 == s3.Int3)
+                .Where((s1, s2a, s2b, s3) => s2b.String2 == "text" && !s3.String3.EndsWith(":bad"))
+                .Build();
+
+            var expected = @"SELECT Source1.Int1,Source3.SameString AS SameString,SUBSTRING(Source2.String2,((CHARINDEX(':',Source2.String2)-1) + 1)+1,100) AS Int2,Source3.String3 AS String3 FROM Source1 INNER JOIN Source2 ON ((Source1.SameString = SUBSTRING(Source2.SameString,((CHARINDEX(':',Source2.SameString)-1) + 1)+1,100)) AND .Bool2 = 1) INNER JOIN Source2 Source2__1 ON (Source1.Int1 = Source2__1.Int2) INNER JOIN Source3 ON (Source1.Int1 = Source3.Int3) WHERE ((Source2__1.String2 = 'text') AND NOT Source3.String3 LIKE '%:bad')";
+            Assert.AreEqual(expected, actual);
         }
 
         private List<SqlTestRecord> GetData()
@@ -2355,69 +2359,5 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
                 });
             return data;
         }
-    }
-
-    public class TargetRecord
-    {
-        public const string TableName = "Target";
-
-        public string SameString { get; set; }
-
-        public int Int1 { get; set; }
-
-        public int? Int2 { get; set; }
-
-        public int? Int3 { get; set; }
-
-        public int? Int4 { get; set; }
-
-        public string String1 { get; set; }
-
-        public string String2 { get; set; }
-
-        public string String3 { get; set; }
-
-        public string String4 { get; set; }
-
-        public DateTime DateTime1 { get; set; }
-    }
-
-    public class SourceRecord1
-    {
-        public const string TableName = "Source1";
-
-        public string SameString { get; set; }
-
-        public int Int1 { get; set; }
-
-        public string String1 { get; set; }
-
-        public DateTime DateTime1 { get; set; }
-    }
-
-    public class SourceRecord2
-    {
-        public const string TableName = "Source2";
-
-        public string SameString { get; set; }
-
-        public int? Int2 { get; set; }
-
-        public string String2 { get; set; }
-
-        public DateTime DateTime2 { get; set; }
-    }
-
-    public class SourceRecord3
-    {
-        public const string TableName = "Source3";
-
-        public string SameString { get; set; }
-
-        public int? Int3 { get; set; }
-
-        public string String3 { get; set; }
-
-        public DateTime? DateTime3 { get; set; }
     }
 }
