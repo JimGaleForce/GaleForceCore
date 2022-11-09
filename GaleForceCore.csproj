@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.32.1</Version>
-    <AssemblyVersion>1.0.32.1</AssemblyVersion>
-    <FileVersion>1.0.32.1</FileVersion>
-    <PackageReleaseNotes>added insert from select as testable execution</PackageReleaseNotes>
+    <Version>1.0.32.2</Version>
+    <AssemblyVersion>1.0.32.2</AssemblyVersion>
+    <FileVersion>1.0.32.2</FileVersion>
+    <PackageReleaseNotes>fixes EndsWith spelling</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 

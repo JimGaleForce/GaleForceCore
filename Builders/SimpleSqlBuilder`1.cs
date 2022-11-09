@@ -1655,7 +1655,7 @@ namespace GaleForceCore.Builders
                     {
                         "Contains",
                         "StartsWith",
-                        "EndWidth",
+                        "EndsWith",
                         "IsNullOrEmpty",
                         "IsNullOrWhiteSpace",
                         "Trim",
