@@ -1584,6 +1584,7 @@ namespace GaleForceCore.Builders
                 var testExp = this.ParseExpression(
                     types,
                     test,
+                    parameters: parameters,
                     tableNames: tableNames,
                     evalInfo: ei);
 
