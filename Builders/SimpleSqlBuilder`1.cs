@@ -1782,7 +1782,7 @@ namespace GaleForceCore.Builders
                                             parameters: parameters,
                                             tableNames: tableNames,
                                             evalInfo: evalInfo)
-                                    : null;
+                                    : ",LEN({obj})";
 
                                 var parm2 = origValueInt.HasValue
                                     ? (origValueInt + offset).ToString()
