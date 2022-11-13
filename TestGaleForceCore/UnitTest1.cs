@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using GaleForceCore.Helpers;
 using GaleForceCore.Logger;
 using GaleForceCore.Writers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -106,5 +108,104 @@ namespace TestGaleForceCore
             Assert.AreEqual(null, logger);
             Assert.AreEqual(true, valid);
         }
+
+        [TestMethod]
+        public void TestShallowCopy()
+        {
+            var source = new Object1
+            {
+                SameId = 1,
+                SameIdNull = 1,
+                SameString = "String1",
+                SameBool = true,
+                SameDateTime = DateTime.Now,
+                SameSubObject = new SubObject { Name = "SubObject" },
+                DiffId1 = 2,
+                DiffId1Null = 2,
+                DiffString1 = "String2",
+                DiffBool1 = true,
+                DiffDateTime1 = DateTime.Now
+            };
+
+            var target = source.CopyShallow<Object2>();
+
+            Assert.AreEqual(target.SameId, source.SameId);
+            Assert.AreEqual(target.SameBool, source.SameBool);
+            Assert.AreEqual(target.SameDateTime, source.SameDateTime);
+            Assert.AreEqual(target.SameSubObject, source.SameSubObject);
+
+            Assert.AreNotEqual(target.DiffId2, source.DiffId1);
+        }
+    }
+
+    public class Object1
+    {
+        public int SameId { get; set; }
+
+        public int DiffId1 { get; set; }
+
+        public int? SameIdNull { get; set; }
+
+        public int? DiffId1Null { get; set; }
+
+        public string SameString { get; set; }
+
+        public string DiffString1 { get; set; }
+
+        public bool SameBool { get; set; }
+
+        public bool DiffBool1 { get; set; }
+
+        public bool? SameBoolNull { get; set; }
+
+        public bool? DiffBool1Null { get; set; }
+
+        public DateTime SameDateTime { get; set; }
+
+        public DateTime DiffDateTime1 { get; set; }
+
+        public DateTime? SameDateTimeNull { get; set; }
+
+        public DateTime? DiffDateTime1Null { get; set; }
+
+        public SubObject SameSubObject { get; set; }
+    }
+
+    public class Object2
+    {
+        public int SameId { get; set; }
+
+        public int DiffId2 { get; set; }
+
+        public int? SameIdNull { get; set; }
+
+        public int? DiffId2Null { get; set; }
+
+        public string SameString { get; set; }
+
+        public string DiffString2 { get; set; }
+
+        public bool SameBool { get; set; }
+
+        public bool DiffBool2 { get; set; }
+
+        public bool? SameBoolNull { get; set; }
+
+        public bool? DiffBool2Null { get; set; }
+
+        public DateTime SameDateTime { get; set; }
+
+        public DateTime DiffDateTime2 { get; set; }
+
+        public DateTime? SameDateTimeNull { get; set; }
+
+        public DateTime? DiffDateTime2Null { get; set; }
+
+        public SubObject SameSubObject { get; set; }
+    }
+
+    public class SubObject
+    {
+        public string Name { get; set; }
     }
 }
