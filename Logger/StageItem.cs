@@ -67,5 +67,7 @@ namespace GaleForceCore.Logger
         /// Gets or sets the result.
         /// </summary>
         public int Result { get; set; }
+
+        public Exception Exception { get; set; }
     }
 }

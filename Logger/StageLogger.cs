@@ -442,6 +442,18 @@ namespace GaleForceCore.Logger
                 });
         }
 
+        public int Log(Exception e, string message = "", string tags = null)
+        {
+            return this.Log(
+                new StageItem
+                {
+                    Exception = e,
+                    Message = message + (!string.IsNullOrEmpty(message) ? ":" : "") + e.ToString(),
+                    Level = StageLevel.Error,
+                    Tags = tags
+                });
+        }
+
         /// <summary>
         /// Logs the metric.
         /// </summary>

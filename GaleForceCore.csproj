@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.32.6</Version>
-    <AssemblyVersion>1.0.32.6</AssemblyVersion>
-    <FileVersion>1.0.32.6</FileVersion>
-    <PackageReleaseNotes>allowed single parm substring</PackageReleaseNotes>
+    <Version>1.0.32.7</Version>
+    <AssemblyVersion>1.0.32.7</AssemblyVersion>
+    <FileVersion>1.0.32.7</FileVersion>
+    <PackageReleaseNotes>adds exceptions to logging</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
