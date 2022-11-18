@@ -1552,7 +1552,7 @@ namespace GaleForceCore.Builders
                     memberName = (pe.Expression as MemberExpression)?.Member.Name;
                 }
 
-                var value2 = prefix + memberName + suffix;
+                var value2 = prefix + this.FinalField(memberName) + suffix;
                 var wvalue2 = this.WrappedValue(value2, pe, typeof(MemberExpression));
                 evalInfo?.Register(pe, typeof(MemberExpression), wvalue2);
                 return wvalue2;
@@ -2110,6 +2110,24 @@ namespace GaleForceCore.Builders
             return string.Empty;
         }
 
+        private string FinalField(string field)
+        {
+            // TODO: Allow for  attributed replacements - and recognize keywords.
+
+            var lcField = field.ToLowerInvariant();
+            if (lcField == "user" || lcField == "from")
+            {
+                return $"[{field}]";
+            }
+
+            return field;
+        }
+
+        private List<string> FinalFields(List<string> fields)
+        {
+            return fields.Select(f => this.FinalField(f)).ToList();
+        }
+
         /// <summary>
         /// Builds the sql-server friendly string.
         /// </summary>
@@ -2127,7 +2145,7 @@ namespace GaleForceCore.Builders
 
             if (this.Fields.Count > 0)
             {
-                sb.Append(string.Join(",", this.Fields));
+                sb.Append(string.Join(",", this.FinalFields(this.Fields)));
             }
             else
             {

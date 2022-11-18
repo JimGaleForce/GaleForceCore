@@ -2138,6 +2138,39 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
             Assert.AreEqual(expected, actual);
         }
 
+        [TestMethod]
+        public void TestBracketedFields()
+        {
+            var actual = new SimpleSqlBuilder<SourceRecordWithUser>(SourceRecordWithUser.TableName)
+                .Select()
+                .Where(m => string.IsNullOrEmpty(m.User))
+                .Build();
+
+            var expected = "SELECT * FROM TableName WHERE ISNULL([User], '') = ''";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestBracketedFields2()
+        {
+            var actual = new SimpleSqlBuilder<SourceRecordWithUser>(SourceRecordWithUser.TableName)
+                .Select()
+                .Where(m => m.User == "ABC")
+                .Build();
+
+            var expected = "SELECT * FROM TableName WHERE ([User] = 'ABC')";
+            Assert.AreEqual(expected, actual);
+        }
+
+        public class SourceRecordWithUser
+        {
+            public const string TableName = "TableName";
+
+            public int Id { get; set; }
+
+            public string User { get; set; }
+        }
+
         private List<SqlTestRecord> GetData()
         {
             var dt = DateTime.MaxValue;
