@@ -1290,7 +1290,7 @@ namespace GaleForceCore.Builders
         /// <param name="fields">The fields.</param>
         public void OverrideFields(IEnumerable<string> fields)
         {
-            this._OverrideFields = fields.ToList();
+            this._OverrideFields = fields == null ? null : fields.ToList();
         }
 
         /// <summary>
