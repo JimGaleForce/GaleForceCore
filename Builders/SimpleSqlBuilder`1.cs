@@ -54,10 +54,24 @@ namespace GaleForceCore.Builders
         } = new Dictionary<object, Expression<Func<TRecord, object>>>();
 
         /// <summary>
+        /// The table name.
+        /// </summary>
+        private string tableName;
+
+        /// <summary>
         /// Gets the name of the table.
         /// </summary>
         /// <value>The name of the table.</value>
-        public string TableName { get; protected set; }
+        public string TableName
+        {
+            get { return this._OverrideTableName ?? this.tableName; }
+            protected set { this.tableName = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the name of the override table.
+        /// </summary>
+        public string _OverrideTableName { get; protected set; }
 
         /// <summary>
         /// Gets the name of the table to merge into.
@@ -96,10 +110,24 @@ namespace GaleForceCore.Builders
         public int Count { get; protected set; } = int.MaxValue;
 
         /// <summary>
+        /// The command
+        /// </summary>
+        private string command = "SELECT";
+
+        /// <summary>
         /// Gets the command (only SELECT active currently).
         /// </summary>
         /// <value>The command.</value>
-        public string Command { get; protected set; } = "SELECT";
+        public string Command
+        {
+            get { return this._OverrideCommand ?? this.command; }
+            protected set { this.command = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the override command.
+        /// </summary>
+        public string _OverrideCommand { get; protected set; }
 
         /// <summary>
         /// Gets the where condition string.
@@ -393,6 +421,9 @@ namespace GaleForceCore.Builders
         /// </summary>
         public string DistinctOnStr { get; set; }
 
+        /// <summary>
+        /// Gets or sets the source builder.
+        /// </summary>
         public Expression<Action<SimpleSqlBuilder<TRecord>>> SourceBuilder { get; set; }
 
         /// <summary>
@@ -744,7 +775,7 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Inserts the specified records.
         /// </summary>
-        /// <param name="records">The records.</param>
+        /// <param name="selectSource">The select source.</param>
         /// <param name="fields">The fields.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Insert(
@@ -783,7 +814,7 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Inserts the specified records.
         /// </summary>
-        /// <param name="records">The records.</param>
+        /// <param name="selectSource">The select source.</param>
         /// <param name="fields">The fields.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Insert(
@@ -822,7 +853,7 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Inserts the specified records.
         /// </summary>
-        /// <param name="records">The records.</param>
+        /// <param name="selectSource">The select source.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Insert(Expression<Action<SimpleSqlBuilder<TRecord>>> selectSource)
         {
@@ -1109,6 +1140,7 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Checks if the Where clause is on an INSERT command, and throws.
         /// </summary>
+        /// <exception cref="GaleForceCore.Builders.IncompatibleClauseException">Where clause is not available on an INSERT command</exception>
         /// <exception cref="T:GaleForceCore.Builders.IncompatibleClauseException">Where clause is not available on an INSERT command</exception>
         protected void WhereCheck()
         {
@@ -1218,6 +1250,24 @@ namespace GaleForceCore.Builders
         {
             this.WhenNotMatchedExpression = ssBuilderNotMatched;
             return this;
+        }
+
+        /// <summary>
+        /// Overrides the name of the table.
+        /// </summary>
+        /// <param name="tempTableName">Name of the temporary table.</param>
+        public void OverrideTableName(string tempTableName)
+        {
+            this._OverrideTableName = tempTableName;
+        }
+
+        /// <summary>
+        /// Overrides the command.
+        /// </summary>
+        /// <param name="tempCommand">The temporary command.</param>
+        public void OverrideCommand(string tempCommand)
+        {
+            this._OverrideCommand = tempCommand;
         }
 
         /// <summary>
@@ -2110,6 +2160,11 @@ namespace GaleForceCore.Builders
             return string.Empty;
         }
 
+        /// <summary>
+        /// Finals the field.
+        /// </summary>
+        /// <param name="field">The field.</param>
+        /// <returns>System.String.</returns>
         private string FinalField(string field)
         {
             // TODO: Allow for  attributed replacements - and recognize keywords.
@@ -2123,6 +2178,11 @@ namespace GaleForceCore.Builders
             return field;
         }
 
+        /// <summary>
+        /// Finals the fields.
+        /// </summary>
+        /// <param name="fields">The fields.</param>
+        /// <returns>List&lt;System.String&gt;.</returns>
         private List<string> FinalFields(List<string> fields)
         {
             return fields.Select(f => this.FinalField(f)).ToList();
@@ -2310,6 +2370,10 @@ namespace GaleForceCore.Builders
         /// Builds the sql-server friendly string.
         /// </summary>
         /// <returns>System.String.</returns>
+        /// <exception cref="GaleForceCore.Logger.StageItem.Exception">
+        /// The select list for the INSERT statement contains more items than the insert list. The
+        /// number of SELECT values must match the number of INSERT columns.
+        /// </exception>
         private string BuildInsert()
         {
             var records = this.SourceData;
@@ -2658,7 +2722,7 @@ namespace GaleForceCore.Builders
         /// Executes the specified source.
         /// </summary>
         /// <param name="target">The target.</param>
-        /// <param name="overrideSource">The override source.</param>
+        /// <param name="sources">The sources.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
         public int ExecuteNonQuery(List<TRecord> target, Dictionary<string, SourceData> sources)
@@ -2751,9 +2815,9 @@ namespace GaleForceCore.Builders
         /// Executes the expressions within this builder upon these records, returning the results.
         /// </summary>
         /// <param name="target">The target.</param>
-        /// <param name="overrideSource">The override source.</param>
+        /// <param name="sources">The sources.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
-        /// <exception cref="GaleForceCore.Builders.MissingDataTableException">UPDATE testing requires a record set</exception>
+        /// <exception cref="GaleForceCore.Builders.MissingDataTableException">UPDATE testing requires a target record set to populate</exception>
         public int ExecuteUpdate(IEnumerable<TRecord> target, Dictionary<string, SourceData> sources = null)
         {
             if (target == null)
@@ -2832,6 +2896,7 @@ namespace GaleForceCore.Builders
         /// Get a field list, or default to all fields
         /// </summary>
         /// <param name="list">The list.</param>
+        /// <param name="useAs">if set to <c>true</c> [use as].</param>
         /// <returns>List&lt;System.String&gt;.</returns>
         public List<string> FieldList(List<string> list, bool useAs = false)
         {
@@ -2853,6 +2918,12 @@ namespace GaleForceCore.Builders
             return original;
         }
 
+        /// <summary>
+        /// Gets the source data.
+        /// </summary>
+        /// <param name="sources">The sources.</param>
+        /// <param name="name">The name.</param>
+        /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         public IEnumerable<TRecord> GetSourceData(Dictionary<string, SourceData> sources, string name)
         {
             if (sources == null || !sources.ContainsKey(name))
@@ -2867,9 +2938,10 @@ namespace GaleForceCore.Builders
         /// Executes the expressions within this builder upon these records, returning the results.
         /// </summary>
         /// <param name="target">The target.</param>
-        /// <param name="overrideSource">The override source.</param>
+        /// <param name="sources">The sources.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         /// <exception cref="GaleForceCore.Builders.MissingDataTableException">INSERT testing requires a record set</exception>
+        /// <exception cref="GaleForceCore.Builders.MissingDataTableException">Named table {subFrom} inside SELECT inside requires a data source in sources</exception>
         public int ExecuteInsert(List<TRecord> target, Dictionary<string, SourceData> sources = null)
         {
             if (target == null)
@@ -2923,6 +2995,12 @@ namespace GaleForceCore.Builders
             return count;
         }
 
+        /// <summary>
+        /// Executes the merge.
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <param name="source">The source.</param>
+        /// <returns>System.Int32.</returns>
         public int ExecuteMerge(List<TRecord> target, IEnumerable<TRecord> source)
         {
             var sources = new Dictionary<string, SourceData>();
@@ -2936,10 +3014,10 @@ namespace GaleForceCore.Builders
         /// Executes the merge.
         /// </summary>
         /// <param name="target">The target.</param>
-        /// <param name="source">The source.</param>
+        /// <param name="sources">The sources.</param>
         /// <returns>System.Int32.</returns>
         /// <exception cref="GaleForceCore.Builders.MissingDataTableException">MERGE testing requires a List<TRecord> set</exception>
-        /// <exception cref="System.Exception">source record matches multiple targets (record #{index})</exception>
+        /// <exception cref="GaleForceCore.Logger.StageItem.Exception">source record matches multiple targets (record #{index})</exception>
         /// <font color="red">Badly formed XML comment.</font>
         public int ExecuteMerge(List<TRecord> target, Dictionary<string, SourceData> sources)
         {
@@ -3069,18 +3147,40 @@ namespace GaleForceCore.Builders
         }
     }
 
+    /// <summary>
+    /// Class SourceData.
+    /// </summary>
     public class SourceData
     {
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
         public string Name { get; set; }
 
+        /// <summary>
+        /// Gets or sets the type of the source.
+        /// </summary>
         public Type SourceType { get; set; }
 
+        /// <summary>
+        /// Gets or sets the data.
+        /// </summary>
         public IEnumerable<object> Data { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SourceData"/> class.
+        /// </summary>
         public SourceData()
         {
         }
 
+        /// <summary>
+        /// Creates the specified name.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="name">The name.</param>
+        /// <param name="data">The data.</param>
+        /// <returns>SourceData.</returns>
         public static SourceData Create<T>(string name, IEnumerable<T> data)
         {
             return new SourceData { Data = (IEnumerable<object>) data, Name = name, SourceType = typeof(T) };
