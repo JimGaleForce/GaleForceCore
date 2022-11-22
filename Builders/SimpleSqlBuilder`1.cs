@@ -79,11 +79,19 @@ namespace GaleForceCore.Builders
         /// <value>The name of the table.</value>
         public string MergeIntoTableName { get; protected set; }
 
+        private List<string> fields = new List<string>();
+
         /// <summary>
         /// Gets the field names.
         /// </summary>
         /// <value>The fields.</value>
-        public List<string> Fields { get; protected set; } = new List<string>();
+        public List<string> Fields
+        {
+            get { return this.OverrideFields ?? this.fields; }
+            protected set { this.fields = value; }
+        }
+
+        public List<string> OverrideFields { get; protected set; }
 
         /// <summary>
         /// Gets the update field names.
