@@ -79,6 +79,9 @@ namespace GaleForceCore.Builders
         /// <value>The name of the table.</value>
         public string MergeIntoTableName { get; protected set; }
 
+        /// <summary>
+        /// The fields
+        /// </summary>
         private List<string> fields = new List<string>();
 
         /// <summary>
@@ -87,11 +90,14 @@ namespace GaleForceCore.Builders
         /// <value>The fields.</value>
         public List<string> Fields
         {
-            get { return this.OverrideFields ?? this.fields; }
+            get { return this._OverrideFields ?? this.fields; }
             protected set { this.fields = value; }
         }
 
-        public List<string> OverrideFields { get; protected set; }
+        /// <summary>
+        /// Gets or sets the override fields.
+        /// </summary>
+        public List<string> _OverrideFields { get; protected set; }
 
         /// <summary>
         /// Gets the update field names.
@@ -1276,6 +1282,15 @@ namespace GaleForceCore.Builders
         public void OverrideCommand(string tempCommand)
         {
             this._OverrideCommand = tempCommand;
+        }
+
+        /// <summary>
+        /// Overrides the fields.
+        /// </summary>
+        /// <param name="fields">The fields.</param>
+        public void OverrideFields(IEnumerable<string> fields)
+        {
+            this._OverrideFields = fields.ToList();
         }
 
         /// <summary>

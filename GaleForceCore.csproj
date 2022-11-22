@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.33.5</Version>
-    <AssemblyVersion>1.0.33.5</AssemblyVersion>
-    <FileVersion>1.0.33.5</FileVersion>
-    <PackageReleaseNotes>added override for fields</PackageReleaseNotes>
+    <Version>1.0.33.6</Version>
+    <AssemblyVersion>1.0.33.6</AssemblyVersion>
+    <FileVersion>1.0.33.6</FileVersion>
+    <PackageReleaseNotes>added override for fields with method</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
