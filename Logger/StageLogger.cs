@@ -62,6 +62,11 @@ namespace GaleForceCore.Logger
         /// <param name="value">The value.</param>
         public void ChangeItemUpdated(StageSection changeItem, string areaChange, string name, string value)
         {
+            if (this.StageChangeCallback == null)
+            {
+                return;
+            }
+
             var update = new StageSectionUpdate
             {
                 StageSection = changeItem,
@@ -70,7 +75,7 @@ namespace GaleForceCore.Logger
                 UpdateValue = value
             };
 
-            this.StageChangeCallback(update);
+            this.StageChangeCallback.Invoke(update);
         }
 
         /// <summary>
