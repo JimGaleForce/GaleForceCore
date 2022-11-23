@@ -212,6 +212,10 @@ namespace GaleForceCore.Builders
         /// </summary>
         public List<string> OrderByStrings { get; protected set; } = new List<string>();
 
+        public bool IsTracing { get; protected set; } = false;
+
+        public StringBuilder Trace { get; protected set; }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleSqlBuilder{TRecord}"/> class.
         /// </summary>
@@ -292,6 +296,13 @@ namespace GaleForceCore.Builders
         /// Gets or sets the options.
         /// </summary>
         public SimpleSqlBuilderOptions Options { get; protected set; } = new SimpleSqlBuilderOptions();
+
+        public SimpleSqlBuilder<TRecord> TraceTo(StringBuilder sb)
+        {
+            this.Trace = sb;
+            this.IsTracing = true;
+            return this;
+        }
 
         /// <summary>
         /// Sets the options.
@@ -1556,6 +1567,11 @@ namespace GaleForceCore.Builders
                 if (exp.ToString().StartsWith("value("))
                 {
                     var value = Expression.Lambda(exp).Compile().DynamicInvoke();
+                    if (this.IsTracing)
+                    {
+                        this.Trace.AppendLine("(eval:" + exp.ToString() + "=" + value.ToString());
+                    }
+
                     var xValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
                     var wvalue = this.WrappedValue(xValue, exp, typeof(ConstantExpression));
                     evalInfo?.Register(exp, typeof(ConstantExpression), wvalue);
@@ -1674,6 +1690,18 @@ namespace GaleForceCore.Builders
                             hideSourceTable: hideSourceTable,
                             parameters: parameters,
                             isCondition: true);
+
+                        if (this.IsTracing)
+                        {
+                            this.Trace
+                                .AppendLine(
+                                    "(eval:" +
+                                        test.ToString() +
+                                        "=" +
+                                        testResult.ToString() +
+                                        " -> " +
+                                        testExp.ToString());
+                        }
 
                         var wvalue2 = this.WrappedValue(testExp, ce, typeof(ConstantExpression));
                         evalInfo?.Register(ce, typeof(ConstantExpression), wvalue2);
@@ -1909,6 +1937,14 @@ namespace GaleForceCore.Builders
                 try
                 {
                     object value = Expression.Lambda(me).Compile().DynamicInvoke();
+
+                    if (this.IsTracing)
+                    {
+                        this.Trace
+                            .AppendLine(
+                                "(eval:" + me.ToString() + "=" + value.ToString());
+                    }
+
                     var sqlValue = SqlHelpers.GetAsSQLValue(value.GetType(), value);
                     var wvalue = this.WrappedValue(sqlValue, me, typeof(MethodCallExpression));
                     evalInfo?.Register(me, typeof(MethodCallExpression), wvalue);
@@ -2781,12 +2817,27 @@ namespace GaleForceCore.Builders
             }
 
             var result = new List<TRecord>();
-
             var current = records;
+
+            if (this.IsTracing)
+            {
+                this.Trace.AppendLine("ExecuteSelect: record count=" + current.Count());
+            }
+
             foreach (var whereExpression in this.WhereExpression)
             {
                 var we = whereExpression.Compile();
                 current = current.Where(we);
+
+                if (this.IsTracing)
+                {
+                    this.Trace
+                        .AppendLine(
+                            "ExecuteSelect: after Where clause: " +
+                                whereExpression.ToString() +
+                                ": count=" +
+                                current.Count());
+                }
             }
 
             if (this.OrderByList.Count > 0)
@@ -2829,6 +2880,14 @@ namespace GaleForceCore.Builders
                 }
 
                 result.Add(newRecord);
+            }
+
+            if (this.IsTracing)
+            {
+                this.Trace
+                    .AppendLine(
+                        "ExecuteSelect: final count: " +
+                            result.Count());
             }
 
             return result;

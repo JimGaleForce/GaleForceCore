@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
+    using System.Text;
     using GaleForceCore.Builders;
     using GaleForceCore.Helpers;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -2160,6 +2161,23 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
 
             var expected = "SELECT * FROM TableName WHERE ([User] = 'ABC')";
             Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestTracing()
+        {
+            var sb = new StringBuilder();
+            var data = this.GetData();
+            var actual = new SimpleSqlBuilder<SqlTestNewRecord, SqlTestRecord, SqlTestRecord>()
+                .TraceTo(sb)
+                .From(SqlTestRecord.TableName, SqlTestRecord.TableName)
+                .SelectAs(tu => tu.String3, (t1, t3) => t3.String1)
+                .SelectAs(tu => tu.Int3, (t1, t3) => t1.Int1)
+                .InnerJoinOn((t1, t3) => t1.Int1 == t3.Int1)
+                .Where((t1, t3) => t1.Int1 % 2 == 1)
+                .Execute(data, data);
+
+            Assert.IsTrue(sb.ToString().Length > 0);
         }
 
         public class SourceRecordWithUser

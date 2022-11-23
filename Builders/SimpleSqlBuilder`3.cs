@@ -92,6 +92,12 @@ namespace GaleForceCore.Builders
         {
         }
 
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> TraceTo(StringBuilder sb)
+        {
+            base.TraceTo(sb);
+            return this;
+        }
+
         /// <summary>
         /// Sets the options.
         /// </summary>
@@ -394,6 +400,11 @@ namespace GaleForceCore.Builders
         {
             var result = new List<TRecord>();
 
+            if (this.IsTracing)
+            {
+                this.Trace.AppendLine("ExecuteSelect2: records1 count=" + records1.Count());
+            }
+
             if (this.JoinKey == null)
             {
                 throw new UnjoinedTablesException(
@@ -412,6 +423,7 @@ namespace GaleForceCore.Builders
                         r1 => records2.Where(r2 => joinKey(r1, r2))
                             .Select(r2 => new Tuple<TRecord1, TRecord2>(r1, r2)))
                         .ToList();
+
                     break;
                 case "LEFT OUTER":
                     records = records1.SelectMany(
@@ -420,6 +432,7 @@ namespace GaleForceCore.Builders
                             : new List<TRecord2>() { (TRecord2)Activator.CreateInstance(typeof(TRecord2)) })
                             .Select(r2 => new Tuple<TRecord1, TRecord2>(r1, r2)))
                         .ToList();
+
                     break;
                 case "RIGHT OUTER":
                     records = records2.SelectMany(
@@ -428,7 +441,18 @@ namespace GaleForceCore.Builders
                             : new List<TRecord1>() { (TRecord1)Activator.CreateInstance(typeof(TRecord1)) })
                             .Select(r1 => new Tuple<TRecord1, TRecord2>(r1, r2)))
                         .ToList();
+
                     break;
+            }
+
+            if (this.IsTracing)
+            {
+                this.Trace
+                    .AppendLine(
+                        $"ExecuteSelect2: after {this.JoinPhrase} 1-2 clause: " +
+                            this.JoinKey.ToString() +
+                            ": count=" +
+                            records.Count());
             }
 
             var current = records;
@@ -436,6 +460,16 @@ namespace GaleForceCore.Builders
             {
                 var we2 = whereExpression.Compile();
                 current = current.Where(t => we2(t.Item1, t.Item2));
+
+                if (this.IsTracing)
+                {
+                    this.Trace
+                        .AppendLine(
+                            "ExecuteSelect2: after Where2 clause: " +
+                                whereExpression.ToString() +
+                                ": count=" +
+                                current.Count());
+                }
             }
 
             if (this.OrderByList.Count > 0)
@@ -495,6 +529,24 @@ namespace GaleForceCore.Builders
             {
                 var we1 = whereExpression.Compile();
                 result = result.Where(we1).ToList();
+
+                if (this.IsTracing)
+                {
+                    this.Trace
+                        .AppendLine(
+                            "ExecuteSelect2: after Where clause: " +
+                                whereExpression.ToString() +
+                                ": count=" +
+                                result.Count());
+                }
+            }
+
+            if (this.IsTracing)
+            {
+                this.Trace
+                    .AppendLine(
+                        "ExecuteSelect2: final count: " +
+                            result.Count());
             }
 
             return result;

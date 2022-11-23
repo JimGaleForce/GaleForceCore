@@ -83,6 +83,12 @@ namespace GaleForceCore.Builders
         {
         }
 
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> TraceTo(StringBuilder sb)
+        {
+            base.TraceTo(sb);
+            return this;
+        }
+
         /// <summary>
         /// Sets the options.
         /// </summary>
@@ -734,6 +740,11 @@ namespace GaleForceCore.Builders
         {
             var result = new List<TRecord>();
 
+            if (this.IsTracing)
+            {
+                this.Trace.AppendLine("ExecuteSelect4: records1 count=" + records1.Count());
+            }
+
             var records = this.ExecuteJoins(records1, records2, records3, records4);
 
             var emptyRecs = new Tuple<TRecord1, TRecord2, TRecord3, TRecord4>(
@@ -753,6 +764,16 @@ namespace GaleForceCore.Builders
                         (TRecord3)(t.Item3 ?? emptyRecs.Item3),
                         (TRecord4)(t.Item4 ?? emptyRecs.Item4)))
                     .ToList();
+
+                if (this.IsTracing)
+                {
+                    this.Trace
+                        .AppendLine(
+                            "ExecuteSelect4: after Where4 clause: " +
+                                whereExpression.ToString() +
+                                ": count=" +
+                                current.Count());
+                }
             }
 
             if (this.OrderByList.Count > 0)
@@ -819,8 +840,25 @@ namespace GaleForceCore.Builders
             {
                 var we1 = whereExpression.Compile();
                 result = result.Where(we1).ToList();
+
+                if (this.IsTracing)
+                {
+                    this.Trace
+                        .AppendLine(
+                            "ExecuteSelect4: after Where clause: " +
+                                whereExpression.ToString() +
+                                ": count=" +
+                                result.Count());
+                }
             }
 
+            if (this.IsTracing)
+            {
+                this.Trace
+                    .AppendLine(
+                        "ExecuteSelect4: final count: " +
+                            result.Count());
+            }
             return result;
         }
 
@@ -870,6 +908,16 @@ namespace GaleForceCore.Builders
             }
 
             records.RemoveAll(r => r[index2] == null);
+
+            if (this.IsTracing)
+            {
+                this.Trace
+                    .AppendLine(
+                        $"ExecuteSelect4: after inner join {index1}-{index2} clause: " +
+                            joinKeyExp.ToString() +
+                            ": count=" +
+                            records.Count());
+            }
         }
 
         /// <summary>
@@ -959,6 +1007,16 @@ namespace GaleForceCore.Builders
                         }
                     }
                 }
+            }
+
+            if (this.IsTracing)
+            {
+                this.Trace
+                    .AppendLine(
+                        $"ExecuteSelect4: after outer join {index1}-{index2} clause: " +
+                            joinKeyExp.ToString() +
+                            ": count=" +
+                            records.Count());
             }
         }
 
