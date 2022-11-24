@@ -2185,7 +2185,10 @@ namespace GaleForceCore.Builders
 
             this.InjectInnerClauses(sb);
 
-            sb.Append("where Temp > 1");
+            if (this.DistinctOnStr != null)
+            {
+                sb.Append("where Temp > 1");
+            }
 
             return sb.ToString().Trim();
         }
