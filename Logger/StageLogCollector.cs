@@ -110,6 +110,8 @@ namespace GaleForceCore.Logger
                     seDT = latest.ChangeItem.EndDateTime;
                 }
 
+                stack.Push(latest);
+
                 if (!owned.ContainsKey(latest))
                 {
                     owned[latest] = new List<StageLogCollectorItem>();
