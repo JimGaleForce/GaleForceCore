@@ -82,8 +82,11 @@ namespace TestGaleForceCore
                     Thread.Sleep(20);
                     stagelog.AddMetric("key", 1);
                 }
+
                 logger.Log("test-out-step");
             }
+
+            var test = logger.Collector.ToLogString();
 
             var item = logger.Collector.Items.First(l => l.ChangeItem != null && l.ChangeItem.Id == "id1").ChangeItem;
         }

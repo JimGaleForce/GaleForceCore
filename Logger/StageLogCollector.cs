@@ -8,6 +8,7 @@ namespace GaleForceCore.Logger
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text;
 
     /// <summary>
     /// Class StageLogCollector.
@@ -82,6 +83,101 @@ namespace GaleForceCore.Logger
         public double GetDuration(string id)
         {
             return this.Items.Where(i => i.ChangeItem?.Id == id).Sum(i => i.ChangeItem.Duration);
+        }
+
+        public string ToLogString()
+        {
+            var stack = new Stack<StageLogCollectorItem>();
+            var owned = new Dictionary<StageLogCollectorItem, List<StageLogCollectorItem>>();
+
+            var root = new StageLogCollectorItem { ChangeItem =
+                                                       new StageSection { 
+                DateTime = DateTime.MinValue, EndDateTime = DateTime.MaxValue } };
+
+            stack.Push(root);
+
+            var latest = root;
+            foreach (var item in this.Items)
+            {
+                var dt = item.DateTime;
+                var ssDT = latest.ChangeItem.DateTime;
+                var seDT = latest.ChangeItem.EndDateTime;
+
+                while (dt > seDT)
+                {
+                    latest = stack.Pop();
+                    ssDT = latest.ChangeItem.DateTime;
+                    seDT = latest.ChangeItem.EndDateTime;
+                }
+
+                if (!owned.ContainsKey(latest))
+                {
+                    owned[latest] = new List<StageLogCollectorItem>();
+                }
+
+                owned[latest].Add(item);
+
+                if (item.ChangeItem != null)
+                {
+                    stack.Push(item);
+                    latest = item;
+                }
+            }
+
+            var sb = new StringBuilder();
+            var indentLevel = 0;
+            this.ToLogStringItem(root, owned, sb, indentLevel);
+            return sb.ToString();
+        }
+
+        private void ToLogStringItem(
+            StageLogCollectorItem item,
+            Dictionary<StageLogCollectorItem, List<StageLogCollectorItem>> owned,
+            StringBuilder sb,
+            int indentLevel)
+        {
+            sb.AppendLine(this.Indent(indentLevel) + item.ChangeItem.Id + ":" + item.ChangeItem.DateTime.ToString());
+            indentLevel++;
+
+            if (item.ChangeItem.Events != null)
+            {
+                foreach (var evt in item.ChangeItem.Events)
+                {
+                    sb.AppendLine(this.Indent(indentLevel) + "event:" + evt.Key + ":" + evt.Value);
+                }
+            }
+
+            if (item.ChangeItem.Metrics != null)
+            {
+                foreach (var evt in item.ChangeItem.Metrics)
+                {
+                    sb.AppendLine(this.Indent(indentLevel) + "metrc:" + evt.Key + ":" + evt.Value);
+                }
+            }
+
+            if (owned.ContainsKey(item))
+            {
+                foreach (var evt in owned[item])
+                {
+                    if (evt.Item != null)
+                    {
+                        sb.AppendLine(this.Indent(indentLevel) + "item :" + evt.Item.Message);
+                    }
+                }
+
+                foreach (var evt in owned[item])
+                {
+                    if (evt.ChangeItem != null)
+                    {
+                        this.ToLogStringItem(evt, owned, sb, indentLevel + 1);
+                    }
+                }
+            }
+        }
+
+        public string Indent(int indentLevel)
+        {
+            return "".PadRight(indentLevel * 2, ' ');
         }
     }
 }
