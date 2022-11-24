@@ -1151,7 +1151,7 @@ GO;";
                 .Build();
 
             var expected = 
-                @"with TableNameCTE AS (SELECT Int2, row_number() over (partition by Int2 order by Int2) as Temp from TableName) DELETE FROM TableNameCTE WHERE (Int1 = 5) AND Temp > 1";
+                @"with TableNameCTE AS (SELECT Int2, row_number() over (partition by Int2 order by Int2) as Temp from TableName WHERE (Int1 = 5)) DELETE FROM TableNameCTE where Temp > 1";
 
             Assert.AreEqual(expected, actual);
         }

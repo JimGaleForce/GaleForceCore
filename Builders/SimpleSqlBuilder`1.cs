@@ -2165,10 +2165,16 @@ namespace GaleForceCore.Builders
             var updatedTableName = tableName;
             if (this.DistinctOnStr != null)
             {
+                var where = this.JoinedWhereString().Trim();
+                if (!string.IsNullOrEmpty(where))
+                {
+                    where = " " + where;
+                }
+
                 sb.Append(
 
                     // with TokensCTE AS (SELECT ocvId, row_number() over (partition by ocvId order by ocvId) as Temp from Tokens) select * FROM TokensCTE WHERE Temp > 1
-                    $"with {tableName}CTE AS (SELECT {this.DistinctOnStr}, row_number() over (partition by {this.DistinctOnStr} order by {this.DistinctOnStr}) as Temp from {tableName}) ");
+                    $"with {tableName}CTE AS (SELECT {this.DistinctOnStr}, row_number() over (partition by {this.DistinctOnStr} order by {this.DistinctOnStr}) as Temp from {tableName}{where}) ");
                 updatedTableName = $"{tableName}CTE";
             }
 
@@ -2179,7 +2185,7 @@ namespace GaleForceCore.Builders
 
             this.InjectInnerClauses(sb);
 
-            sb.Append(this.JoinedWhereString(this.DistinctOnStr != null ? "Temp > 1" : null));
+            sb.Append("where Temp > 1");
 
             return sb.ToString().Trim();
         }
@@ -3171,15 +3177,15 @@ namespace GaleForceCore.Builders
 
             var current = target;
 
+            foreach (var whereExpression in this.WhereExpression)
+            {
+                current = current.Where(whereExpression.Compile()).ToList();
+            }
+
             if (this.DistinctOnStr != null)
             {
                 var distExp = this.DistinctOnExpression.Compile();
                 current = current.GroupBy(r => distExp(r)).SelectMany(r => r.Skip(1)).ToList();
-            }
-
-            foreach (var whereExpression in this.WhereExpression)
-            {
-                current = current.Where(whereExpression.Compile()).ToList();
             }
 
             var count = target.Count();
