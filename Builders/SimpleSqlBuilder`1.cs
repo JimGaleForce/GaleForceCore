@@ -2189,6 +2189,10 @@ namespace GaleForceCore.Builders
             {
                 sb.Append("where Temp > 1");
             }
+            else
+            {
+                sb.Append(this.JoinedWhereString());
+            }
 
             return sb.ToString().Trim();
         }

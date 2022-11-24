@@ -1136,7 +1136,7 @@ GO;";
                 .Build();
 
             var expected = 
-                @"with TableNameCTE AS (SELECT Int2, row_number() over (partition by Int2 order by Int2) as Temp from TableName) DELETE FROM TableNameCTE WHERE Temp > 1";
+                @"with TableNameCTE AS (SELECT Int2, row_number() over (partition by Int2 order by Int2) as Temp from TableName) DELETE FROM TableNameCTE where Temp > 1";
 
             Assert.AreEqual(expected, actual);
         }
@@ -1218,9 +1218,25 @@ GO;";
                 .Where(s => s.Int1 == 5)
                 .ExecuteDelete(data);
 
+            Assert.AreEqual(0, actual);
+            Assert.AreEqual(5, data.Count());
+            Assert.AreEqual(4, data[3].Int1);
+        }
+
+        [TestMethod]
+        public void TestExecuteDeleteDistinctWhereDeletable()
+        {
+            var data = this.GetData();
+            data[3].Int1 = 5;
+
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Delete()
+                .ExceptDistinctBy(s => s.Int2)
+                .Where(s => s.Int1 == 5)
+                .ExecuteDelete(data);
+
             Assert.AreEqual(1, actual);
             Assert.AreEqual(4, data.Count());
-            Assert.AreEqual(4, data[3].Int1);
         }
 
         [TestMethod]
