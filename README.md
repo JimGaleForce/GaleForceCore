@@ -39,7 +39,7 @@ var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
                 .Select(s => s.String1)
                 .Where(s => s.String1.ToLower() == "string123")
                 .Build();
-'''
+```
 
 SimpleSqlBuilder has been used and tested against a few larger than average scale projects. However, it is open and welcomes further improvements or features.
 
