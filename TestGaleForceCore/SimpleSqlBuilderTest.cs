@@ -2144,7 +2144,8 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
                     (s1, s2a, s2b, s3) => s2a.String2.Substring(s2a.String2.IndexOf(":") + 1, 100))
                 .SelectAs(z => z.String3, (s1, s2a, s2b, s3) => s3.String3)
                 .InnerJoin12On(
-                    (s1, s2a) => s1.SameString == s2a.SameString.Substring(s2a.SameString.IndexOf(":") + 1, 100) &&
+                    (s1, s2a) => s1.SameString ==
+                        s2a.SameString.Substring(s2a.SameString.IndexOf(":") + 1, 100) &&
                         s2a.Bool2.Value)
                 .InnerJoin13On((s1, s2b) => s1.Int1 == s2b.Int2)
                 .InnerJoin14On((s1, s3) => s1.Int1 == s3.Int3)
@@ -2194,6 +2195,23 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
                 .Execute(data, data);
 
             Assert.IsTrue(sb.ToString().Length > 0);
+        }
+
+        [TestMethod]
+        public void TestDistinct()
+        {
+            var data = this.GetData();
+
+            var actual = new SimpleSqlBuilder<SqlTestRecord>()
+                .From(SqlTestRecord.TableName)
+                .Select(r => r.Int1, r => r.Int2)
+                .Distinct()
+                .Where(r => r.Int2 == 102)
+                .Execute(data);
+
+            Assert.AreEqual(2, actual.Count(), "Wrong number of records");
+            Assert.IsTrue(actual.All(r => r.Int2 == 102), "Where clause failed");
+            Assert.IsTrue(actual.All(r => string.IsNullOrEmpty(r.String1)), "Select clause failed");
         }
 
         public class SourceRecordWithUser

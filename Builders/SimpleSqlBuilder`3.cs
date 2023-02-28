@@ -103,7 +103,8 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="options">The options.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> SetOptions(SimpleSqlBuilderOptions options)
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> SetOptions(
+            SimpleSqlBuilderOptions options)
         {
             base.SetOptions(options);
             return this;
@@ -114,7 +115,8 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="syntaxType">Type of the syntax.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> For(SimpleSqlBuilderType syntaxType)
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> For(
+            SimpleSqlBuilderType syntaxType)
         {
             base.For(syntaxType);
             return this;
@@ -126,7 +128,8 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="field">The field.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Select(Expression<Func<TRecord1, TRecord2, object>> field)
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Select(
+            Expression<Func<TRecord1, TRecord2, object>> field)
         {
             return this.Select(new Expression<Func<TRecord1, TRecord2, object>>[] { field });
         }
@@ -158,6 +161,12 @@ namespace GaleForceCore.Builders
             return this;
         }
 
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Distinct()
+        {
+            base.Distinct();
+            return this;
+        }
+
         /// <summary>
         /// Includes as.
         /// </summary>
@@ -165,7 +174,10 @@ namespace GaleForceCore.Builders
         /// <returns>System.String.</returns>
         private string IncludeAs(Expression<Func<TRecord1, TRecord2, object>> field)
         {
-            var expString = this.ParseExpression(this.Types, field.Body, parameters: field.Parameters);
+            var expString = this.ParseExpression(
+                this.Types,
+                field.Body,
+                parameters: field.Parameters);
             if (this.AsFields != null && this.AsFields.ContainsKey(field))
             {
                 var asStr = this.ParseExpression(
@@ -185,7 +197,9 @@ namespace GaleForceCore.Builders
         /// <param name="tableName1">The table name1.</param>
         /// <param name="tableName2">The table name2.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> From(string tableName1, string tableName2)
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> From(
+            string tableName1,
+            string tableName2)
         {
             this.From(new string[] { tableName1, tableName2 });
             return this;
@@ -261,7 +275,8 @@ namespace GaleForceCore.Builders
                 var refTableName = this.TableNames[1] != this.TableNamesActual[1]
                     ? this.TableNames[1] + " "
                     : string.Empty;
-                sb.Append($"{this.JoinPhrase} JOIN {this.TableNamesActual[1]} {refTableName}ON {keys} ");
+                sb.Append(
+                    $"{this.JoinPhrase} JOIN {this.TableNamesActual[1]} {refTableName}ON {keys} ");
             }
         }
 
@@ -270,7 +285,8 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="condition">The condition.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(Expression<Func<TRecord1, TRecord2, bool>> condition)
+        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Where(
+            Expression<Func<TRecord1, TRecord2, bool>> condition)
         {
             this.WhereCheck();
             this.WhereExpression2.Add(condition);
@@ -357,14 +373,17 @@ namespace GaleForceCore.Builders
         /// <param name="records2">The records2.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public IEnumerable<TRecord> Execute(IEnumerable<TRecord1> records1, IEnumerable<TRecord2> records2)
+        public IEnumerable<TRecord> Execute(
+            IEnumerable<TRecord1> records1,
+            IEnumerable<TRecord2> records2)
         {
             switch (this.Command)
             {
                 case "SELECT":
                     return this.ExecuteSelect(records1, records2);
                 default:
-                    throw new NotImplementedException($"{this.Command} is not supported as a query.");
+                    throw new NotImplementedException(
+                        $"{this.Command} is not supported as a query.");
             }
         }
 
@@ -396,7 +415,9 @@ namespace GaleForceCore.Builders
         /// <param name="records2">The records2.</param>
         /// <returns>IEnumerable&lt;TRecord&gt;.</returns>
         /// <exception cref="GaleForceCore.Builders.UnjoinedTablesException"></exception>
-        public IEnumerable<TRecord> ExecuteSelect(IEnumerable<TRecord1> records1, IEnumerable<TRecord2> records2)
+        public IEnumerable<TRecord> ExecuteSelect(
+            IEnumerable<TRecord1> records1,
+            IEnumerable<TRecord2> records2)
         {
             var result = new List<TRecord>();
 
@@ -429,7 +450,10 @@ namespace GaleForceCore.Builders
                     records = records1.SelectMany(
                         r1 => (records2.Any(r2 => joinKey(r1, r2))
                             ? records2.Where(r2 => joinKey(r1, r2))
-                            : new List<TRecord2>() { (TRecord2)Activator.CreateInstance(typeof(TRecord2)) })
+                            : new List<TRecord2>()
+                            {
+                                (TRecord2)Activator.CreateInstance(typeof(TRecord2))
+                            })
                             .Select(r2 => new Tuple<TRecord1, TRecord2>(r1, r2)))
                         .ToList();
 
@@ -438,7 +462,10 @@ namespace GaleForceCore.Builders
                     records = records2.SelectMany(
                         r2 => (records1.Any(r1 => joinKey(r1, r2))
                             ? records1.Where(r1 => joinKey(r1, r2))
-                            : new List<TRecord1>() { (TRecord1)Activator.CreateInstance(typeof(TRecord1)) })
+                            : new List<TRecord1>()
+                            {
+                                (TRecord1)Activator.CreateInstance(typeof(TRecord1))
+                            })
                             .Select(r1 => new Tuple<TRecord1, TRecord2>(r1, r2)))
                         .ToList();
 
@@ -505,7 +532,9 @@ namespace GaleForceCore.Builders
             {
                 var field = this.Fields[i];
                 var fieldName = field.Contains(" AS ") ? this.GrabAs(field) : field;
-                fieldName = fieldName.Contains(".") ? fieldName.Substring(fieldName.IndexOf(".") + 1) : fieldName;
+                fieldName = fieldName.Contains(".")
+                    ? fieldName.Substring(fieldName.IndexOf(".") + 1)
+                    : fieldName;
                 propFields.Add(
                     ExceptionHelpers.ThrowIfNull<PropertyInfo, MissingMemberException>(
                         props.FirstOrDefault(p => p.Name == fieldName),
@@ -543,10 +572,7 @@ namespace GaleForceCore.Builders
 
             if (this.IsTracing)
             {
-                this.Trace
-                    .AppendLine(
-                        "ExecuteSelect2: final count: " +
-                            result.Count());
+                this.Trace.AppendLine("ExecuteSelect2: final count: " + result.Count());
             }
 
             return result;
