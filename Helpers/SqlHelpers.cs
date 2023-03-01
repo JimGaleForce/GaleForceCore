@@ -7,6 +7,7 @@ namespace GaleForceCore.Helpers
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Reflection;
 
     /// <summary>
@@ -74,6 +75,15 @@ namespace GaleForceCore.Helpers
         }
 
         /// <summary>
+        /// Cleans the text for backslashes, wildcards, and single quotes
+        /// </summary>
+        /// <param name="fields">The text to clean.</param>
+        public static string CleanString(string text)
+        {
+            return text.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_").Replace("'", "''");
+        }
+
+        /// <summary>
         /// Gets a SQL-friendly value.
         /// </summary>
         /// <param name="type">The type.</param>
@@ -92,7 +102,7 @@ namespace GaleForceCore.Helpers
             switch (name)
             {
                 case "string":
-                    value = "'" + value + "'";
+                    value = "'" + CleanString(value.ToString()) + "'";
                     break;
                 case "DateTime":
                     if (value is DateTime)
@@ -158,14 +168,14 @@ namespace GaleForceCore.Helpers
                         var listOfStrings = value as List<string>;
                         if (listOfStrings != null)
                         {
-                            return "('" + string.Join("','", listOfStrings) + "')";
+                            return "('" + string.Join("','", listOfStrings.Select(s => CleanString(s))) + "')";
                         }
                         else
                         {
                             var listOfStrings2 = value as string[];
                             if (listOfStrings2 != null)
                             {
-                                return "('" + string.Join("','", listOfStrings2) + "')";
+                                return "('" + string.Join("','", listOfStrings2.Select(s => CleanString(s))) + "')";
                             }
                         }
                     }
@@ -173,8 +183,7 @@ namespace GaleForceCore.Helpers
 #if RELEASE
                     break;
 #else
-                    throw new ArgumentException(
-                        $"Unsupported object type '{type}', cannot convert to SQL value.");
+                    throw new ArgumentException($"Unsupported object type '{type}', cannot convert to SQL value.");
 #endif
             }
 

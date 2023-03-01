@@ -5,14 +5,14 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>GaleForce.Core</PackageId>
     <Authors>GaleForce</Authors>
-    <Copyright>2020-2022 (c) GaleForce Software</Copyright>
+    <Copyright>2020-2023 (c) GaleForce Software</Copyright>
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.34.7</Version>
+    <Version>1.0.35.1</Version>
     <AssemblyVersion>1.0.34.7</AssemblyVersion>
     <FileVersion>1.0.34.7</FileVersion>
-    <PackageReleaseNotes>fixed deletes</PackageReleaseNotes>
+    <PackageReleaseNotes>improve string cleaning, params</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
