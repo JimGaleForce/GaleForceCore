@@ -173,6 +173,10 @@ namespace GaleForceCore.Builders
             return this;
         }
 
+        /// <summary>
+        /// Makes this instance distinctive (uses DISTINCT).
+        /// </summary>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3> Distinct()
         {
             base.Distinct();

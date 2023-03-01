@@ -21,6 +21,6 @@ namespace GaleForceCore.Builders
         /// <summary>
         /// Gets or sets a value indicating whether [use parameters].
         /// </summary>
-        public bool UseParameters { get; set; } = false;
+        public bool UseParameters { get; set; } = true;
     }
 }

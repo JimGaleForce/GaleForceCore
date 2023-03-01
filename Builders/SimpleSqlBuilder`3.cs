@@ -86,6 +86,16 @@ namespace GaleForceCore.Builders
         /// cref="SimpleSqlBuilder{TRecord,&#xD;&#xA;TRecord1,&#xD;&#xA;TRecord2}"/> class.
         /// </summary>
         /// <param name="options">The options.</param>
+        public SimpleSqlBuilder(SimpleSqlBuilderOptions options)
+            : base(options, new Type[] { typeof(TRecord1), typeof(TRecord2) })
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see
+        /// cref="SimpleSqlBuilder{TRecord,&#xD;&#xA;TRecord1,&#xD;&#xA;TRecord2}"/> class.
+        /// </summary>
+        /// <param name="options">The options.</param>
         /// <param name="types">The types.</param>
         public SimpleSqlBuilder(SimpleSqlBuilderOptions options, Type[] types)
             : base(options, types)
@@ -161,6 +171,10 @@ namespace GaleForceCore.Builders
             return this;
         }
 
+        /// <summary>
+        /// Makes this instance distinctive (uses DISTINCT).
+        /// </summary>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Distinct()
         {
             base.Distinct();

@@ -57,6 +57,12 @@ namespace GaleForceCore.Builders
             protected set;
         } = new Dictionary<object, Expression<Func<TRecord, object>>>();
 
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance is distinctive (uses DISTINCT).
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if this instance is distinct; otherwise, <c>false</c>.
+        /// </value>
         public bool IsDistinct { get; set; }
 
         /// <summary>
@@ -658,6 +664,10 @@ namespace GaleForceCore.Builders
             return this;
         }
 
+        /// <summary>
+        /// Makes this instance distinctive (uses DISTINCT).
+        /// </summary>
+        /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
         public SimpleSqlBuilder<TRecord> Distinct()
         {
             this.CheckDowncast("Distinct");
@@ -2973,9 +2983,11 @@ namespace GaleForceCore.Builders
             var type = typeof(TRecord);
             var props = GetNonIgnoreProperties<TRecord>();
             var fields = this.FieldList(this.Fields);
+            var distinctiveKeys = new List<int>();
 
             foreach (var record in current)
             {
+                var distinctiveKey = 17;
                 var newRecord = (TRecord)Activator.CreateInstance(type);
                 foreach (var field in fields)
                 {
@@ -2984,9 +2996,21 @@ namespace GaleForceCore.Builders
                         $"{field} property missing from {type.Name}");
 
                     prop.SetValue(newRecord, prop.GetValue(record));
+                    if (this.IsDistinct)
+                    {
+                        distinctiveKey = (distinctiveKey * 23) + field.GetHashCode();
+                        distinctiveKey = (distinctiveKey * 23) + prop.GetValue(record).GetHashCode();
+                    }
                 }
 
-                result.Add(newRecord);
+                if (!this.IsDistinct || !distinctiveKeys.Contains(distinctiveKey))
+                {
+                    result.Add(newRecord);
+                    if (this.IsDistinct)
+                    {
+                        distinctiveKeys.Add(distinctiveKey);
+                    }
+                }
             }
 
             if (this.IsTracing)
