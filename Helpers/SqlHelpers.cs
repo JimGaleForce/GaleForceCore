@@ -74,11 +74,21 @@ namespace GaleForceCore.Helpers
             return typeName + (isNullable ? "?" : string.Empty);
         }
 
+        public static string CleanStringForEquals(string text)
+        {
+            return text.Replace("'", "''");
+        }
+
+        public static string CleanStringForLike(string text)
+        {
+            return text.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+        }
+
         /// <summary>
         /// Cleans the text for backslashes, wildcards, and single quotes
         /// </summary>
         /// <param name="fields">The text to clean.</param>
-        public static string CleanString(string text)
+        public static string CleanStringX(string text)
         {
             return text.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_").Replace("'", "''");
         }
@@ -102,7 +112,7 @@ namespace GaleForceCore.Helpers
             switch (name)
             {
                 case "string":
-                    value = "'" + CleanString(value.ToString()) + "'";
+                    value = "'" + CleanStringForEquals(value.ToString()) + "'";
                     break;
                 case "DateTime":
                     if (value is DateTime)
@@ -168,14 +178,16 @@ namespace GaleForceCore.Helpers
                         var listOfStrings = value as List<string>;
                         if (listOfStrings != null)
                         {
-                            return "('" + string.Join("','", listOfStrings.Select(s => CleanString(s))) + "')";
+                            return "('" + string.Join("','", listOfStrings.Select(s => CleanStringForEquals(s))) + "')";
                         }
                         else
                         {
                             var listOfStrings2 = value as string[];
                             if (listOfStrings2 != null)
                             {
-                                return "('" + string.Join("','", listOfStrings2.Select(s => CleanString(s))) + "')";
+                                return "('" +
+                                    string.Join("','", listOfStrings2.Select(s => CleanStringForEquals(s))) +
+                                    "')";
                             }
                         }
                     }
