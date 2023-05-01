@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.36.1</Version>
-    <AssemblyVersion>1.0.36.1</AssemblyVersion>
-    <FileVersion>1.0.36.1</FileVersion>
-    <PackageReleaseNotes>fixed escpaing extra chars only for like, not equals</PackageReleaseNotes>
+    <Version>1.0.35.1</Version>
+    <AssemblyVersion>1.0.34.7</AssemblyVersion>
+    <FileVersion>1.0.34.7</FileVersion>
+    <PackageReleaseNotes>improve string cleaning, params</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
