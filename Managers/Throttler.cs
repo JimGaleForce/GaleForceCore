@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using GaleForceCore.Helpers;
 
 namespace GaleForceCore.Managers
 {
-    public class Throttler2
+    public class Throttler
     {
-        private readonly IDataSource2 _dataSource;
+        private readonly IThrottlerDataSource _dataSource;
         private readonly object _syncLock = new object();
 
-        public Throttler2(IDataSource2 dataSource)
+        public Throttler(IThrottlerDataSource dataSource)
         {
             _dataSource = dataSource;
         }
@@ -38,7 +37,7 @@ namespace GaleForceCore.Managers
                 ClearLocksFrom(request, reservations);
 
                 // add a new request into the correct place
-                var res = reservations.GetOrAdd(response.Id, (reservationId) => Reservation2.From(request));
+                var res = reservations.GetOrAdd(response.Id, (reservationId) => Reservation.From(request));
                 res.Requested = dt;
                 res.Checked = dt;
                 res.Status = response.Status;
@@ -53,62 +52,6 @@ namespace GaleForceCore.Managers
             {
                 return _CheckAndUse(response, dateTime);
             }
-        }
-
-        private ReservationResult _CheckAndUse(ReservationResult response, DateTime? dateTime = null)
-        {
-            if (string.IsNullOrEmpty(response.Key) || response.Id == 0)
-            {
-                return null;
-            }
-
-            var dt = dateTime ?? DateTime.UtcNow;
-
-            var reservations = _dataSource.GetReservations(response.Key);
-            var bucket = _dataSource.GetBucket(response.Key);
-
-            // settle current locks 
-            SettleCurrentLocks(response.Key, reservations, bucket, dt);
-            var minSeconds = AllowAvailableSlots(response.Key, reservations, dt);
-            response.MinimumWaitSeconds = minSeconds;
-
-            var status = reservations.FirstOrDefault(r => r.Key == response.Id);
-            if (status.Key == 0)
-            {
-                response.Status = Status.Deleted;
-                return response;
-            }
-
-            status.Value.Checked = dt;
-
-            if (status.Value.Status == Status.Ready || status.Value.Status == Status.Allocated)
-            {
-                response.Status = Status.Granted;
-                response.Slots =
-                    status.Value.RequestedSlots;
-
-                for (var i = 0; i < response.Slots; i++)
-                {
-                    _dataSource.UseSlot(response.Key, dt);
-                }
-
-                status.Value.RemainingSlots -= response.Slots;
-                if (status.Value.RemainingSlots > 0)
-                {
-                    status.Value.Status = Status.Allocated;
-                }
-                else
-                {
-                    status.Value.Status = Status.InUse;
-                }
-            }
-            else
-            {
-                response.Status = status.Value.Status;
-                response.Slots = status.Value.RemainingSlots;
-            }
-
-            return response;
         }
 
         public ReservationResult ReleaseSlots(ReservationResult response)
@@ -140,37 +83,191 @@ namespace GaleForceCore.Managers
             return response;
         }
 
+        public ReservationResult CheckQueueInfo(ReservationResult response, DateTime? dateTime = null)
+        {
+            var dt = dateTime ?? DateTime.UtcNow;
+
+            var reservations = _dataSource.GetReservations(response.Key);
+            var bucket = _dataSource.GetBucket(response.Key);
+            var used = _dataSource.GetUsed(response.Key);
+            var minDt = dt.AddSeconds(-bucket.TimeSpan.TotalSeconds);
+            var count = used.Count(u => u.DateTime >= minDt);
+            var completed = reservations.Where(r => r.Value.Status > Status.Allocated).Sum(r => r.Value.RequestedSlots);
+            var waiting = reservations.Where(r => r.Value.Status == Status.Awaiting).Sum(r => r.Value.RequestedSlots);
+            var ready = reservations.Where(r => r.Value.Status == Status.Ready || r.Value.Status == Status.Allocated)
+                .Sum(r => r.Value.RequestedSlots);
+
+            response.Info = new QueueInfo
+            {
+                Done = completed,
+                Used = count,
+                Of = bucket.QuotaPerTimeSpan,
+                Waiting = waiting,
+                In = bucket.TimeSpan,
+                Ready = ready
+            };
+
+            return response;
+        }
+
+        private ReservationResult _CheckAndUse(ReservationResult response, DateTime? dateTime = null)
+        {
+            if (string.IsNullOrEmpty(response.Key) || response.Id == 0)
+            {
+                return null;
+            }
+
+            var dt = dateTime ?? DateTime.UtcNow;
+
+            var reservations = _dataSource.GetReservations(response.Key);
+            var bucket = _dataSource.GetBucket(response.Key);
+
+            // settle current locks 
+            SettleCurrentLocks(response.Key, reservations, bucket, dt);
+            var minSeconds = AllowAvailableSlots(response, reservations, bucket, dt);
+            response.MinimumWaitSeconds = minSeconds;
+
+            var status = reservations.FirstOrDefault(r => r.Key == response.Id);
+            if (status.Key == 0)
+            {
+                response.Status = Status.Deleted;
+                return response;
+            }
+
+            status.Value.Checked = dt;
+
+            if (status.Value.Status == Status.Ready || status.Value.Status == Status.Allocated)
+            {
+                response.Status = Status.Granted;
+                _dataSource.ProvideValues(response);
+                response.Slots =
+                    status.Value.RequestedSlots;
+
+                for (var i = 0; i < response.Slots; i++)
+                {
+                    _dataSource.UseSlot(response.Key, status.Value.App, dt);
+                }
+
+                status.Value.RemainingSlots -= response.Slots;
+                if (status.Value.RemainingSlots > 0)
+                {
+                    status.Value.Status = Status.Allocated;
+                }
+                else
+                {
+                    status.Value.Status = Status.InUse;
+                }
+            }
+            else
+            {
+                response.Status = status.Value.Status;
+                response.Slots = status.Value.RemainingSlots;
+            }
+
+            CheckQueueInfo(response);
+
+            return response;
+        }
+
         private int AllowAvailableSlots(
-            string key,
-            ConcurrentDictionary<int, Reservation2> reservations,
+            ReservationResult response,
+            ConcurrentDictionary<int, Reservation> reservations,
+            BucketInfo bucket,
             DateTime? dateTime = null)
         {
+            var key = response.Key;
             var list = reservations.Values.ToList();
             var ready = list.Count(r => r.Status == Status.Ready || r.Status == Status.Allocated);
             var awaiting = list.Where(r => r.Status == Status.Awaiting);
 
-            var usedOf = _dataSource.CountUsedOf(key, dateTime);
+            var usedOf = CountUsedOf(key, dateTime);
             var sysAvailable = usedOf.Item2 - usedOf.Item1;
             var available = sysAvailable - ready;
             if (available > 0)
             {
-                var ordered = awaiting.OrderBy(r => r.Priority).ThenBy(r => r.Requested).Take(available);
+                var onlyProcessedReservedSlots = false;
+                var ordered = awaiting.OrderBy(r => r.Priority).ThenBy(r => r.Requested);
                 foreach (var o in ordered)
                 {
-                    if (o.RequestedSlots > available)
+                    // summ it all
+                    var reserveds = GetReservedByOtherAndMyApp(key, o.App);
+
+                    var reservedByOtherApps = reserveds.Item1;
+                    var reservedByMyApp = reserveds.Item2;
+                    var actuallyAvailable = onlyProcessedReservedSlots
+                        ? reservedByMyApp
+                        : Math.Max(0, available - reservedByOtherApps);
+
+                    if (!onlyProcessedReservedSlots && o.RequestedSlots > actuallyAvailable)
                     {
-                        break;
+                        onlyProcessedReservedSlots = true;
                     }
 
-                    o.Status = Status.Ready;
-                    available -= o.RequestedSlots;
+                    if (o.RequestedSlots <= actuallyAvailable)
+                    {
+                        o.Status = Status.Ready;
+                        available -= o.RequestedSlots;
+                    }
                 }
             }
 
             return usedOf.Item3;
         }
 
-        private void ClearLocksFrom(ThrottlerRequest request, ConcurrentDictionary<int, Reservation2> reservations)
+        private Tuple<int, int, int> CountUsedOf(string key, DateTime? dateTime = null)
+        {
+            var bucket = _dataSource.GetBucket(key);
+
+            var seconds = bucket.TimeSpan.TotalSeconds;
+            var expireSeconds = seconds * 2;
+            if (bucket.RequestDropoff != null)
+            {
+                expireSeconds = bucket.RequestDropoff.Value.TotalSeconds;
+            }
+
+            var dt = dateTime ?? DateTime.UtcNow;
+            var dtMin = dt.AddSeconds(-seconds);
+
+            var dtExpire = dt.AddSeconds(-expireSeconds);
+            var items = _dataSource.GetUsed(key);
+
+            var toDel = items.Where(i => i.DateTime < dtExpire).ToList();
+            foreach (var td in toDel)
+            {
+                items.Remove(td);
+            }
+
+            var count = items.Count(idt => idt.DateTime >= dtMin);
+            var ordered = items.OrderByDescending(i => i.DateTime).ToList();
+            var minSeconds = 2;
+            if (ordered.Count() >= bucket.QuotaPerTimeSpan)
+            {
+                minSeconds = Math.Max(2, (int)((ordered.Last().DateTime.AddSeconds(seconds) - dt).TotalSeconds + 0.99));
+            }
+
+            return new Tuple<int, int, int>(count, bucket.QuotaPerTimeSpan, minSeconds);
+        }
+
+        private Tuple<int, int> GetReservedByOtherAndMyApp(string key, string app, DateTime? dateTime = null)
+        {
+            var bucket = _dataSource.GetBucket(key);
+            var dt = (dateTime ?? DateTime.UtcNow).AddSeconds(-bucket.TimeSpan.TotalSeconds);
+            var used = _dataSource.GetUsed(key).Where(u => u.DateTime >= dt).ToList();
+            var dict = bucket.ReservedSlots.ToDictionary(s => s.Key, s => s.Value);
+            foreach (var u in used)
+            {
+                if (dict.ContainsKey(u.App) && dict[u.App] > 0)
+                {
+                    dict[u.App]--;
+                }
+            }
+
+            var reservedForOthers = dict.Where(d => d.Key != app).Sum(d => d.Value);
+            var reservedForMe = dict.ContainsKey(app) ? dict[app] : 0;
+            return new Tuple<int, int>(reservedForOthers, reservedForMe);
+        }
+
+        private void ClearLocksFrom(ThrottlerRequest request, ConcurrentDictionary<int, Reservation> reservations)
         {
             var matches = reservations.Where(
                 r => r.Value.Instance == request.Instance &&
@@ -185,7 +282,7 @@ namespace GaleForceCore.Managers
 
         private bool SettleCurrentLocks(
             string key,
-            ConcurrentDictionary<int, Reservation2> reservations,
+            ConcurrentDictionary<int, Reservation> reservations,
             BucketInfo bucket,
             DateTime? dateTime = null)
         {
@@ -255,193 +352,5 @@ namespace GaleForceCore.Managers
 
             return true;
         }
-    }
-
-    public interface IDataSource2
-    {
-        bool AddBucket(string key, BucketInfo bucket);
-
-        BucketInfo GetBucket(string key);
-
-        ConcurrentDictionary<int, Reservation2> GetReservations(string key);
-
-        int GetNewId();
-
-        Tuple<int, int, int> CountUsedOf(string key, DateTime? dateTime = null);
-
-        void UseSlot(string key, DateTime? dateTime);
-    }
-
-    public class MemoryDataSource2 : IDataSource2
-    {
-        private ConcurrentDictionary<string, ConcurrentDictionary<int, Reservation2>> _reservations = new ConcurrentDictionary<string, ConcurrentDictionary<int, Reservation2>>();
-        private ConcurrentDictionary<string, BucketInfo> _buckets = new ConcurrentDictionary<string, BucketInfo>();
-        private ConcurrentDictionary<string, List<DateTime>> _used = new ConcurrentDictionary<string, List<DateTime>>();
-
-        private int nextId = 1;
-
-        public bool AddBucket(string key, BucketInfo bucket)
-        {
-            if (_buckets != null && _buckets.ContainsKey(key))
-            {
-                return false;
-            }
-
-            _buckets.TryAdd(key, bucket);
-            return true;
-        }
-
-        public BucketInfo GetBucket(string key)
-        {
-            return _buckets.ContainsKey(key) ? _buckets[key] : null;
-        }
-
-        public ConcurrentDictionary<int, Reservation2> GetReservations(string key)
-        {
-            return _reservations.GetOrAdd(key, keyx => new ConcurrentDictionary<int, Reservation2>());
-        }
-
-        public int GetNewId()
-        {
-            return nextId++;
-        }
-
-        public Tuple<int, int, int> CountUsedOf(string key, DateTime? dateTime = null)
-        {
-            var bucket = GetBucket(key);
-
-            if (_used == null)
-            {
-                return new Tuple<int, int, int>(0, bucket.QuotaPerTimeSpan, 0);
-            }
-
-            var seconds = bucket.TimeSpan.TotalSeconds;
-            var expireSeconds = seconds * 2;
-            if (bucket.RequestDropoff != null)
-            {
-                expireSeconds = bucket.RequestDropoff.Value.TotalSeconds;
-            }
-
-            var dt = dateTime ?? DateTime.UtcNow;
-            var dtMin = dt.AddSeconds(-seconds);
-
-            var dtExpire = dt.AddSeconds(-expireSeconds);
-            var items = _used.GetOrAdd(key, (keyx) => new List<DateTime>());
-
-            var toDel = items.Where(i => i < dtExpire).ToList();
-            foreach (var td in toDel)
-            {
-                items.Remove(td);
-            }
-
-            var count = items.Count(idt => idt >= dtMin);
-            var ordered = items.OrderByDescending(i => i).Take(bucket.QuotaPerTimeSpan);
-            var minSeconds = 2;
-            if (ordered.Count() == bucket.QuotaPerTimeSpan)
-            {
-                minSeconds = Math.Max(2, ((int)((ordered.Last().AddSeconds(seconds) - dt).TotalSeconds + 0.99)));
-            }
-
-            return new Tuple<int, int, int>(count, bucket.QuotaPerTimeSpan, minSeconds);
-        }
-
-        public void UseSlot(string key, DateTime? dateTime = null)
-        {
-            var items = _used.GetOrAdd(key, (keyx) => new List<DateTime>());
-            items.Add(dateTime ?? DateTime.UtcNow);
-        }
-    }
-
-    public class BucketInfo
-    {
-        public string Key { get; set; }
-
-        public string Name { get; set; }
-
-        public int QuotaPerTimeSpan { get; set; }
-
-        public TimeSpan TimeSpan { get; set; } = TimeSpan.FromMinutes(1);
-
-        public TimeSpan? DefaultAwaitingReadyTimeout { get; set; }
-
-        public TimeSpan? DefaultAllocatedTimeout { get; set; }
-
-        public TimeSpan? RequestDropoff { get; set; }
-    }
-
-    public class ThrottlerRequest
-    {
-        public string Key { get; set; }
-
-        public int RequestedSlots { get; set; }
-
-        public int MinReadySlots { get; set; } = 1;
-
-        public int Priority { get; set; } = 5;
-
-        public string Owner { get; set; }
-
-        public string App { get; set; }
-
-        public string Instance { get; set; }
-    }
-
-    public class Reservation2
-    {
-        public int Id { get; set; }
-
-        public string Owner { get; set; }
-
-        public string App { get; set; }
-
-        public string Instance { get; set; }
-
-        public int Priority { get; set; }
-
-        public Status Status { get; set; }
-
-        public DateTime Requested { get; set; }
-
-        public DateTime Checked { get; set; }
-
-        public List<DateTime> Used { get; set; } = new List<DateTime>();
-
-        public TimeSpan? AwaitingReadyTimeout { get; set; }
-
-        public TimeSpan? AllocatedTimeout { get; set; }
-
-        public int RequestedSlots { get; set; }
-
-        public int RemainingSlots { get; set; }
-
-        public static Reservation2 From(ThrottlerRequest request)
-        {
-            var res = new Reservation2()
-            {
-                Owner = request.Owner,
-                App = request.App,
-                RequestedSlots = request.RequestedSlots,
-                RemainingSlots = request.RequestedSlots,
-                Priority = request.Priority,
-                Status = Status.Awaiting,
-                Instance = request.Instance
-            };
-
-            return res;
-        }
-    }
-
-    public enum Status
-    {
-        None = 0,
-        Awaiting = 1,
-        Ready = 2,
-        Granted = 3, //only used to hand to caller when consuming - server is InUse
-        Allocated = 4,
-        InUse = 5,
-        Completed = 6,
-        Released = 7,
-        Abandoned = 8,
-        Deleted = 9
     }
 }

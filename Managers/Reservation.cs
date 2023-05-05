@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GaleForceCore.Managers
 {
@@ -6,27 +8,44 @@ namespace GaleForceCore.Managers
     {
         public int Id { get; set; }
 
-        public int RequestedSlots { get; set; }
+        public string Owner { get; set; }
 
-        public DateTime RequestTime { get; set; }
+        public string App { get; set; }
 
-        public ReservationStatus Status { get; set; }
+        public string Instance { get; set; }
 
         public int Priority { get; set; }
 
-        public override string ToString()
-        {
-            return $"Id={Id}, Req={RequestedSlots}, Status={Status}, Pri={Priority}, Time={RequestTime}";
-        }
-    }
+        public Status Status { get; set; }
 
-    public enum ReservationStatus
-    {
-        Waiting = 1,
-        Allowed = 2,
-        Denied = 3,
-        Expired = 4,
-        Released = 5,
-        Missing = 6
+        public DateTime Requested { get; set; }
+
+        public DateTime Checked { get; set; }
+
+        public List<DateTime> Used { get; set; } = new List<DateTime>();
+
+        public TimeSpan? AwaitingReadyTimeout { get; set; }
+
+        public TimeSpan? AllocatedTimeout { get; set; }
+
+        public int RequestedSlots { get; set; }
+
+        public int RemainingSlots { get; set; }
+
+        public static Reservation From(ThrottlerRequest request)
+        {
+            var res = new Reservation()
+            {
+                Owner = request.Owner,
+                App = request.App,
+                RequestedSlots = request.RequestedSlots,
+                RemainingSlots = request.RequestedSlots,
+                Priority = request.Priority,
+                Status = Status.Awaiting,
+                Instance = request.Instance
+            };
+
+            return res;
+        }
     }
 }

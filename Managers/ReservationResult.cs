@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace GaleForceCore.Managers
 {
@@ -17,16 +18,7 @@ namespace GaleForceCore.Managers
         public int MinimumWaitSeconds { get; set; }
 
         public QueueInfo Info { get; set; }
-    }
 
-    public class QueueInfo
-    {
-        public int Used { get; set; }
-
-        public int Of { get; set; }
-
-        public TimeSpan In { get; set; }
-
-        public int Completed { get; set; }
+        public Dictionary<string, string> Values { get; set; }
     }
 }

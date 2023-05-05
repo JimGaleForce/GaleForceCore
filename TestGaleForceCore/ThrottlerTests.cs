@@ -9,14 +9,14 @@ namespace TestGaleForceCore
     [TestClass]
     public class ThrottlerTests
     {
-        private MemoryDataSource2 _memoryDataSource;
-        private Throttler2 _throttler;
+        private MemoryThrottlerDataSource _memoryDataSource;
+        private Throttler _throttler;
 
         [TestInitialize]
         public void Setup()
         {
-            _memoryDataSource = new MemoryDataSource2();
-            _throttler = new Throttler2(_memoryDataSource);
+            _memoryDataSource = new MemoryThrottlerDataSource();
+            _throttler = new Throttler(_memoryDataSource);
         }
 
         [TestMethod]
@@ -279,6 +279,71 @@ namespace TestGaleForceCore
 
             Assert.AreEqual(Status.Granted, stat3.Status);
             Assert.AreEqual(Status.Awaiting, stat2.Status);
+        }
+
+        [TestMethod]
+        public void TestThrottlerReservedSlots()
+        {
+            // Set up a bucket with a quota of 5 requests per minute
+            string bucketKey = "gpt4model";
+            int quota = 5;
+
+            var reservedSlots = new Dictionary<string, int>();
+            reservedSlots["app2"] = 3;
+
+            var bucket = new BucketInfo
+            {
+                Key = bucketKey,
+                Name = bucketKey,
+                TimeSpan = TimeSpan.FromSeconds(60),
+                QuotaPerTimeSpan = quota,
+                ReservedSlots = reservedSlots
+            };
+
+            _memoryDataSource.AddBucket(bucketKey, bucket);
+
+            var dt = DateTime.UtcNow;
+
+            var req = new ThrottlerRequest
+            {
+                Key = bucketKey,
+                RequestedSlots = 1,
+                App = "app",
+                Owner = "owner",
+                Instance = "instance",
+                MinReadySlots = 1,
+                Priority = 5
+            };
+
+            req.RequestedSlots = 1;
+            req.Owner = "owner1";
+            var result1 = _throttler.RequestSlots(req, dt);
+            Assert.AreEqual(Status.Granted, result1.Status);
+
+            req.Owner = "owner2";
+            var result2 = _throttler.RequestSlots(req, dt);
+            Assert.AreEqual(Status.Granted, result2.Status);
+
+            req.Owner = "owner3";
+            var result3 = _throttler.RequestSlots(req, dt);
+            Assert.AreEqual(Status.Awaiting, result3.Status);
+
+            req.Owner = "owner4-app3";
+            req.App = "app2";
+            var result4 = _throttler.RequestSlots(req, dt);
+            Assert.AreEqual(Status.Granted, result4.Status);
+
+            req.Owner = "owner5-app3";
+            var result5 = _throttler.RequestSlots(req, dt);
+            Assert.AreEqual(Status.Granted, result5.Status);
+
+            req.Owner = "owner6-app3";
+            var result6 = _throttler.RequestSlots(req, dt);
+            Assert.AreEqual(Status.Granted, result6.Status);
+
+            req.Owner = "owner7-app3";
+            var result7 = _throttler.RequestSlots(req, dt);
+            Assert.AreEqual(Status.Awaiting, result7.Status);
         }
     }
 }
