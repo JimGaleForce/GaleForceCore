@@ -15,44 +15,49 @@ namespace GaleForceCore.Managers
 
         public bool AddBucket(string key, BucketInfo bucket)
         {
-            if (_buckets != null && _buckets.ContainsKey(key))
+            if (this._buckets != null && this._buckets.ContainsKey(key))
             {
                 return false;
             }
 
-            _buckets.TryAdd(key, bucket);
+            this._buckets.TryAdd(key, bucket);
             return true;
         }
 
         public BucketInfo GetBucket(string key)
         {
-            return _buckets.ContainsKey(key) ? _buckets[key] : null;
+            return this._buckets.ContainsKey(key) ? this._buckets[key] : null;
         }
 
         public ConcurrentDictionary<int, Reservation> GetReservations(string key)
         {
-            return _reservations.GetOrAdd(key, keyx => new ConcurrentDictionary<int, Reservation>());
+            return this._reservations.GetOrAdd(key, keyx => new ConcurrentDictionary<int, Reservation>());
         }
 
         public int GetNewId()
         {
-            return nextId++;
+            return this.nextId++;
         }
 
         public void UseSlot(string key, string app, DateTime? dateTime = null)
         {
-            var items = _used.GetOrAdd(key, (keyx) => new List<UsedSlot>());
+            var items = this._used.GetOrAdd(key, (keyx) => new List<UsedSlot>());
             items.Add(new UsedSlot { DateTime = dateTime ?? DateTime.UtcNow, App = app });
         }
 
         public List<UsedSlot> GetUsed(string key)
         {
-            return _used.GetOrAdd(key, (keyx) => new List<UsedSlot>());
+            return this._used.GetOrAdd(key, (keyx) => new List<UsedSlot>());
         }
 
         public void ProvideValues(ReservationResult response)
         {
             return;
+        }
+
+        public List<string> GetKeys()
+        {
+            return this._buckets.Keys.ToList();
         }
     }
 }

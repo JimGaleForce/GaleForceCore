@@ -12,29 +12,29 @@ namespace GaleForceCore.Managers
 
         public Throttler(IThrottlerDataSource dataSource)
         {
-            _dataSource = dataSource;
+            this._dataSource = dataSource;
         }
 
         public ReservationResult RequestSlots(ThrottlerRequest request, DateTime? dateTime = null)
         {
-            lock (_syncLock)
+            lock (this._syncLock)
             {
                 var dt = dateTime ?? DateTime.UtcNow;
 
                 var response = new ReservationResult
                 {
-                    Id = _dataSource.GetNewId(),
+                    Id = this._dataSource.GetNewId(),
                     Key = request.Key,
                     Status = Status.Awaiting,
                     AllocatedSlots = 0,
                     Slots = 0
                 };
 
-                var reservations = _dataSource.GetReservations(request.Key);
-                var bucket = _dataSource.GetBucket(request.Key);
+                var reservations = this._dataSource.GetReservations(request.Key);
+                var bucket = this._dataSource.GetBucket(request.Key);
 
                 // clear ALL matching instances from this app/owner
-                ClearLocksFrom(request, reservations);
+                this.ClearLocksFrom(request, reservations);
 
                 // add a new request into the correct place
                 var res = reservations.GetOrAdd(response.Id, (reservationId) => Reservation.From(request));
@@ -42,15 +42,15 @@ namespace GaleForceCore.Managers
                 res.Checked = dt;
                 res.Status = response.Status;
 
-                return _CheckAndUse(response, dt);
+                return this._CheckAndUse(response, dt);
             }
         }
 
         public ReservationResult CheckAndUse(ReservationResult response, DateTime? dateTime = null)
         {
-            lock (_syncLock)
+            lock (this._syncLock)
             {
-                return _CheckAndUse(response, dateTime);
+                return this._CheckAndUse(response, dateTime);
             }
         }
 
@@ -61,8 +61,8 @@ namespace GaleForceCore.Managers
                 return null;
             }
 
-            var reservations = _dataSource.GetReservations(response.Key);
-            var bucket = _dataSource.GetBucket(response.Key);
+            var reservations = this._dataSource.GetReservations(response.Key);
+            var bucket = this._dataSource.GetBucket(response.Key);
 
             var status = reservations.FirstOrDefault(r => r.Key == response.Id);
             if (status.Key == 0)
@@ -87,9 +87,9 @@ namespace GaleForceCore.Managers
         {
             var dt = dateTime ?? DateTime.UtcNow;
 
-            var reservations = _dataSource.GetReservations(response.Key);
-            var bucket = _dataSource.GetBucket(response.Key);
-            var used = _dataSource.GetUsed(response.Key);
+            var reservations = this._dataSource.GetReservations(response.Key);
+            var bucket = this._dataSource.GetBucket(response.Key);
+            var used = this._dataSource.GetUsed(response.Key);
             var minDt = dt.AddSeconds(-bucket.TimeSpan.TotalSeconds);
             var count = used.Count(u => u.DateTime >= minDt);
             var completed = reservations.Where(r => r.Value.Status > Status.Allocated).Sum(r => r.Value.RequestedSlots);
@@ -119,12 +119,12 @@ namespace GaleForceCore.Managers
 
             var dt = dateTime ?? DateTime.UtcNow;
 
-            var reservations = _dataSource.GetReservations(response.Key);
-            var bucket = _dataSource.GetBucket(response.Key);
+            var reservations = this._dataSource.GetReservations(response.Key);
+            var bucket = this._dataSource.GetBucket(response.Key);
 
             // settle current locks 
-            SettleCurrentLocks(response.Key, reservations, bucket, dt);
-            var minSeconds = AllowAvailableSlots(response, reservations, bucket, dt);
+            this.SettleCurrentLocks(response.Key, reservations, bucket, dt);
+            var minSeconds = this.AllowAvailableSlots(response, reservations, bucket, dt);
             response.MinimumWaitSeconds = minSeconds;
 
             var status = reservations.FirstOrDefault(r => r.Key == response.Id);
@@ -139,13 +139,13 @@ namespace GaleForceCore.Managers
             if (status.Value.Status == Status.Ready || status.Value.Status == Status.Allocated)
             {
                 response.Status = Status.Granted;
-                _dataSource.ProvideValues(response);
+                this._dataSource.ProvideValues(response);
                 response.Slots =
                     status.Value.RequestedSlots;
 
                 for (var i = 0; i < response.Slots; i++)
                 {
-                    _dataSource.UseSlot(response.Key, status.Value.App, dt);
+                    this._dataSource.UseSlot(response.Key, status.Value.App, dt);
                 }
 
                 status.Value.RemainingSlots -= response.Slots;
@@ -164,7 +164,7 @@ namespace GaleForceCore.Managers
                 response.Slots = status.Value.RemainingSlots;
             }
 
-            CheckQueueInfo(response);
+            this.CheckQueueInfo(response);
 
             return response;
         }
@@ -180,7 +180,7 @@ namespace GaleForceCore.Managers
             var ready = list.Count(r => r.Status == Status.Ready || r.Status == Status.Allocated);
             var awaiting = list.Where(r => r.Status == Status.Awaiting);
 
-            var usedOf = CountUsedOf(key, dateTime);
+            var usedOf = this.CountUsedOf(key, dateTime);
             var sysAvailable = usedOf.Item2 - usedOf.Item1;
             var available = sysAvailable - ready;
             if (available > 0)
@@ -190,7 +190,7 @@ namespace GaleForceCore.Managers
                 foreach (var o in ordered)
                 {
                     // summ it all
-                    var reserveds = GetReservedByOtherAndMyApp(key, o.App);
+                    var reserveds = this.GetReservedByOtherAndMyApp(key, o.App);
 
                     var reservedByOtherApps = reserveds.Item1;
                     var reservedByMyApp = reserveds.Item2;
@@ -216,7 +216,7 @@ namespace GaleForceCore.Managers
 
         private Tuple<int, int, int> CountUsedOf(string key, DateTime? dateTime = null)
         {
-            var bucket = _dataSource.GetBucket(key);
+            var bucket = this._dataSource.GetBucket(key);
 
             var seconds = bucket.TimeSpan.TotalSeconds;
             var expireSeconds = seconds * 2;
@@ -229,7 +229,7 @@ namespace GaleForceCore.Managers
             var dtMin = dt.AddSeconds(-seconds);
 
             var dtExpire = dt.AddSeconds(-expireSeconds);
-            var items = _dataSource.GetUsed(key);
+            var items = this._dataSource.GetUsed(key);
 
             var toDel = items.Where(i => i.DateTime < dtExpire).ToList();
             foreach (var td in toDel)
@@ -250,9 +250,9 @@ namespace GaleForceCore.Managers
 
         private Tuple<int, int> GetReservedByOtherAndMyApp(string key, string app, DateTime? dateTime = null)
         {
-            var bucket = _dataSource.GetBucket(key);
+            var bucket = this._dataSource.GetBucket(key);
             var dt = (dateTime ?? DateTime.UtcNow).AddSeconds(-bucket.TimeSpan.TotalSeconds);
-            var used = _dataSource.GetUsed(key).Where(u => u.DateTime >= dt).ToList();
+            var used = this._dataSource.GetUsed(key).Where(u => u.DateTime >= dt).ToList();
             var dict = bucket.ReservedSlots.ToDictionary(s => s.Key, s => s.Value);
             foreach (var u in used)
             {

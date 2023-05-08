@@ -19,5 +19,7 @@ namespace GaleForceCore.Managers
         List<UsedSlot> GetUsed(string key);
 
         void ProvideValues(ReservationResult response);
+
+        List<string> GetKeys();
     }
 }
