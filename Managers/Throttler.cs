@@ -89,6 +89,22 @@ namespace GaleForceCore.Managers
 
             var reservations = this._dataSource.GetReservations(response.Key);
             var bucket = this._dataSource.GetBucket(response.Key);
+
+            if (bucket == null)
+            {
+                // bucket lost?
+                response.Info = new QueueInfo
+                {
+                    Done = 0,
+                    Used = 0,
+                    Of = 0,
+                    Waiting = 0,
+                    Ready = 0
+                };
+
+                return response;
+            }
+
             var used = this._dataSource.GetUsed(response.Key);
             var minDt = dt.AddSeconds(-bucket.TimeSpan.TotalSeconds);
             var count = used.Count(u => u.DateTime >= minDt);
@@ -121,6 +137,13 @@ namespace GaleForceCore.Managers
 
             var reservations = this._dataSource.GetReservations(response.Key);
             var bucket = this._dataSource.GetBucket(response.Key);
+
+            if (bucket == null)
+            {
+                // bucket lost?
+                response.Status = Status.Deleted;
+                return response;
+            }
 
             // settle current locks 
             this.SettleCurrentLocks(response.Key, reservations, bucket, dt);
@@ -218,6 +241,11 @@ namespace GaleForceCore.Managers
         {
             var bucket = this._dataSource.GetBucket(key);
 
+            if (bucket == null)
+            {
+                return new Tuple<int, int, int>(0, 0, 0);
+            }
+
             var seconds = bucket.TimeSpan.TotalSeconds;
             var expireSeconds = seconds * 2;
             if (bucket.RequestDropoff != null)
@@ -251,6 +279,12 @@ namespace GaleForceCore.Managers
         private Tuple<int, int> GetReservedByOtherAndMyApp(string key, string app, DateTime? dateTime = null)
         {
             var bucket = this._dataSource.GetBucket(key);
+
+            if (bucket == null)
+            {
+                return new Tuple<int, int>(0, 0);
+            }
+
             var dt = (dateTime ?? DateTime.UtcNow).AddSeconds(-bucket.TimeSpan.TotalSeconds);
             var used = this._dataSource.GetUsed(key).Where(u => u.DateTime >= dt).ToList();
             var dict = bucket.ReservedSlots.ToDictionary(s => s.Key, s => s.Value);
