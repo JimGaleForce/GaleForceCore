@@ -245,6 +245,68 @@
         /// Tests Select with Where, Contains.
         /// </summary>
         [TestMethod]
+        public void TestSelectWhereStringContainsStringArray()
+        {
+            var list = new string[] { "ABC", "DEF" };
+
+            var options = new SimpleSqlBuilderOptions { UseParameters = false };
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(options)
+                .From(SqlTestRecord.TableName)
+                .Select(r => r.Int1)
+                .OrderByDescending(r => r.Int2)
+                .Take(10)
+                .Where(r => list.Contains(r.String1))
+                .Build();
+
+            var expected = "SELECT TOP 10 Int1 FROM TableName WHERE String1 IN ('ABC','DEF') ORDER BY Int2 DESC";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// Tests Select with Where, Contains.
+        /// </summary>
+        [TestMethod]
+        public void TestSelectWhereStringContainsIntArray()
+        {
+            var list = new int[] { 1, 3, 5 };
+
+            var options = new SimpleSqlBuilderOptions { UseParameters = false };
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(options)
+                .From(SqlTestRecord.TableName)
+                .Select(r => r.Int1)
+                .OrderByDescending(r => r.Int2)
+                .Take(10)
+                .Where(r => list.Contains(r.Int2.Value))
+                .Build();
+
+            var expected = "SELECT TOP 10 Int1 FROM TableName WHERE Int2 IN (1,3,5) ORDER BY Int2 DESC";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// Tests Select with Where, Contains.
+        /// </summary>
+        [TestMethod]
+        public void TestStringEmpty()
+        {
+            var options = new SimpleSqlBuilderOptions { UseParameters = false };
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(options)
+                .From(SqlTestRecord.TableName)
+                .Select(r => r.Int1)
+                .Where(r => r.String1 != string.Empty)
+                .Build();
+
+            var expected = "SELECT Int1 FROM TableName WHERE (String1 != '')";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        /// Tests Select with Where, Contains.
+        /// </summary>
+        [TestMethod]
         public void TestSelectWhereStringContains()
         {
             var options = new SimpleSqlBuilderOptions { UseParameters = false };

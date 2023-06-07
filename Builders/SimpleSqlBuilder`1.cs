@@ -1578,6 +1578,15 @@ namespace GaleForceCore.Builders
                 var suffix = string.Empty;
 
                 var parmName = pe.Expression is ParameterExpression ? (pe.Expression as ParameterExpression).Name : null;
+
+                if (parmName == null)
+                {
+                    if (exp.ToString() == "String.Empty")
+                    {
+                        return "''";
+                    }
+                }
+
                 var declaringType = pe.Expression.Type.Name;
                 var matchingType = this.GetMatchingType(types, declaringType);
                 var ignoreTableName = 

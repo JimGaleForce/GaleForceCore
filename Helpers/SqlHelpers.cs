@@ -167,12 +167,19 @@ namespace GaleForceCore.Helpers
                     }
                     else if (type.Name.StartsWith("List") ||
                         type.Name.StartsWith("String[]") ||
+                        type.Name.StartsWith("Int32[]") ||
                         type.Name.StartsWith("Enumerable"))
                     {
                         var listOfInts = value as List<int>;
                         if (listOfInts != null)
                         {
                             return "(" + string.Join(",", listOfInts) + ")";
+                        }
+
+                        var arrayOfInts = value as int[];
+                        if (arrayOfInts != null)
+                        {
+                            return "(" + string.Join(",", arrayOfInts) + ")";
                         }
 
                         var listOfStrings = value as List<string>;
