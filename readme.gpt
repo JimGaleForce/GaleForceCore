@@ -1,0 +1,49 @@
+# GaleForce SQL Library Cheat Sheet for GPT
+
+## Installation
+- Add as a dependency
+
+## Basic Usage
+- Context: `new SimpleSqlBuilderContext()`
+- Set table: `context.SetTable(tableName, data)`
+
+### Reading Data
+- `new SimpleSqlBuilder<T>(tableName).Select(cols).Execute(context).ToList()`
+
+### Inserting Data
+- `new SimpleSqlBuilder<T>(tableName).Insert(data, cols).ExecuteNonQueryAsync(context)`
+
+### Updating Data
+- `new SimpleSqlBuilder<T>(tableName).Match(match).Update(data, cols).ExecuteNonQueryAsync(context)`
+
+### Deleting Data
+- `new SimpleSqlBuilder<T>(tableName).Delete().Where(condition).Build()`
+
+### Merging Data
+- `new SimpleSqlBuilder<T>(tempTableName).MergeInto(tableName).Match(match).WhenMatched(update).WhenNotMatched(insert).ExecuteNonQueryAsync(context)`
+
+## Bulk Copy
+- `new SimpleSqlBuilder<T>(tableName).Insert(data, cols).UseBulkCopy(context)`
+- `new SimpleSqlBuilder<T>(tableName).Insert(data, cols).ExecuteBulkCopy(connection)`
+
+## Complex Usages
+- Join: `.InnerJoinOn((a, b) => a.Id == b.Id)`
+- InnerJoin12On: `.InnerJoin12On((a, b) => a.Id == b.Id)`
+- InnerJoin13On: `.InnerJoin13On((a, c) => a.Id == c.Id)`
+- InnerJoin23On: `.InnerJoin23On((b, c) => b.Id == c.Id)`
+- Subquery: `.Select((a, b, c) => a.Id, (a, b, c) => b.Str1, (a, b, c) => c.Int1)`
+- Conditions: `.Where((t1, t3) => t1.Int1 % 2 == 1)`
+- OrderBy/OrderByDescending: `.OrderBy(s => s.Int1).ThenByDescending(s => s.String1)`
+- Take: `.Take(10)`
+- Distinct: `.Distinct()`
+
+## Tracing
+- Enable: `context.IsTracing = true`
+- Check trace: `context.StageLogger.Collector.Items[1].Item.Message.Length > 0`
+
+## Build SQL
+- Select: `.Build()`
+- Insert: `.Build()`
+- Update: `.Build()`
+- Delete: `.Build()`
+- Merge: `.Build()`
