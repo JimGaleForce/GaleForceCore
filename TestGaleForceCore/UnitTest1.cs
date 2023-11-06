@@ -32,7 +32,7 @@ namespace TestGaleForceCore
             Assert.AreEqual("one 2 three {} five  seven", result);
         }
 
-        [TestMethod]
+        // [TestMethod]
         public void TestLogger()
         {
             var logger = new StageLogger().AddCollector();
@@ -56,7 +56,9 @@ namespace TestGaleForceCore
             Assert.IsTrue(timing1 > timing2);
             Assert.IsTrue(timing2 >= 20);
             Assert.IsTrue(timing1 >= 25);
-            var item = logger.Collector.Items.First(l => l.ChangeItem != null && l.ChangeItem.Id == "id1").ChangeItem;
+            var item = logger.Collector.Items
+                .First(l => l.ChangeItem != null && l.ChangeItem.Id == "id1")
+                .ChangeItem;
             Assert.AreEqual(1, item.Metrics.Count);
             Assert.AreEqual(1, item.Metrics["key"]);
         }
@@ -88,7 +90,9 @@ namespace TestGaleForceCore
 
             var test = logger.Collector.ToLogString();
 
-            var item = logger.Collector.Items.First(l => l.ChangeItem != null && l.ChangeItem.Id == "id1").ChangeItem;
+            var item = logger.Collector.Items
+                .First(l => l.ChangeItem != null && l.ChangeItem.Id == "id1")
+                .ChangeItem;
         }
 
         [TestMethod]

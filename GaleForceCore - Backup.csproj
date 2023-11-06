@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.37.2</Version>
-    <AssemblyVersion>1.0.37.2</AssemblyVersion>
-    <FileVersion>1.0.37.2</FileVersion>
-    <PackageReleaseNotes>added Int[] for Contains(), String.Empty</PackageReleaseNotes>
+    <Version>1.0.37.1</Version>
+    <AssemblyVersion>1.0.37.1</AssemblyVersion>
+    <FileVersion>1.0.37.1</FileVersion>
+    <PackageReleaseNotes>added Throttler</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
