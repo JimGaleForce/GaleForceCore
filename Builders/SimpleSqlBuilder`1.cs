@@ -498,6 +498,7 @@ namespace GaleForceCore.Builders
                 if (actualTableNames.Contains(tableName))
                 {
                     newTableNames.Add(tableName + "__" + index);
+                    index++;
                 }
                 else
                 {

@@ -102,7 +102,7 @@ namespace GaleForceCore.Builders
         {
         }
 
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> TraceTo(StringBuilder sb)
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> TraceTo(StringBuilder sb)
         {
             base.TraceTo(sb);
             return this;
@@ -175,7 +175,7 @@ namespace GaleForceCore.Builders
         /// Makes this instance distinctive (uses DISTINCT).
         /// </summary>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Distinct()
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2> Distinct()
         {
             base.Distinct();
             return this;

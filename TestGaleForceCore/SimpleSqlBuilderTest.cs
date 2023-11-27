@@ -2539,6 +2539,75 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
             Assert.AreEqual(expected, actual);
         }
 
+        // [TestMethod]
+        public void TestBacktick()
+        {
+            var dt = DateTime.MinValue;
+            var newRecord = new SqlTestRecord
+            {
+                Int1 = 3,
+                Int2 = 202,
+                String1 = "This `thing` is a test",
+                Bool1 = false,
+                DateTime1 = dt
+            };
+
+            var actual = new SimpleSqlBuilder<SqlTestRecord>(SqlTestRecord.TableName)
+                .Where(s => s.Int1 == 3)
+                .Update(newRecord, s => s.String1)
+                .Build();
+
+            var expected = "UPDATE TableName SET Int2 = 202, Bool1 = 0 WHERE Int1 = 3";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void TestMultiSameNames()
+        {
+            var build = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest2Record>()
+                .From(
+                    SqlTestRecord.TableName,
+                    SqlTest2Record.TableName,
+                    SqlTest2Record.TableName)
+                .InnerJoin12On((e, tx) => e.Int1 == tx.Int1)
+                .InnerJoin13On((e, tz) => e.Int2 == tz.Int2)
+                .Select(
+                    (e, tx, tz) => e.Int1,
+                    (e, tx, tz) => e.String1,
+                    (e, tx, tz) => tx.String2)
+                .SelectAs(r => r.DateTime1, (e, tx, tz) => tz.DateTime1)
+                .Where((e, tx, tz) => e.Int2 != null);
+
+            var query = build.Build();
+            var expected = @"SELECT TableName.Int1,TableName.String1,TableName2.String2,TableName2__1.DateTime1 AS DateTime1 FROM TableName INNER JOIN TableName2 ON (TableName.Int1 = TableName2.Int1) INNER JOIN TableName2 TableName2__1 ON (TableName.Int2 = TableName2__1.Int2) WHERE (TableName.Int2 IS NOT NULL)";
+            Assert.AreEqual(expected, query);
+        }
+
+        [TestMethod]
+        public void TestMulti3SameNames()
+        {
+            var build = new SimpleSqlBuilder<SqlTestRecord, SqlTestRecord, SqlTest2Record, SqlTest2Record, SqlTest2Record>()
+                .From(
+                    SqlTestRecord.TableName,
+                    SqlTest2Record.TableName,
+                    SqlTest2Record.TableName,
+                    SqlTest2Record.TableName)
+                .InnerJoin12On((e, tx) => e.Int1 == tx.Int1)
+                .InnerJoin13On((e, ty) => e.Int2 == ty.Int2)
+                .InnerJoin14On((e, tz) => e.Int2 == tz.Int2)
+                .Select(
+                    (e, tx, ty, tz) => e.Int1,
+                    (e, tx, ty, tz) => e.String1,
+                    (e, tx, ty, tz) => tx.String2)
+                .SelectAs(r => r.DateTime1, (e, tx, ty, tz) => tz.DateTime1)
+                .Where((e, tx, ty, tz) => e.Int2 != null);
+
+            var query = build.Build();
+            var expected = @"SELECT TableName.Int1,TableName.String1,TableName2.String2,TableName2__2.DateTime1 AS DateTime1 FROM TableName INNER JOIN TableName2 ON (TableName.Int1 = TableName2.Int1) INNER JOIN TableName2 TableName2__1 ON (TableName.Int2 = TableName2__1.Int2) INNER JOIN TableName2 TableName2__2 ON (TableName.Int2 = TableName2__2.Int2) WHERE (TableName.Int2 IS NOT NULL)";
+            Assert.AreEqual(expected, query);
+        }
+
         public class SourceRecordWithUser
         {
             public const string TableName = "TableName";

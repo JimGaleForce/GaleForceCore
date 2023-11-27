@@ -27,7 +27,7 @@ namespace GaleForceCore.Builders
         /// Gets or sets the join key.
         /// </summary>
         /// <value>The join key.</value>
-        public List<JoinKeyItem<TRecord1, TRecord2, TRecord3, TRecord4>> JoinKeys
+        public new List<JoinKeyItem<TRecord1, TRecord2, TRecord3, TRecord4>> JoinKeys
         {
             get;
             protected set;
@@ -86,7 +86,7 @@ namespace GaleForceCore.Builders
         {
         }
 
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> TraceTo(
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> TraceTo(
             StringBuilder sb)
         {
             base.TraceTo(sb);
@@ -161,7 +161,7 @@ namespace GaleForceCore.Builders
         /// Makes this instance distinctive (uses DISTINCT).
         /// </summary>
         /// <returns>SimpleSqlBuilder&lt;TRecord&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> Distinct()
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> Distinct()
         {
             base.Distinct();
             return this;
@@ -231,7 +231,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> InnerJoin12On(
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> InnerJoin12On(
             Expression<Func<TRecord1, TRecord2, bool>> joinKey) => this.JoinOn(
             joinKey,
             JoinType.INNER);
@@ -241,7 +241,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> InnerJoin13On(
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> InnerJoin13On(
             Expression<Func<TRecord1, TRecord3, bool>> joinKey) => this.JoinOn(
             joinKey,
             JoinType.INNER);
@@ -261,7 +261,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> InnerJoin23On(
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> InnerJoin23On(
             Expression<Func<TRecord2, TRecord3, bool>> joinKey) => this.JoinOn(
             joinKey,
             JoinType.INNER);
@@ -391,7 +391,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> LeftOuterJoin12On(
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> LeftOuterJoin12On(
             Expression<Func<TRecord1, TRecord2, bool>> joinKey) => this.JoinOn(
             joinKey,
             JoinType.LEFTOUTER);
@@ -401,7 +401,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> LeftOuterJoin13On(
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> LeftOuterJoin13On(
             Expression<Func<TRecord1, TRecord3, bool>> joinKey) => this.JoinOn(
             joinKey,
             JoinType.LEFTOUTER);
@@ -421,7 +421,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> LeftOuterJoin23On(
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> LeftOuterJoin23On(
             Expression<Func<TRecord2, TRecord3, bool>> joinKey) => this.JoinOn(
             joinKey,
             JoinType.LEFTOUTER);
@@ -441,7 +441,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> RightOuterJoin12On(
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> RightOuterJoin12On(
             Expression<Func<TRecord1, TRecord2, bool>> joinKey) => this.JoinOn(
             joinKey,
             JoinType.RIGHTOUTER);
@@ -451,7 +451,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> RightOuterJoin13On(
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> RightOuterJoin13On(
             Expression<Func<TRecord1, TRecord3, bool>> joinKey) => this.JoinOn(
             joinKey,
             JoinType.RIGHTOUTER);
@@ -471,7 +471,7 @@ namespace GaleForceCore.Builders
         /// </summary>
         /// <param name="joinKey">The join key.</param>
         /// <returns>SimpleSqlBuilder&lt;TRecord, TRecord1, TRecord2&gt;.</returns>
-        public SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> RightOuterJoin23On(
+        public new SimpleSqlBuilder<TRecord, TRecord1, TRecord2, TRecord3, TRecord4> RightOuterJoin23On(
             Expression<Func<TRecord2, TRecord3, bool>> joinKey) => this.JoinOn(
             joinKey,
             JoinType.RIGHTOUTER);
