@@ -2534,7 +2534,7 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
                 .Where(r => r.String1.Contains(test))
                 .Build();
 
-            var expected = "SELECT TOP 10 Int1 FROM TableName WHERE String1 LIKE '%A\\_Value%'";
+            var expected = "SELECT TOP 10 Int1 FROM TableName WHERE String1 LIKE '%A_Value%'";
 
             Assert.AreEqual(expected, actual);
         }
@@ -2612,9 +2612,17 @@ SELECT String1 FROM TableName WHERE (String1 = @Param1)";
         {
             public const string TableName = "TableName";
 
-            public int Id { get; set; }
+            public int Id
+            {
+                get;
+                set;
+            }
 
-            public string User { get; set; }
+            public string User
+            {
+                get;
+                set;
+            }
         }
 
         private List<SqlTestRecord> GetData()

@@ -81,7 +81,7 @@ namespace GaleForceCore.Helpers
 
         public static string CleanStringForLike(string text)
         {
-            return text.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+            return text.Replace("\\", "\\\\").Replace("%", "\\%"); //.Replace("_", "\\_");
         }
 
         /// <summary>
