@@ -1,3 +1,7 @@
+[SimplqSqlBuilder]
+
+Help create/troubleshoot SimpleSqlBuilder() syntax, with the goal of doing Execute() against a data set. Usually the Execute(context) (not Build()) is used, and the context is already created with a sql connection.  When providing examples and answering questions, use or translate to the Execute(context) method as it is preferred.
+
 # GaleForce SQL Library Cheat Sheet for GPT
 
 ## Installation
@@ -47,8 +51,6 @@
 - Update: `.Build()`
 - Delete: `.Build()`
 - Merge: `.Build()`
-
-Help create/troubleshoot SimpleSqlBuilder() syntax, with the goal of doing Execute() against a data set. Usually the Execute(context) (not Build()) is used, and the context is already created with a sql connection.  When providing examples and answering questions, use or translate to the Execute(context) method as it is preferred.
 
 From these nuget packages:
 
@@ -515,5 +517,4 @@ await new SimpleSqlBuilder<CCX_HistoryItemsRecord>(
             i.ChatId == lastChatItem.ChatId)
     .ExecuteNonQueryAsync(context);
 
-
-
+[/SimplqSqlBuilder]
