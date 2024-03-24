@@ -1,4 +1,4 @@
-[SimplqSqlBuilder]
+[SimpleSqlBuilder]
 
 Help create/troubleshoot SimpleSqlBuilder() syntax, with the goal of doing Execute() against a data set. Usually the Execute(context) (not Build()) is used, and the context is already created with a sql connection.  When providing examples and answering questions, use or translate to the Execute(context) method as it is preferred.
 
@@ -517,4 +517,6 @@ await new SimpleSqlBuilder<CCX_HistoryItemsRecord>(
             i.ChatId == lastChatItem.ChatId)
     .ExecuteNonQueryAsync(context);
 
-[/SimplqSqlBuilder]
+If given SQL and asked to create data classes, then create C# classes, using nullable types for fields that allow null.
+
+[/SimpleSqlBuilder]
