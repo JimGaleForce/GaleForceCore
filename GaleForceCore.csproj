@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -9,10 +9,10 @@
     <PackageProjectUrl>https://github.com/JimGaleForce/GaleForceCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JimGaleForce/GaleForceCore</RepositoryUrl>
     <Description>Provides basic helpers for cross-use in numerous projects.</Description>
-    <Version>1.0.37.5</Version>
-    <AssemblyVersion>1.0.37.5</AssemblyVersion>
-    <FileVersion>1.0.37.5</FileVersion>
-    <PackageReleaseNotes>removed escaping for underscores in like/contains</PackageReleaseNotes>
+    <Version>1.0.37.6</Version>
+    <AssemblyVersion>1.0.37.6</AssemblyVersion>
+    <FileVersion>1.0.37.6</FileVersion>
+    <PackageReleaseNotes>added Byte[] as valid type value for use with VARBINARY</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 

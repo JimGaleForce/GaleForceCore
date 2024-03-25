@@ -890,6 +890,24 @@
         }
 
         [TestMethod]
+        public void TestUpdateBytes()
+        {
+            var dt = DateTime.MinValue;
+            var newRecord = new SqlTest5Record
+            {
+                Int1 = 1,
+                Data = new byte[5] { 1, 2, 3, 4, 5 } };
+
+            var actual = new SimpleSqlBuilder<SqlTest5Record>(SqlTest5Record.TableName)
+                .Update(newRecord)
+                .Build();
+
+            var expected = "UPDATE TableName SET Bool1 = 0, DateTime1 = '0001-01-01T00:00:00.0000000', DateTime2 = null, Int1 = 1, Int2 = null, Int3 = null, String1 = null, String2 = null, Bool2 = null, Int4 = null, Data = 0x0102030405";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
         public void TestUpdateWithWhere() //todo: params
         {
             var dt = DateTime.MinValue;

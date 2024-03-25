@@ -168,6 +168,7 @@ namespace GaleForceCore.Helpers
                     else if (type.Name.StartsWith("List") ||
                         type.Name.StartsWith("String[]") ||
                         type.Name.StartsWith("Int32[]") ||
+                        type.Name.StartsWith("Byte[]") ||
                         type.Name.StartsWith("Enumerable"))
                     {
                         var listOfInts = value as List<int>;
@@ -180,6 +181,12 @@ namespace GaleForceCore.Helpers
                         if (arrayOfInts != null)
                         {
                             return "(" + string.Join(",", arrayOfInts) + ")";
+                        }
+
+                        var arrayOfBytes = value as byte[];
+                        if (arrayOfBytes != null)
+                        {
+                            return "0x" + BitConverter.ToString(arrayOfBytes).Replace("-", "");
                         }
 
                         var listOfStrings = value as List<string>;
